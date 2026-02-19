@@ -1,5 +1,5 @@
 [build]
-  command = "prisma generate && npm run setup:prod && next build"
+  command = "export DATABASE_URL=${NETLIFY_DATABASE_URL:-$DATABASE_URL} && prisma generate && npm run setup:prod && next build"
   publish = ".next"
 
 [build.environment]

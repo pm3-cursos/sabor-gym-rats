@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 async function getLeaderboard() {
   const users = await prisma.user.findMany({
