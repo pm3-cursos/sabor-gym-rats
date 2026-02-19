@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+
+  checkIns CheckIn[]
+}
+
+model Live {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  scheduledAt DateTime?
+  order       Int       @unique
+  isActive    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  checkIns CheckIn[]
+}
+
+model CheckIn {
+  id          String        @id @default(cuid())
+  userId      String
+  liveId      String
+  linkedinUrl String
+  status      CheckInStatus @default(PENDING)
+  adminNote   String?
+  createdAt   DateTime      @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  live Live @relation(fields: [liveId], references: [id])
+
+  @@unique([userId, liveId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum CheckInStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
