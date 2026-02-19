@@ -76,7 +76,7 @@ async function main() {
   console.log('✅ 8 lives criadas')
 
   // Cria usuário admin
-  const adminPassword = await bcrypt.hash('PM3Gymrats2026!', 12)
+  const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD ?? 'PM3Gymrats2026!', 12)
   await prisma.user.upsert({
     where: { email: 'admin@pm3.com.br' },
     update: {},
@@ -87,7 +87,7 @@ async function main() {
       role: 'ADMIN',
     },
   })
-  console.log('✅ Admin criado: admin@pm3.com.br / PM3Gymrats2026!')
+  console.log('✅ Admin criado: admin@pm3.com.br')
 
   console.log('🎉 Seed concluído!')
 }
