@@ -3,6 +3,37 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+function EmailVerificationBanner() {
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+
+  async function resend() {
+    setSending(true)
+    await fetch('/api/auth/reenviar-verificacao', { method: 'POST' })
+    setSending(false)
+    setSent(true)
+  }
+
+  return (
+    <div className="mb-6 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+      <p className="text-amber-400 text-sm">
+        📬 Confirme seu e-mail para ativar sua conta. Verifique sua caixa de entrada.
+      </p>
+      {sent ? (
+        <span className="text-emerald-400 text-xs shrink-0">E-mail reenviado ✓</span>
+      ) : (
+        <button
+          onClick={resend}
+          disabled={sending}
+          className="text-amber-400 hover:text-amber-300 text-xs underline shrink-0 disabled:opacity-50"
+        >
+          {sending ? 'Enviando...' : 'Reenviar e-mail'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 interface Live {
   id: string
   title: string
@@ -23,12 +54,13 @@ interface CheckIn {
 
 interface Props {
   userName: string
+  emailVerified: boolean
   lives: Live[]
   checkIns: CheckIn[]
   approvedCount: number
 }
 
-export default function DashboardClient({ userName, lives, checkIns, approvedCount }: Props) {
+export default function DashboardClient({ userName, emailVerified, lives, checkIns, approvedCount }: Props) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState<string | null>(null)
   const [urls, setUrls] = useState<Record<string, string>>({})
@@ -79,6 +111,8 @@ export default function DashboardClient({ userName, lives, checkIns, approvedCou
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
+      {!emailVerified && <EmailVerificationBanner />}
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-1">Olá, {userName}! 👋</h1>

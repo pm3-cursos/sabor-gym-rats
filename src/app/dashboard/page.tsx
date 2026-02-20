@@ -9,11 +9,15 @@ export default async function DashboardPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [lives, checkIns] = await Promise.all([
+  const [lives, checkIns, user] = await Promise.all([
     prisma.live.findMany({ orderBy: { order: 'asc' } }),
     prisma.checkIn.findMany({
       where: { userId: session.userId },
       include: { live: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { emailVerified: true },
     }),
   ])
 
@@ -22,6 +26,7 @@ export default async function DashboardPage() {
   return (
     <DashboardClient
       userName={session.name}
+      emailVerified={user?.emailVerified ?? false}
       lives={lives}
       checkIns={checkIns.map((c) => ({
         id: c.id,
