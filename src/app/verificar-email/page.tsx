@@ -54,7 +54,7 @@ export default function VerificarEmailPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">🏋️</div>
           <h1 className="text-2xl font-bold">Confirmação de e-mail</h1>
-          <p className="text-gray-400 text-sm mt-1">PM3 Gymrats</p>
+          <p className="text-gray-400 text-sm mt-1">ProductRats — Maratona PM3</p>
         </div>
         <div className="card p-8">
           <Suspense fallback={<div className="text-center text-gray-400">Verificando...</div>}>
