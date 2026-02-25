@@ -37,7 +37,7 @@ export default function EsqueciSenhaPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">🔑</div>
           <h1 className="text-2xl font-bold">Esqueci minha senha</h1>
-          <p className="text-gray-400 text-sm mt-1">PM3 Gymrats</p>
+          <p className="text-gray-400 text-sm mt-1">ProductRats — Maratona PM3</p>
         </div>
 
         {sent ? (

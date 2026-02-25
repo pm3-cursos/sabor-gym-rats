@@ -41,7 +41,7 @@ export default function CadastroPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">🏋️</div>
           <h1 className="text-2xl font-bold">Criar conta</h1>
-          <p className="text-gray-400 text-sm mt-1">Participe do PM3 Gymrats</p>
+          <p className="text-gray-400 text-sm mt-1">Participe da Maratona ProductRats</p>
         </div>
 
         <form onSubmit={handleSubmit} className="card p-6 space-y-4">
