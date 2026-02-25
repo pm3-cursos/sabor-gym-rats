@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 import { prisma } from '@/lib/db'
 import { hashPassword, createToken } from '@/lib/auth'
+import { sendEmailVerification } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,6 +33,18 @@ export async function POST(request: NextRequest) {
         role: 'USER',
       },
     })
+
+    // Send verification email (non-blocking — don't fail signup if email fails)
+    try {
+      const verifyToken = randomBytes(32).toString('hex')
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+      await prisma.emailVerificationToken.create({
+        data: { token: verifyToken, userId: user.id, expiresAt },
+      })
+      await sendEmailVerification(user.email, user.name, verifyToken)
+    } catch {
+      // Email failure should not block account creation
+    }
 
     const token = await createToken({
       userId: user.id,
