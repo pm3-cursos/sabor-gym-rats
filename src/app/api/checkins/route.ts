@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
 
-  const { liveId, linkedinUrl } = await request.json()
+  const { liveId, linkedinUrl, insight } = await request.json()
 
   if (!liveId || !linkedinUrl) {
     return NextResponse.json({ error: 'liveId e linkedinUrl são obrigatórios.' }, { status: 400 })
@@ -29,6 +29,10 @@ export async function POST(request: NextRequest) {
 
   if (!linkedinUrl.includes('linkedin.com')) {
     return NextResponse.json({ error: 'Por favor, envie um link válido do LinkedIn.' }, { status: 400 })
+  }
+
+  if (insight !== undefined && insight !== null && insight.trim().length < 10) {
+    return NextResponse.json({ error: 'O insight deve ter pelo menos 10 caracteres.' }, { status: 400 })
   }
 
   const live = await prisma.live.findUnique({ where: { id: liveId } })
@@ -51,11 +55,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Seu check-in para esta live já foi aprovado.' }, { status: 409 })
   }
 
-  // Se existe um REJECTED, permite reenviar (upsert)
+  const insightValue = insight?.trim() || null
+
   const checkIn = await prisma.checkIn.upsert({
     where: { userId_liveId: { userId: session.userId, liveId } },
     update: {
       linkedinUrl,
+      insight: insightValue,
       status: 'PENDING',
       adminNote: null,
       reviewedAt: null,
@@ -65,6 +71,7 @@ export async function POST(request: NextRequest) {
       userId: session.userId,
       liveId,
       linkedinUrl,
+      insight: insightValue,
       status: 'PENDING',
     },
     include: { live: true },

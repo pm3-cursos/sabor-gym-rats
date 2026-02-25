@@ -37,6 +37,7 @@ model CheckIn {
   id          String        @id @default(cuid())
   userId      String
   liveId      String
+  insight     String?
   linkedinUrl String
   status      CheckInStatus @default(PENDING)
   adminNote   String?

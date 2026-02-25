@@ -18,16 +18,19 @@ body {
     @apply bg-gray-900 border border-gray-800 rounded-xl;
   }
   .btn-primary {
-    @apply bg-violet-600 hover:bg-violet-500 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-violet-600 hover:bg-violet-500 active:scale-95 text-white font-semibold min-h-[44px] px-5 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
   }
   .btn-secondary {
-    @apply bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors;
+    @apply bg-gray-800 hover:bg-gray-700 active:scale-95 text-white font-semibold min-h-[44px] px-5 rounded-lg transition-all duration-150;
   }
   .btn-danger {
-    @apply bg-red-600 hover:bg-red-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm;
+    @apply bg-red-600 hover:bg-red-500 active:scale-95 text-white font-semibold min-h-[44px] px-4 rounded-lg transition-all duration-150 text-sm;
   }
   .btn-success {
-    @apply bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm;
+    @apply bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold min-h-[44px] px-4 rounded-lg transition-all duration-150 text-sm;
+  }
+  .card-hover {
+    @apply hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 hover:border-gray-700 transition-all duration-200;
   }
   .input {
     @apply w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2.5 focus:outline-none focus:border-violet-500 transition-colors;
