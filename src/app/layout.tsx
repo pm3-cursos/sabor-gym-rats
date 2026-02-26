@@ -4,8 +4,8 @@ import Navbar from '@/components/Navbar'
 import { getSession } from '@/lib/auth'
 
 export const metadata: Metadata = {
-  title: 'ProductRats — Maratona PM3',
-  description: 'Participe da Maratona PM3, assista às aulas, publique no LinkedIn e concorra a prêmios!',
+  title: 'PM3 Gymrats — Desafio de Lives',
+  description: 'Participe do desafio de lives da PM3 e ganhe prêmios!',
 }
 
 export default async function RootLayout({

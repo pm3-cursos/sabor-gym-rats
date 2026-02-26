@@ -6,44 +6,58 @@ const prisma = new PrismaClient()
 const lives = [
   {
     order: 1,
-    title: 'Radar de Mercado com IA: sustentando sua hipótese',
-    description: 'Aula 1 da Maratona ProductRats PM3.',
-    scheduledAt: new Date('2026-03-05T19:00:00-03:00'),
-    isActive: true,
+    title: 'Live 1 — PM3 Gymrats',
+    description: 'Primeira live da série PM3 Gymrats de março.',
+    scheduledAt: new Date('2026-03-03T19:00:00-03:00'),
+    isActive: false,
   },
   {
     order: 2,
-    title: 'Discovery Product-Led: de problemas a oportunidades de crescimento',
-    description: 'Aula 2 da Maratona ProductRats PM3.',
-    scheduledAt: new Date('2026-03-10T19:00:00-03:00'),
+    title: 'Live 2 — PM3 Gymrats',
+    description: 'Segunda live da série PM3 Gymrats de março.',
+    scheduledAt: new Date('2026-03-06T19:00:00-03:00'),
     isActive: false,
   },
   {
     order: 3,
-    title: 'MVP com IA: prototipar para aprender (vibe-coding)',
-    description: 'Aula 3 da Maratona ProductRats PM3.',
-    scheduledAt: new Date('2026-03-12T19:00:00-03:00'),
+    title: 'Live 3 — PM3 Gymrats',
+    description: 'Terceira live da série PM3 Gymrats de março.',
+    scheduledAt: new Date('2026-03-10T19:00:00-03:00'),
     isActive: false,
   },
   {
     order: 4,
-    title: 'Métricas de Growth: o que é sucesso em um produto Product-Led',
-    description: 'Aula 4 da Maratona ProductRats PM3.',
-    scheduledAt: new Date('2026-03-17T19:00:00-03:00'),
+    title: 'Live 4 — PM3 Gymrats',
+    description: 'Quarta live da série PM3 Gymrats de março.',
+    scheduledAt: new Date('2026-03-13T19:00:00-03:00'),
     isActive: false,
   },
   {
     order: 5,
-    title: 'Do MVP ao Experimento: desenhando testes que geram decisão',
-    description: 'Aula 5 da Maratona ProductRats PM3.',
-    scheduledAt: new Date('2026-03-19T19:00:00-03:00'),
+    title: 'Live 5 — PM3 Gymrats',
+    description: 'Quinta live da série PM3 Gymrats de março.',
+    scheduledAt: new Date('2026-03-17T19:00:00-03:00'),
     isActive: false,
   },
   {
     order: 6,
-    title: 'Influência em Produto: como negociar decisões com stakeholders',
-    description: 'Aula 6 da Maratona ProductRats PM3.',
+    title: 'Live 6 — PM3 Gymrats',
+    description: 'Sexta live da série PM3 Gymrats de março.',
+    scheduledAt: new Date('2026-03-20T19:00:00-03:00'),
+    isActive: false,
+  },
+  {
+    order: 7,
+    title: 'Live 7 — PM3 Gymrats',
+    description: 'Sétima live da série PM3 Gymrats de março.',
     scheduledAt: new Date('2026-03-24T19:00:00-03:00'),
+    isActive: false,
+  },
+  {
+    order: 8,
+    title: 'Live 8 — PM3 Gymrats',
+    description: 'Oitava e última live da série PM3 Gymrats de março.',
+    scheduledAt: new Date('2026-03-27T19:00:00-03:00'),
     isActive: false,
   },
 ]
@@ -51,10 +65,7 @@ const lives = [
 async function main() {
   console.log('🌱 Iniciando seed...')
 
-  // Remove lives with order > 6 (old extra entries)
-  await prisma.live.deleteMany({ where: { order: { gt: 6 } } })
-
-  // Upsert the 6 lives
+  // Cria as 8 lives
   for (const live of lives) {
     await prisma.live.upsert({
       where: { order: live.order },
@@ -62,10 +73,10 @@ async function main() {
       create: live,
     })
   }
-  console.log('✅ 6 aulas criadas/atualizadas')
+  console.log('✅ 8 lives criadas')
 
   // Cria usuário admin
-  const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD ?? 'PM3ProductRats2026!', 12)
+  const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD ?? 'PM3Gymrats2026!', 12)
   await prisma.user.upsert({
     where: { email: 'admin@pm3.com.br' },
     update: {},

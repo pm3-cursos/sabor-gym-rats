@@ -50,7 +50,7 @@ function EmailVerificationBanner() {
 
 function CelebrationOverlay({ userName, onClose }: { userName: string; onClose: () => void }) {
   const shareText = encodeURIComponent(
-    `Acabei de completar a PM3 Marathon! 🏋️🥇\nAssisti a todas as aulas da série PM3, publiquei meus insights no LinkedIn e cruzei a linha de chegada!\n#ProductRats #MaratonaPM3 #ProductManagement`,
+    `Acabei de completar a PM3 Marathon! 🏋️🥇\nAssisti a todas as aulas da série PM3, publiquei meus insights no LinkedIn e cruzei a linha de chegada!\n#PM3Gymrats #ProductManagement`,
   )
   const shareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${shareText}`
 
@@ -205,7 +205,7 @@ export default function DashboardClient({
 
   function buildLinkedInShareUrl(liveTitle: string, insight: string) {
     const text = encodeURIComponent(
-      `Acabei de assistir "${liveTitle}" da série PM3! 🏋️\n${insight ? insight + '\n' : ''}#ProductRats #MaratonaPM3 #ProductManagement`,
+      `Acabei de assistir "${liveTitle}" da série PM3! 🏋️\n${insight ? insight + '\n' : ''}#PM3Gymrats #ProductManagement`,
     )
     return `https://www.linkedin.com/feed/?shareActive=true&text=${text}`
   }
