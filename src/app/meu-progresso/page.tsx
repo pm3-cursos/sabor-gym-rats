@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
+import { calcPoints, calcAulaCount } from '@/lib/points'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,19 +27,18 @@ export default async function MeuProgressoPage() {
       where: { role: 'USER' },
       select: {
         id: true,
-        checkIns: { where: { status: 'APPROVED' }, select: { id: true } },
+        checkIns: { where: { status: 'APPROVED' }, select: { type: true, status: true } },
       },
     }),
   ])
 
   const totalLives = lives.length
-  const approvedCheckIns = checkIns.filter((c) => c.status === 'APPROVED')
-  const approvedCount = approvedCheckIns.length
+  const approvedCount = calcAulaCount(checkIns)
   const pendingCount = checkIns.filter((c) => c.status === 'PENDING').length
 
-  // Rank
+  // Rank by weighted points
   const sorted = allUsers
-    .map((u) => ({ id: u.id, points: u.checkIns.length }))
+    .map((u) => ({ id: u.id, points: calcPoints(u.checkIns) }))
     .sort((a, b) => b.points - a.points)
   const userRank = sorted.findIndex((u) => u.id === session.userId) + 1
   const totalParticipants = sorted.length
@@ -46,8 +46,6 @@ export default async function MeuProgressoPage() {
   const level = getUserLevel(approvedCount, totalLives)
   const safeTotal = totalLives > 0 ? totalLives : 1
   const pct = Math.min(100, Math.round((approvedCount / safeTotal) * 100))
-
-  const approvedLiveIds = new Set(approvedCheckIns.map((c) => c.liveId))
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
@@ -121,7 +119,7 @@ export default async function MeuProgressoPage() {
         </div>
         <ul className="divide-y divide-gray-800/60">
           {lives.map((live) => {
-            const checkIn = checkIns.find((c) => c.liveId === live.id)
+            const checkIn = checkIns.find((c) => c.liveId === live.id && c.type === 'AULA')
             const isApproved = checkIn?.status === 'APPROVED'
             const isPending = checkIn?.status === 'PENDING'
             const isRejected = checkIn?.status === 'REJECTED'

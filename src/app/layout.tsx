@@ -6,6 +6,13 @@ import { getSession } from '@/lib/auth'
 export const metadata: Metadata = {
   title: 'ProductRats — Maratona PM3',
   description: 'Participe da Maratona PM3, assista às aulas, publique no LinkedIn e concorra a prêmios!',
+  openGraph: {
+    title: 'ProductRats — Maratona PM3',
+    description: 'Participe da Maratona PM3, assista às aulas, publique no LinkedIn e concorra a prêmios!',
+    siteName: 'ProductRats',
+    locale: 'pt_BR',
+    type: 'website',
+  },
 }
 
 export default async function RootLayout({

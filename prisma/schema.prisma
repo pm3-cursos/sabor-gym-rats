@@ -37,8 +37,9 @@ model CheckIn {
   id          String        @id @default(cuid())
   userId      String
   liveId      String
+  type        CheckInType   @default(AULA)
   insight     String?
-  linkedinUrl String
+  linkedinUrl String?
   status      CheckInStatus @default(PENDING)
   adminNote   String?
   createdAt   DateTime      @default(now())
@@ -48,7 +49,7 @@ model CheckIn {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   live Live @relation(fields: [liveId], references: [id])
 
-  @@unique([userId, liveId])
+  @@unique([userId, liveId, type])
 }
 
 model PasswordResetToken {
@@ -79,4 +80,9 @@ enum CheckInStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum CheckInType {
+  AULA
+  LINKEDIN
 }

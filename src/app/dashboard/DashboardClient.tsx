@@ -6,10 +6,10 @@ import confetti from 'canvas-confetti'
 
 // ─── Level system ────────────────────────────────────────────────────────────
 
-function getUserLevel(points: number, total: number) {
-  if (total > 0 && points >= total) return { label: 'Maratonista PM3', icon: '🥇', color: 'text-yellow-400' }
-  if (points >= 3) return { label: 'Corredor', icon: '🥈', color: 'text-gray-300' }
-  if (points >= 1) return { label: 'Iniciante', icon: '🥉', color: 'text-amber-500' }
+function getUserLevel(aulaCount: number, total: number) {
+  if (total > 0 && aulaCount >= total) return { label: 'Maratonista PM3', icon: '🥇', color: 'text-yellow-400' }
+  if (aulaCount >= 3) return { label: 'Corredor', icon: '🥈', color: 'text-gray-300' }
+  if (aulaCount >= 1) return { label: 'Iniciante', icon: '🥉', color: 'text-amber-500' }
   return { label: 'Na largada', icon: '🏁', color: 'text-gray-500' }
 }
 
@@ -105,7 +105,8 @@ interface Live {
 interface CheckIn {
   id: string
   liveId: string
-  linkedinUrl: string
+  type: string
+  linkedinUrl: string | null
   insight: string | null
   status: string
   adminNote: string | null
@@ -138,11 +139,14 @@ export default function DashboardClient({
   nextLiveId,
 }: Props) {
   const router = useRouter()
+  // submitting key: `${liveId}_AULA` or `${liveId}_LINKEDIN`
   const [submitting, setSubmitting] = useState<string | null>(null)
-  const [urls, setUrls] = useState<Record<string, string>>({})
   const [insights, setInsights] = useState<Record<string, string>>({})
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [success, setSuccess] = useState<Record<string, boolean>>({})
+  const [urls, setUrls] = useState<Record<string, string>>({})
+  const [aulaErrors, setAulaErrors] = useState<Record<string, string>>({})
+  const [linkedinErrors, setLinkedinErrors] = useState<Record<string, string>>({})
+  const [aulaSuccess, setAulaSuccess] = useState<Record<string, boolean>>({})
+  const [linkedinSuccess, setLinkedinSuccess] = useState<Record<string, boolean>>({})
   const [showCelebration, setShowCelebration] = useState(false)
 
   const level = getUserLevel(approvedCount, totalLives)
@@ -150,7 +154,6 @@ export default function DashboardClient({
   const pct = Math.min(100, Math.round((approvedCount / safeTotal) * 100))
   const remaining = totalLives - approvedCount
 
-  // Show celebration once when all lives completed
   useEffect(() => {
     if (
       totalLives > 0 &&
@@ -162,44 +165,60 @@ export default function DashboardClient({
     }
   }, [approvedCount, totalLives])
 
-  const checkInMap: Record<string, CheckIn> = {}
+  const aulaCheckInMap: Record<string, CheckIn> = {}
+  const linkedinCheckInMap: Record<string, CheckIn> = {}
   for (const c of checkIns) {
-    checkInMap[c.liveId] = c
+    if (c.type === 'AULA') aulaCheckInMap[c.liveId] = c
+    else if (c.type === 'LINKEDIN') linkedinCheckInMap[c.liveId] = c
   }
 
-  async function handleSubmit(liveId: string) {
-    const url = urls[liveId]?.trim()
+  async function handleSubmit(liveId: string, type: 'AULA' | 'LINKEDIN') {
+    const key = `${liveId}_${type}`
     const insight = insights[liveId]?.trim()
+    const url = urls[liveId]?.trim()
 
-    if (!url) {
-      setErrors((prev) => ({ ...prev, [liveId]: 'Cole o link da sua publicação no LinkedIn.' }))
-      return
-    }
-    if (!insight || insight.length < 10) {
-      setErrors((prev) => ({ ...prev, [liveId]: 'Escreva seu insight (mínimo 10 caracteres).' }))
-      return
+    if (type === 'AULA') {
+      if (!insight || insight.length < 10) {
+        setAulaErrors((prev) => ({ ...prev, [liveId]: 'Escreva seu insight (mínimo 10 caracteres).' }))
+        return
+      }
+      setAulaErrors((prev) => ({ ...prev, [liveId]: '' }))
+    } else {
+      if (!url || !url.includes('linkedin.com')) {
+        setLinkedinErrors((prev) => ({ ...prev, [liveId]: 'Cole o link da sua publicação no LinkedIn.' }))
+        return
+      }
+      setLinkedinErrors((prev) => ({ ...prev, [liveId]: '' }))
     }
 
-    setSubmitting(liveId)
-    setErrors((prev) => ({ ...prev, [liveId]: '' }))
+    setSubmitting(key)
+
+    const body: Record<string, string> = { liveId, type }
+    if (type === 'AULA') body.insight = insight!
+    else body.linkedinUrl = url!
 
     const res = await fetch('/api/checkins', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ liveId, linkedinUrl: url, insight }),
+      body: JSON.stringify(body),
     })
 
     const data = await res.json()
     setSubmitting(null)
 
     if (!res.ok) {
-      setErrors((prev) => ({ ...prev, [liveId]: data.error || 'Erro ao enviar.' }))
+      if (type === 'AULA') setAulaErrors((prev) => ({ ...prev, [liveId]: data.error || 'Erro ao enviar.' }))
+      else setLinkedinErrors((prev) => ({ ...prev, [liveId]: data.error || 'Erro ao enviar.' }))
       return
     }
 
-    setSuccess((prev) => ({ ...prev, [liveId]: true }))
-    setUrls((prev) => ({ ...prev, [liveId]: '' }))
-    setInsights((prev) => ({ ...prev, [liveId]: '' }))
+    if (type === 'AULA') {
+      setAulaSuccess((prev) => ({ ...prev, [liveId]: true }))
+      setInsights((prev) => ({ ...prev, [liveId]: '' }))
+    } else {
+      setLinkedinSuccess((prev) => ({ ...prev, [liveId]: true }))
+      setUrls((prev) => ({ ...prev, [liveId]: '' }))
+    }
     router.refresh()
   }
 
@@ -214,9 +233,7 @@ export default function DashboardClient({
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      {showCelebration && (
-        <CelebrationOverlay userName={userName} onClose={closeCelebration} />
-      )}
+      {showCelebration && <CelebrationOverlay userName={userName} onClose={closeCelebration} />}
 
       {!emailVerified && <EmailVerificationBanner />}
 
@@ -239,7 +256,11 @@ export default function DashboardClient({
       <div className="card p-5 mb-8">
         <h2 className="font-semibold text-gray-300 mb-4">Seu progresso na PM3 Marathon</h2>
         <div className="flex items-end gap-3 mb-4">
-          <span className={`text-5xl font-bold tabular-nums ${approvedCount >= totalLives && totalLives > 0 ? 'text-emerald-400' : 'text-violet-400'}`}>
+          <span
+            className={`text-5xl font-bold tabular-nums ${
+              approvedCount >= totalLives && totalLives > 0 ? 'text-emerald-400' : 'text-violet-400'
+            }`}
+          >
             {approvedCount}
           </span>
           <span className="text-gray-500 text-lg mb-1">de {totalLives} aulas</span>
@@ -247,7 +268,9 @@ export default function DashboardClient({
         <div className="h-3 bg-gray-800 rounded-full overflow-hidden mb-3">
           <div
             className={`h-full rounded-full transition-all duration-700 delay-100 ${
-              approvedCount >= totalLives && totalLives > 0 ? 'bg-emerald-500' : 'bg-gradient-to-r from-violet-600 to-violet-400'
+              approvedCount >= totalLives && totalLives > 0
+                ? 'bg-emerald-500'
+                : 'bg-gradient-to-r from-violet-600 to-violet-400'
             }`}
             style={{ width: `${pct}%` }}
           />
@@ -275,42 +298,42 @@ export default function DashboardClient({
         )}
 
         {lives.map((live) => {
-          const checkIn = checkInMap[live.id]
-          const isApproved = checkIn?.status === 'APPROVED'
-          const isPending = checkIn?.status === 'PENDING'
-          const isRejected = checkIn?.status === 'REJECTED'
-          const canSubmit = live.isActive && (!checkIn || isRejected)
+          const aulaCI = aulaCheckInMap[live.id]
+          const linkedinCI = linkedinCheckInMap[live.id]
+          const aulaApproved = aulaCI?.status === 'APPROVED'
+          const aulaPending = aulaCI?.status === 'PENDING'
+          const aulaRejected = aulaCI?.status === 'REJECTED'
+          const canSubmitAula = live.isActive && (!aulaCI || aulaRejected)
+          const canSubmitLinkedin = live.isActive && (!linkedinCI || linkedinCI.status === 'REJECTED')
           const isNext = live.id === nextLiveId
-          const showSuccess = success[live.id]
+
           const insightValue = insights[live.id] || ''
           const insightLen = insightValue.trim().length
           const insightValid = insightLen >= 10
           const urlValue = urls[live.id] || ''
-          const submitDisabled = submitting === live.id || !insightValid || !urlValue.trim()
 
-          // Card style per state
           let cardClass = 'card p-5'
-          if (isApproved) cardClass += ' bg-emerald-500/5 border-emerald-800/30'
-          else if (!live.isActive && !checkIn) cardClass += ' opacity-60'
+          if (aulaApproved) cardClass += ' bg-emerald-500/5 border-emerald-800/30'
+          else if (!live.isActive && !aulaCI) cardClass += ' opacity-60'
           else if (isNext) cardClass += ' border-violet-800/50'
 
           return (
             <div key={live.id} className={`${cardClass} card-hover`}>
               {/* Card header */}
-              <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="flex items-center gap-2 min-w-0">
                   <span
                     className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${
-                      isApproved
+                      aulaApproved
                         ? 'bg-emerald-500/20 text-emerald-400'
-                        : isRejected
+                        : aulaRejected
                         ? 'bg-red-500/20 text-red-400'
-                        : isPending
+                        : aulaPending
                         ? 'bg-amber-500/20 text-amber-400'
                         : 'bg-gray-800 text-gray-500'
                     }`}
                   >
-                    {isApproved ? '✓' : live.order}
+                    {aulaApproved ? '✓' : live.order}
                   </span>
                   <div className="min-w-0">
                     <p className="font-medium text-sm leading-snug">{live.title}</p>
@@ -325,148 +348,183 @@ export default function DashboardClient({
                     )}
                   </div>
                 </div>
-                <div className="shrink-0">
-                  {isApproved && <span className="badge-approved">✓ Completa</span>}
-                  {isPending && <span className="badge-pending">⏳ Em revisão</span>}
-                  {isRejected && <span className="badge-rejected">✗ Rejeitado</span>}
-                  {!checkIn && !live.isActive && (
+                <div className="shrink-0 flex gap-1 flex-wrap justify-end">
+                  {!aulaCI && !live.isActive && (
                     <span className="text-xs text-gray-600">🔒 Em breve</span>
                   )}
-                  {isNext && !checkIn && (
-                    <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full font-medium ml-1">
+                  {isNext && !aulaCI && (
+                    <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full font-medium">
                       Próxima
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* State A: Locked (no action) — already handled by opacity-60 + "Em breve" badge */}
-
-              {/* State C & D: Pending or Approved — show insight + linkedin */}
-              {(isPending || isApproved) && checkIn && (
-                <div className="mt-2 mb-3 space-y-2">
-                  {checkIn.insight && (
-                    <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-4 py-3 border-l-2 border-violet-500/40 italic">
-                      "{checkIn.insight}"
-                    </blockquote>
-                  )}
-                  <div className="text-xs text-gray-500 bg-gray-800/40 rounded-lg px-3 py-2">
-                    <a
-                      href={checkIn.linkedinUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-violet-400 hover:text-violet-300 break-all"
-                    >
-                      {checkIn.linkedinUrl}
-                    </a>
+              {/* AULA section */}
+              <div className="border border-gray-800 rounded-lg p-4 mb-3">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    Aula · 1 pt
+                  </span>
+                  <div className="flex gap-1">
+                    {aulaApproved && <span className="badge-approved">✓ Aprovado</span>}
+                    {aulaPending && <span className="badge-pending">⏳ Revisão</span>}
+                    {aulaRejected && <span className="badge-rejected">✗ Rejeitado</span>}
                   </div>
                 </div>
-              )}
 
-              {/* State E: Rejected — show admin note + resubmit form */}
-              {isRejected && checkIn?.adminNote && (
-                <div className="mt-2 mb-3 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-                  <p className="text-xs text-red-400">
-                    <strong>Nota do admin:</strong> {checkIn.adminNote}
-                  </p>
-                </div>
-              )}
+                {(aulaPending || aulaApproved) && aulaCI?.insight && (
+                  <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-4 py-3 border-l-2 border-violet-500/40 italic mb-3">
+                    "{aulaCI.insight}"
+                  </blockquote>
+                )}
 
-              {/* State B & E: Submit / Resubmit form */}
-              {canSubmit && !showSuccess && (
-                <div className="space-y-3 mt-2">
-                  {isRejected && (
-                    <p className="text-xs text-amber-400">
-                      Seu check-in foi rejeitado. Envie uma nova publicação:
+                {aulaRejected && aulaCI?.adminNote && (
+                  <div className="mb-3 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                    <p className="text-xs text-red-400">
+                      <strong>Nota do admin:</strong> {aulaCI.adminNote}
                     </p>
-                  )}
+                  </div>
+                )}
 
-                  {/* Insight textarea */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1.5">
-                      Seu insight sobre esta aula
-                    </label>
-                    <textarea
-                      className="input text-sm resize-none"
-                      rows={3}
-                      placeholder="O que você aprendeu? Mínimo 10 caracteres..."
-                      value={insightValue}
-                      onChange={(e) =>
-                        setInsights((prev) => ({ ...prev, [live.id]: e.target.value }))
-                      }
-                    />
-                    <div
-                      className={`text-xs mt-1 text-right tabular-nums ${
-                        insightLen === 0
-                          ? 'text-gray-600'
-                          : insightValid
-                          ? 'text-emerald-400'
-                          : 'text-red-400'
-                      }`}
-                    >
-                      {insightLen} / 10 mín.
+                {canSubmitAula && !aulaSuccess[live.id] && (
+                  <div className="space-y-2">
+                    {aulaRejected && (
+                      <p className="text-xs text-amber-400">Seu check-in foi rejeitado. Envie novamente:</p>
+                    )}
+                    <div>
+                      <textarea
+                        className="input text-sm resize-none w-full"
+                        rows={3}
+                        placeholder="O que você aprendeu? Mínimo 10 caracteres..."
+                        value={insightValue}
+                        onChange={(e) =>
+                          setInsights((prev) => ({ ...prev, [live.id]: e.target.value }))
+                        }
+                      />
+                      <div
+                        className={`text-xs mt-1 text-right tabular-nums ${
+                          insightLen === 0
+                            ? 'text-gray-600'
+                            : insightValid
+                            ? 'text-emerald-400'
+                            : 'text-red-400'
+                        }`}
+                      >
+                        {insightLen} / 10 mín.
+                      </div>
+                    </div>
+                    {aulaErrors[live.id] && (
+                      <p className="text-xs text-red-400">{aulaErrors[live.id]}</p>
+                    )}
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => handleSubmit(live.id, 'AULA')}
+                        disabled={submitting === `${live.id}_AULA` || !insightValid}
+                        className="btn-primary text-sm flex-1"
+                      >
+                        {submitting === `${live.id}_AULA` ? 'Enviando...' : 'Check-in de Aula ✓'}
+                      </button>
+                      <a
+                        href={buildLinkedInShareUrl(live.title, insightValue)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-secondary text-sm text-center shrink-0"
+                      >
+                        Compartilhar →
+                      </a>
                     </div>
                   </div>
+                )}
 
-                  {/* LinkedIn URL */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-400 mb-1.5">
-                      Link da publicação no LinkedIn
-                    </label>
-                    <input
-                      type="url"
-                      className="input text-sm"
-                      placeholder="https://www.linkedin.com/posts/..."
-                      value={urlValue}
-                      onChange={(e) =>
-                        setUrls((prev) => ({ ...prev, [live.id]: e.target.value }))
-                      }
-                    />
-                  </div>
+                {aulaSuccess[live.id] && (
+                  <p className="text-sm text-emerald-400">
+                    🏃 Check-in enviado! Aguarde a aprovação.
+                  </p>
+                )}
 
-                  {errors[live.id] && (
-                    <p className="text-xs text-red-400">{errors[live.id]}</p>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 flex-wrap">
-                    <button
-                      onClick={() => handleSubmit(live.id)}
-                      disabled={submitDisabled}
-                      className="btn-primary text-sm flex-1"
-                    >
-                      {submitting === live.id ? 'Enviando...' : 'Fazer Check-in ✓'}
-                    </button>
-                    <a
-                      href={buildLinkedInShareUrl(live.title, insightValue)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-secondary text-sm text-center shrink-0"
-                    >
-                      Compartilhar no LinkedIn →
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {/* Success message */}
-              {showSuccess && (
-                <p className="text-sm text-emerald-400 mt-3">
-                  🏃 Você avançou mais uma milha na PM3 Marathon! Aguarde a aprovação do admin.
-                </p>
-              )}
-
-              {/* LinkedIn share for approved cards */}
-              {isApproved && checkIn && (
-                <div className="mt-3">
+                {aulaApproved && aulaCI && (
                   <a
-                    href={buildLinkedInShareUrl(live.title, checkIn.insight || '')}
+                    href={buildLinkedInShareUrl(live.title, aulaCI.insight || '')}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-violet-400 hover:text-violet-300 underline"
                   >
                     Compartilhar no LinkedIn →
                   </a>
+                )}
+              </div>
+
+              {/* LINKEDIN section — only show when live is active or already has a check-in */}
+              {(live.isActive || linkedinCI) && (
+                <div className="border border-gray-800 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                      LinkedIn · 3 pts
+                    </span>
+                    <div className="flex gap-1">
+                      {linkedinCI?.status === 'APPROVED' && <span className="badge-approved">✓ Aprovado</span>}
+                      {linkedinCI?.status === 'PENDING' && <span className="badge-pending">⏳ Revisão</span>}
+                      {linkedinCI?.status === 'REJECTED' && <span className="badge-rejected">✗ Rejeitado</span>}
+                    </div>
+                  </div>
+
+                  {(linkedinCI?.status === 'PENDING' || linkedinCI?.status === 'APPROVED') &&
+                    linkedinCI?.linkedinUrl && (
+                      <div className="text-xs text-gray-500 bg-gray-800/40 rounded-lg px-3 py-2 mb-3">
+                        <a
+                          href={linkedinCI.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-violet-400 hover:text-violet-300 break-all"
+                        >
+                          {linkedinCI.linkedinUrl}
+                        </a>
+                      </div>
+                    )}
+
+                  {linkedinCI?.status === 'REJECTED' && linkedinCI?.adminNote && (
+                    <div className="mb-3 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                      <p className="text-xs text-red-400">
+                        <strong>Nota do admin:</strong> {linkedinCI.adminNote}
+                      </p>
+                    </div>
+                  )}
+
+                  {canSubmitLinkedin && !linkedinSuccess[live.id] && (
+                    <div className="space-y-2">
+                      {linkedinCI?.status === 'REJECTED' && (
+                        <p className="text-xs text-amber-400">Seu check-in foi rejeitado. Envie novamente:</p>
+                      )}
+                      <input
+                        type="url"
+                        className="input text-sm w-full"
+                        placeholder="https://www.linkedin.com/posts/..."
+                        value={urlValue}
+                        onChange={(e) =>
+                          setUrls((prev) => ({ ...prev, [live.id]: e.target.value }))
+                        }
+                      />
+                      {linkedinErrors[live.id] && (
+                        <p className="text-xs text-red-400">{linkedinErrors[live.id]}</p>
+                      )}
+                      <button
+                        onClick={() => handleSubmit(live.id, 'LINKEDIN')}
+                        disabled={submitting === `${live.id}_LINKEDIN` || !urlValue.trim()}
+                        className="btn-secondary text-sm w-full"
+                      >
+                        {submitting === `${live.id}_LINKEDIN`
+                          ? 'Enviando...'
+                          : 'Enviar publicação LinkedIn (+3 pts)'}
+                      </button>
+                    </div>
+                  )}
+
+                  {linkedinSuccess[live.id] && (
+                    <p className="text-sm text-emerald-400">
+                      🎯 Publicação enviada! Aguarde a aprovação.
+                    </p>
+                  )}
                 </div>
               )}
             </div>

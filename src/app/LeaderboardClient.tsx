@@ -10,6 +10,7 @@ interface LeaderboardEntry {
   id: string
   name: string
   points: number
+  aulaCount: number
   rank: number
   level: LevelInfo
 }
@@ -51,8 +52,8 @@ export default function LeaderboardClient({ leaderboard, currentUserId, totalLiv
           {leaderboard.map((user) => {
             const isMe = user.id === currentUserId
             const safeTotal = totalLives > 0 ? totalLives : 1
-            const pct = Math.min(100, Math.round((user.points / safeTotal) * 100))
-            const isComplete = totalLives > 0 && user.points >= totalLives
+            const pct = Math.min(100, Math.round((user.aulaCount / safeTotal) * 100))
+            const isComplete = totalLives > 0 && user.aulaCount >= totalLives
 
             return (
               <li
@@ -101,7 +102,7 @@ export default function LeaderboardClient({ leaderboard, currentUserId, totalLiv
                         isComplete ? 'text-emerald-400' : 'text-white'
                       }`}
                     >
-                      {user.points}/{totalLives}
+                      {user.points} pts
                     </span>
                   </div>
                 </div>
