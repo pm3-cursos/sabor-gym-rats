@@ -26,9 +26,10 @@ model Live {
   title       String
   description String?
   scheduledAt DateTime?
-  order       Int       @unique
-  isActive    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+  order        Int       @unique
+  isActive     Boolean   @default(false)
+  recordingUrl String?
+  createdAt    DateTime  @default(now())
 
   checkIns CheckIn[]
 }

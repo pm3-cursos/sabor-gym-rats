@@ -30,6 +30,7 @@ function getUserLevel(aulaCount: number, total: number) {
 function EmailVerificationBanner() {
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   async function resend() {
     setSending(true)
@@ -38,29 +39,104 @@ function EmailVerificationBanner() {
     setSent(true)
   }
 
+  if (collapsed) {
+    return (
+      <div className="mb-4 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-2 flex items-center justify-between gap-3">
+        <p className="text-amber-400 text-xs">📬 Confirme seu e-mail para ativar sua conta.</p>
+        <button
+          onClick={() => setCollapsed(false)}
+          className="text-amber-400 hover:text-amber-300 text-xs underline shrink-0"
+        >
+          Ver detalhes
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="mb-6 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
       <p className="text-amber-400 text-sm">
         📬 Confirme seu e-mail para ativar sua conta. Verifique sua caixa de entrada.
       </p>
-      {sent ? (
-        <span className="text-emerald-400 text-xs shrink-0">E-mail reenviado ✓</span>
-      ) : (
+      <div className="flex items-center gap-3 shrink-0">
+        {sent ? (
+          <span className="text-emerald-400 text-xs">E-mail reenviado ✓</span>
+        ) : (
+          <button
+            onClick={resend}
+            disabled={sending}
+            className="text-amber-400 hover:text-amber-300 text-xs underline disabled:opacity-50"
+          >
+            {sending ? 'Enviando...' : 'Reenviar e-mail'}
+          </button>
+        )}
         <button
-          onClick={resend}
-          disabled={sending}
-          className="text-amber-400 hover:text-amber-300 text-xs underline shrink-0 disabled:opacity-50"
+          onClick={() => setCollapsed(true)}
+          className="text-gray-600 hover:text-gray-400 text-xs"
+          aria-label="Minimizar aviso"
         >
-          {sending ? 'Enviando...' : 'Reenviar e-mail'}
+          ✕
         </button>
-      )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Recording modal ──────────────────────────────────────────────────────────
+
+function RecordingModal({ url, title, onClose }: { url: string; title: string; onClose: () => void }) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4"
+      onClick={onClose}
+    >
+      <div
+        className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
+          <h3 className="font-semibold text-sm truncate pr-4">🎥 {title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-white transition-colors text-lg shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="p-1">
+          <div className="aspect-video w-full bg-gray-950 rounded-lg overflow-hidden">
+            <iframe
+              src={url}
+              className="w-full h-full"
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
 // ─── Celebration overlay ─────────────────────────────────────────────────────
 
-function CelebrationOverlay({ userName, onClose }: { userName: string; onClose: () => void }) {
+function CelebrationOverlay({
+  userName,
+  userRank,
+  onClose,
+}: {
+  userName: string
+  userRank: number
+  onClose: () => void
+}) {
   const shareText = encodeURIComponent(
     `Acabei de completar a PM3 Marathon! 🏋️🥇\nAssisti a todas as aulas da série PM3, publiquei meus insights no LinkedIn e cruzei a linha de chegada!\n#ProductRats #MaratonaPM3 #ProductManagement`,
   )
@@ -81,10 +157,15 @@ function CelebrationOverlay({ userName, onClose }: { userName: string; onClose: 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
       <div className="card p-8 max-w-sm w-full text-center space-y-5">
         <div className="text-6xl">🎉</div>
-        <h2 className="text-2xl font-bold">Você cruzou a linha de chegada!</h2>
+        <h2 className="text-2xl font-bold">Você cruzou a linha de chegada da Maratona PM3!</h2>
         <p className="text-gray-400">
-          Parabéns, {userName}! Você completou a <strong className="text-white">PM3 Marathon</strong> e está apto a concorrer ao prêmio.
+          Parabéns, {userName}! Você completou todas as aulas e está apto a concorrer ao prêmio.
         </p>
+        {userRank > 0 && (
+          <p className="text-violet-400 font-semibold text-lg">
+            Sua posição no ranking: #{userRank}
+          </p>
+        )}
         <div className="flex flex-col gap-3">
           <a
             href={shareUrl}
@@ -112,6 +193,7 @@ interface Live {
   scheduledAt: string | null
   order: number
   isActive: boolean
+  recordingUrl: string | null
 }
 
 interface CheckIn {
@@ -151,7 +233,6 @@ export default function DashboardClient({
   nextLiveId,
 }: Props) {
   const router = useRouter()
-  // submitting key: `${liveId}_AULA` or `${liveId}_LINKEDIN`
   const [submitting, setSubmitting] = useState<string | null>(null)
   const [insights, setInsights] = useState<Record<string, string>>({})
   const [urls, setUrls] = useState<Record<string, string>>({})
@@ -160,6 +241,7 @@ export default function DashboardClient({
   const [aulaSuccess, setAulaSuccess] = useState<Record<string, boolean>>({})
   const [linkedinSuccess, setLinkedinSuccess] = useState<Record<string, boolean>>({})
   const [showCelebration, setShowCelebration] = useState(false)
+  const [recordingLiveId, setRecordingLiveId] = useState<string | null>(null)
 
   const level = getUserLevel(approvedCount, totalLives)
   const safeTotal = totalLives > 0 ? totalLives : 1
@@ -219,8 +301,9 @@ export default function DashboardClient({
     setSubmitting(null)
 
     if (!res.ok) {
-      if (type === 'AULA') setAulaErrors((prev) => ({ ...prev, [liveId]: data.error || 'Erro ao enviar.' }))
-      else setLinkedinErrors((prev) => ({ ...prev, [liveId]: data.error || 'Erro ao enviar.' }))
+      const errMsg = data.error || 'Erro ao enviar.'
+      if (type === 'AULA') setAulaErrors((prev) => ({ ...prev, [liveId]: errMsg }))
+      else setLinkedinErrors((prev) => ({ ...prev, [liveId]: errMsg }))
       return
     }
 
@@ -242,10 +325,21 @@ export default function DashboardClient({
   }
 
   const closeCelebration = useCallback(() => setShowCelebration(false), [])
+  const recordingLive = recordingLiveId ? lives.find((l) => l.id === recordingLiveId) : null
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      {showCelebration && <CelebrationOverlay userName={userName} onClose={closeCelebration} />}
+      {showCelebration && (
+        <CelebrationOverlay userName={userName} userRank={userRank} onClose={closeCelebration} />
+      )}
+
+      {recordingLive?.recordingUrl && (
+        <RecordingModal
+          url={recordingLive.recordingUrl}
+          title={recordingLive.title}
+          onClose={() => setRecordingLiveId(null)}
+        />
+      )}
 
       {!emailVerified && <EmailVerificationBanner />}
 
@@ -375,8 +469,8 @@ export default function DashboardClient({
               {/* AULA section */}
               <div className="border border-gray-800 rounded-lg p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                    Aula · 1 pt
+                  <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
+                    AULA – +1 ponto
                   </span>
                   <div className="flex gap-1">
                     {aulaApproved && <span className="badge-approved">✓ Aprovado</span>}
@@ -408,7 +502,7 @@ export default function DashboardClient({
                       <textarea
                         className="input text-sm resize-none w-full"
                         rows={3}
-                        placeholder="O que você aprendeu? Mínimo 10 caracteres..."
+                        placeholder="O que você aprendeu nesta aula? Qual foi o seu maior insight?"
                         value={insightValue}
                         onChange={(e) =>
                           setInsights((prev) => ({ ...prev, [live.id]: e.target.value }))
@@ -435,7 +529,7 @@ export default function DashboardClient({
                         disabled={submitting === `${live.id}_AULA` || !insightValid}
                         className="btn-primary text-sm flex-1"
                       >
-                        {submitting === `${live.id}_AULA` ? 'Enviando...' : 'Check-in de Aula ✓'}
+                        {submitting === `${live.id}_AULA` ? 'Enviando...' : 'Fazer check-in'}
                       </button>
                       <a
                         href={buildLinkedInShareUrl(live.title, insightValue)}
@@ -451,7 +545,7 @@ export default function DashboardClient({
 
                 {aulaSuccess[live.id] && (
                   <p className="text-sm text-emerald-400">
-                    🏃 Check-in enviado! Aguarde a aprovação.
+                    Você avançou mais um km na Maratona PM3! 🏃
                   </p>
                 )}
 
@@ -467,19 +561,46 @@ export default function DashboardClient({
                 )}
               </div>
 
+              {/* Recording button */}
+              <div className="mb-3">
+                {live.recordingUrl ? (
+                  <button
+                    onClick={() => setRecordingLiveId(live.id)}
+                    className="btn-secondary text-sm w-full"
+                  >
+                    🎥 Assistir gravação
+                  </button>
+                ) : (
+                  <div className="border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
+                    <span className="text-sm text-gray-500">🎥 Gravação disponível em breve</span>
+                  </div>
+                )}
+              </div>
+
               {/* LINKEDIN section — only show when live is active or already has a check-in */}
               {(live.isActive || linkedinCI) && (
                 <div className="border border-gray-800 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                      LinkedIn · 3 pts
-                    </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
+                        🚀 BÔNUS LINKEDIN – +3 pontos
+                      </span>
+                      <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">
+                        Bônus
+                      </span>
+                    </div>
                     <div className="flex gap-1">
                       {linkedinCI?.status === 'APPROVED' && <span className="badge-approved">✓ Aprovado</span>}
                       {linkedinCI?.status === 'PENDING' && <span className="badge-pending">⏳ Revisão</span>}
                       {linkedinCI?.status === 'REJECTED' && <span className="badge-rejected">✗ Rejeitado</span>}
                     </div>
                   </div>
+
+                  {!linkedinCI && (
+                    <p className="text-xs text-gray-500 mb-3">
+                      Compartilhe seu insight no LinkedIn e ganhe 3 pontos extras no ranking.
+                    </p>
+                  )}
 
                   {(linkedinCI?.status === 'PENDING' || linkedinCI?.status === 'APPROVED') &&
                     linkedinCI?.linkedinUrl && (

@@ -24,6 +24,7 @@ interface Live {
   scheduledAt: string | null
   order: number
   isActive: boolean
+  recordingUrl: string | null
   checkInsCount: number
 }
 
@@ -312,6 +313,24 @@ export default function AdminClient({
                         Aceitar check-ins
                       </label>
                     </div>
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">
+                        🎥 URL da gravação
+                        <span className="text-gray-600 ml-1">(embed: youtube.com/embed/ID, Loom, Vimeo)</span>
+                      </label>
+                      <input
+                        type="url"
+                        className="input text-sm"
+                        placeholder="https://www.youtube.com/embed/..."
+                        defaultValue={live.recordingUrl || ''}
+                        onChange={(e) =>
+                          setLiveForms((p) => ({
+                            ...p,
+                            [live.id]: { ...p[live.id], recordingUrl: e.target.value },
+                          }))
+                        }
+                      />
+                    </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => updateLive(live.id)}
@@ -356,6 +375,9 @@ export default function AdminClient({
                       <p className="text-xs text-gray-600 pl-7 mt-0.5">
                         {live.checkInsCount} check-in{live.checkInsCount !== 1 ? 's' : ''}
                       </p>
+                      {live.recordingUrl && (
+                        <p className="text-xs text-violet-500 pl-7 mt-0.5">🎥 Gravação configurada</p>
+                      )}
                     </div>
                     <button
                       onClick={() => {

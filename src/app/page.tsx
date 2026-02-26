@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth'
 import { calcPoints, calcAulaCount } from '@/lib/points'
 import Link from 'next/link'
 import LeaderboardClient from './LeaderboardClient'
+import HomeStatsClient from './HomeStatsClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,25 +51,11 @@ export default async function Home() {
       {/* Hero */}
       <div className="text-center mb-10">
         <div className="text-5xl mb-4">🏋️</div>
-        <h1 className="text-3xl font-bold mb-2">Product<span className="text-violet-400">Rats</span></h1>
-        <p className="text-gray-400 max-w-md mx-auto">
-          Assista às {totalLives > 0 ? totalLives : ''} aulas da série PM3, publique seu insight no LinkedIn e marque seu check-in.
-          Quem completar todas concorre ao prêmio!
+        <h1 className="text-3xl font-bold mb-3">Product<span className="text-violet-400">Rats</span></h1>
+        <p className="text-gray-400 max-w-md mx-auto leading-relaxed">
+          O ProductRats é o seu painel oficial da Maratona PM3. Complete as {totalLives > 0 ? totalLives : ''} aulas, registre seus insights, compartilhe no LinkedIn e acompanhe sua posição no ranking. Os melhores colocados sobem ao pódio e levam prêmios! 🏆
         </p>
-        <div className="flex justify-center gap-6 mt-6 text-center">
-          <div>
-            <div className="text-2xl font-bold text-violet-400">{total}</div>
-            <div className="text-xs text-gray-500 uppercase tracking-wide">participantes</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-emerald-400">{champions.length}</div>
-            <div className="text-xs text-gray-500 uppercase tracking-wide">completos 🏆</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-amber-400">{totalLives}</div>
-            <div className="text-xs text-gray-500 uppercase tracking-wide">aulas no total</div>
-          </div>
-        </div>
+        <HomeStatsClient total={total} champions={champions.length} totalLives={totalLives} />
       </div>
 
       {/* CTA */}
@@ -82,7 +69,7 @@ export default async function Home() {
       </div>
 
       {/* Como funciona */}
-      <div className="card p-5 mb-8">
+      <div className="card p-5 mb-6">
         <h2 className="font-semibold text-gray-300 mb-3">Como funciona</h2>
         <ol className="space-y-2 text-sm text-gray-400">
           <li className="flex gap-2">
@@ -91,17 +78,34 @@ export default async function Home() {
           </li>
           <li className="flex gap-2">
             <span className="text-violet-400 font-bold">2.</span>
-            Escreva seu insight sobre o conteúdo
+            Escreva seu insight e faça o check-in <span className="text-gray-500">(+1 ponto)</span>
           </li>
           <li className="flex gap-2">
             <span className="text-violet-400 font-bold">3.</span>
-            Publique no LinkedIn e envie o link aqui para ganhar 1 ponto
+            Publique no LinkedIn e envie o link para ganhar bônus <span className="text-gray-500">(+3 pontos)</span>
           </li>
           <li className="flex gap-2">
             <span className="text-violet-400 font-bold">4.</span>
             Complete as {totalLives > 0 ? totalLives : 'todas as'} aulas e concorra ao prêmio! 🏆
           </li>
         </ol>
+      </div>
+
+      {/* Prize section */}
+      <div className="card p-5 mb-8 border-violet-800/40">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xl">🏆</span>
+          <h2 className="font-semibold text-white">Premiação da Maratona</h2>
+        </div>
+        <p className="text-gray-400 text-sm mb-3">
+          Os 3 primeiros colocados recebem prêmios exclusivos PM3.
+        </p>
+        <Link
+          href="/ranking"
+          className="text-sm text-violet-400 hover:text-violet-300 underline transition-colors"
+        >
+          Ver detalhes da premiação →
+        </Link>
       </div>
 
       {/* Leaderboard */}

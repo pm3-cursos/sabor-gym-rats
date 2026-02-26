@@ -62,6 +62,7 @@ export default async function DashboardPage() {
         scheduledAt: l.scheduledAt ? l.scheduledAt.toISOString() : null,
         order: l.order,
         isActive: l.isActive,
+        recordingUrl: l.recordingUrl ?? null,
       }))}
       checkIns={checkIns.map((c) => ({
         id: c.id,

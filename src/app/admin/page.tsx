@@ -39,6 +39,7 @@ export default async function AdminPage() {
         scheduledAt: l.scheduledAt?.toISOString() ?? null,
         order: l.order,
         isActive: l.isActive,
+        recordingUrl: l.recordingUrl ?? null,
         checkInsCount: l._count.checkIns,
       }))}
     />

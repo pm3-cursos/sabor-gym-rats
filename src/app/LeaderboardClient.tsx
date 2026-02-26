@@ -35,11 +35,11 @@ function RankBadge({ rank }: { rank: number }) {
 export default function LeaderboardClient({ leaderboard, currentUserId, totalLives }: Props) {
   return (
     <div className="card overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between gap-3 flex-wrap">
         <h2 className="font-semibold">Placar</h2>
-        {leaderboard.length === 0 && (
-          <span className="text-xs text-gray-600">Nenhum participante ainda</span>
-        )}
+        <span className="text-xs text-gray-600">
+          Aula = +1 pt&nbsp;&nbsp;·&nbsp;&nbsp;LinkedIn = +3 pts bônus
+        </span>
       </div>
 
       {leaderboard.length === 0 ? (
