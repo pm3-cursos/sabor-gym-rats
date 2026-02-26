@@ -41,18 +41,18 @@ export default function HomeStatsClient({ total, champions, totalLives }: Props)
   const animLives = useCountUp(totalLives)
 
   return (
-    <div className="flex justify-center gap-6 mt-6 text-center">
+    <div className="flex justify-center gap-8 mt-6 text-center">
       <div>
         <div className="text-2xl font-bold text-violet-400 tabular-nums">{animTotal}</div>
-        <div className="text-xs text-gray-500 uppercase tracking-wide">participantes</div>
+        <div className="text-xs text-gray-400 mt-1 tracking-wide">👥 Participantes</div>
       </div>
       <div>
         <div className="text-2xl font-bold text-emerald-400 tabular-nums">{animChampions}</div>
-        <div className="text-xs text-gray-500 uppercase tracking-wide">completos 🏆</div>
+        <div className="text-xs text-gray-400 mt-1 tracking-wide">🏁 Completaram</div>
       </div>
       <div>
         <div className="text-2xl font-bold text-amber-400 tabular-nums">{animLives}</div>
-        <div className="text-xs text-gray-500 uppercase tracking-wide">aulas no total</div>
+        <div className="text-xs text-gray-400 mt-1 tracking-wide">🎓 Aulas</div>
       </div>
     </div>
   )

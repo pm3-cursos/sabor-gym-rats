@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 44" fill="none">
+  <defs>
+    <linearGradient id="pm3grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#F97066"/>
+    </linearGradient>
+  </defs>
+  <!-- Brand mark: gradient rounded rect -->
+  <rect x="0" y="2" width="40" height="40" rx="10" fill="url(#pm3grad)"/>
+  <!-- Monogram M inside -->
+  <text x="20" y="30" text-anchor="middle" fill="white" font-size="20" font-weight="700"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif">M</text>
+  <!-- "MARATONA" label -->
+  <text x="50" y="18" fill="#A78BFA" font-size="9.5" font-weight="600"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif"
+    letter-spacing="2.5">MARATONA</text>
+  <!-- "PM3" main wordmark -->
+  <text x="49" y="38" fill="white" font-size="22" font-weight="700"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif">PM3</text>
+</svg>

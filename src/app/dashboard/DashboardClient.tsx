@@ -523,23 +523,13 @@ export default function DashboardClient({
                     {aulaErrors[live.id] && (
                       <p className="text-xs text-red-400">{aulaErrors[live.id]}</p>
                     )}
-                    <div className="flex gap-2 flex-wrap">
-                      <button
-                        onClick={() => handleSubmit(live.id, 'AULA')}
-                        disabled={submitting === `${live.id}_AULA` || !insightValid}
-                        className="btn-primary text-sm flex-1"
-                      >
-                        {submitting === `${live.id}_AULA` ? 'Enviando...' : 'Fazer check-in'}
-                      </button>
-                      <a
-                        href={buildLinkedInShareUrl(live.title, insightValue)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-secondary text-sm text-center shrink-0"
-                      >
-                        Compartilhar →
-                      </a>
-                    </div>
+                    <button
+                      onClick={() => handleSubmit(live.id, 'AULA')}
+                      disabled={submitting === `${live.id}_AULA` || !insightValid}
+                      className="btn-primary text-sm w-full"
+                    >
+                      {submitting === `${live.id}_AULA` ? 'Enviando...' : 'Fazer check-in'}
+                    </button>
                   </div>
                 )}
 
@@ -549,32 +539,6 @@ export default function DashboardClient({
                   </p>
                 )}
 
-                {aulaApproved && aulaCI && (
-                  <a
-                    href={buildLinkedInShareUrl(live.title, aulaCI.insight || '')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-violet-400 hover:text-violet-300 underline"
-                  >
-                    Compartilhar no LinkedIn →
-                  </a>
-                )}
-              </div>
-
-              {/* Recording button */}
-              <div className="mb-3">
-                {live.recordingUrl ? (
-                  <button
-                    onClick={() => setRecordingLiveId(live.id)}
-                    className="btn-secondary text-sm w-full"
-                  >
-                    🎥 Assistir gravação
-                  </button>
-                ) : (
-                  <div className="border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
-                    <span className="text-sm text-gray-500">🎥 Gravação disponível em breve</span>
-                  </div>
-                )}
               </div>
 
               {/* LINKEDIN section — only show when live is active or already has a check-in */}
@@ -660,6 +624,22 @@ export default function DashboardClient({
                   )}
                 </div>
               )}
+
+              {/* Recording button */}
+              <div className="mt-3">
+                {live.recordingUrl ? (
+                  <button
+                    onClick={() => setRecordingLiveId(live.id)}
+                    className="btn-secondary text-sm w-full"
+                  >
+                    🎥 Assistir gravação
+                  </button>
+                ) : (
+                  <div className="border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
+                    <span className="text-sm text-gray-500">🎥 Gravação disponível em breve</span>
+                  </div>
+                )}
+              </div>
             </div>
           )
         })}
