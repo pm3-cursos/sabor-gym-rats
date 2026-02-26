@@ -36,23 +36,26 @@ export default function Navbar({ user }: NavbarProps) {
 
   return (
     <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg shrink-0">
-          <span className="text-2xl">🐀</span>
-          <span className="text-white">Product<span className="text-violet-400">Rats</span></span>
-        </Link>
-
-        {/* Center nav links */}
+      <div className="max-w-5xl mx-auto px-4 h-14 grid grid-cols-3 items-center gap-2">
+        {/* Left: nav links */}
         <div className="flex items-center gap-4 overflow-x-auto">
           {navLink('/ranking', 'Ranking')}
           {navLink('/feed', 'Feed')}
-          {user && navLink('/meu-progresso', 'Meu Progresso')}
+          {user && navLink('/meu-progresso', 'Progresso')}
           {user && navLink('/dashboard', 'Check-ins')}
           {user?.role === 'ADMIN' && navLink('/admin', 'Admin')}
         </div>
 
-        {/* Right side */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Center: logo */}
+        <div className="flex justify-center">
+          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
+            <span className="text-2xl">🐀</span>
+            <span className="text-white">Product<span className="text-violet-400">Rats</span></span>
+          </Link>
+        </div>
+
+        {/* Right: user actions */}
+        <div className="flex items-center gap-3 justify-end">
           {user ? (
             <button
               onClick={handleLogout}

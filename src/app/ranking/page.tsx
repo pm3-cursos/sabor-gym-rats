@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import LeaderboardClient from '../LeaderboardClient'
 import RulesModal from './RulesModal'
+import { calcPoints, calcAulaCount } from '@/lib/points'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,13 +21,18 @@ async function getLeaderboard() {
       name: true,
       checkIns: {
         where: { status: 'APPROVED' },
-        select: { liveId: true },
+        select: { type: true, status: true },
       },
     },
   })
 
   return users
-    .map((u) => ({ id: u.id, name: u.name, points: u.checkIns.length }))
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      points: calcPoints(u.checkIns),
+      aulaCount: calcAulaCount(u.checkIns),
+    }))
     .sort((a, b) => b.points - a.points)
 }
 
@@ -38,7 +44,7 @@ export default async function RankingPage() {
   ])
 
   const total = leaderboard.length
-  const champions = leaderboard.filter((u) => u.points >= totalLives && totalLives > 0)
+  const champions = leaderboard.filter((u) => u.aulaCount >= totalLives && totalLives > 0)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
@@ -81,6 +87,7 @@ export default async function RankingPage() {
         currentUserId={session?.userId ?? null}
         totalLives={totalLives}
       />
+
 
       {!session && (
         <p className="text-center text-sm text-gray-500 mt-6">

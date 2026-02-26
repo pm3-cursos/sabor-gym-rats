@@ -47,7 +47,9 @@ export default async function AdminPage() {
 
 function serializeCheckIn(c: {
   id: string
-  linkedinUrl: string
+  type: string
+  linkedinUrl: string | null
+  insight: string | null
   status: string
   adminNote: string | null
   createdAt: Date
@@ -58,7 +60,9 @@ function serializeCheckIn(c: {
 }) {
   return {
     id: c.id,
+    type: c.type,
     linkedinUrl: c.linkedinUrl,
+    insight: c.insight,
     status: c.status,
     adminNote: c.adminNote,
     createdAt: c.createdAt.toISOString(),

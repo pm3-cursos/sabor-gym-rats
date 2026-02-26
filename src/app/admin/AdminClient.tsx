@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 
 interface CheckIn {
   id: string
-  linkedinUrl: string
+  type: string
+  linkedinUrl: string | null
+  insight: string | null
   status: string
   adminNote: string | null
   createdAt: string
@@ -81,19 +83,36 @@ export default function AdminClient({
             <p className="font-medium">{checkIn.user.name}</p>
             <p className="text-xs text-gray-500">{checkIn.user.email}</p>
           </div>
-          <span className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">
-            Live {checkIn.live.order}: {checkIn.live.title}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              checkIn.type === 'LINKEDIN'
+                ? 'bg-blue-500/20 text-blue-400'
+                : 'bg-violet-500/20 text-violet-400'
+            }`}>
+              {checkIn.type === 'LINKEDIN' ? 'LinkedIn +3pts' : 'Aula +1pt'}
+            </span>
+            <span className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">
+              Aula {checkIn.live.order}: {checkIn.live.title}
+            </span>
+          </div>
         </div>
 
-        <a
-          href={checkIn.linkedinUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-violet-400 hover:text-violet-300 break-all block mb-3"
-        >
-          {checkIn.linkedinUrl}
-        </a>
+        {checkIn.insight && (
+          <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-4 py-3 border-l-2 border-violet-500/40 italic mb-3">
+            "{checkIn.insight}"
+          </blockquote>
+        )}
+
+        {checkIn.linkedinUrl && (
+          <a
+            href={checkIn.linkedinUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-violet-400 hover:text-violet-300 break-all block mb-3"
+          >
+            {checkIn.linkedinUrl}
+          </a>
+        )}
 
         {checkIn.adminNote && (
           <p className="text-xs text-red-400 mb-2">Nota: {checkIn.adminNote}</p>
