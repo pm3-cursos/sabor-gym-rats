@@ -1,10 +1,14 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = process.env.EMAIL_FROM ?? 'noreply@productrats.com.br'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY)
+}
+
 export async function sendPasswordReset(to: string, name: string, token: string) {
+  const resend = getResend()
   const link = `${APP_URL}/redefinir-senha?token=${token}`
 
   await resend.emails.send({
@@ -28,6 +32,7 @@ export async function sendPasswordReset(to: string, name: string, token: string)
 }
 
 export async function sendEmailVerification(to: string, name: string, token: string) {
+  const resend = getResend()
   const link = `${APP_URL}/api/auth/verificar-email?token=${token}`
 
   await resend.emails.send({

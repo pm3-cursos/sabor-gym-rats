@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/db'
 import { getSession } from '@/lib/auth'
+import { calcPoints, calcAulaCount } from '@/lib/points'
 import Link from 'next/link'
 import LeaderboardClient from './LeaderboardClient'
 
 export const dynamic = 'force-dynamic'
 
-export function getUserLevel(points: number) {
+function getUserLevel(points: number) {
   if (points >= 6) return { label: 'Maratonista PM3', icon: '🥇', color: 'text-yellow-400' }
   if (points >= 3) return { label: 'Corredor', icon: '🥈', color: 'text-gray-300' }
   if (points >= 1) return { label: 'Iniciante', icon: '🥉', color: 'text-amber-500' }
@@ -19,14 +20,18 @@ async function getLeaderboard() {
       id: true,
       name: true,
       checkIns: {
-        where: { status: 'APPROVED' },
-        select: { liveId: true },
+        select: { type: true, status: true },
       },
     },
   })
 
   return users
-    .map((u) => ({ id: u.id, name: u.name, points: u.checkIns.length }))
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      points: calcPoints(u.checkIns),
+      aulaCount: calcAulaCount(u.checkIns),
+    }))
     .sort((a, b) => b.points - a.points)
 }
 
@@ -37,7 +42,7 @@ export default async function Home() {
     prisma.live.count(),
   ])
 
-  const champions = leaderboard.filter((u) => u.points >= totalLives && totalLives > 0)
+  const champions = leaderboard.filter((u) => u.aulaCount >= totalLives && totalLives > 0)
   const total = leaderboard.length
 
   return (
