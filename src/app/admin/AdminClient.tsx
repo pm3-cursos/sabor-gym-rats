@@ -77,91 +77,96 @@ export default function AdminClient({
   function CheckInCard({ checkIn }: { checkIn: CheckIn }) {
     const isPending = checkIn.status === 'PENDING'
     return (
-      <div className="card p-5">
-        <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-          <div>
-            <p className="font-medium">{checkIn.user.name}</p>
-            <p className="text-xs text-gray-500">{checkIn.user.email}</p>
+      <div className="card p-4">
+        {/* Top row: user + meta */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <div className="flex-1 min-w-0">
+            <span className="font-medium text-sm">{checkIn.user.name}</span>
+            <span className="text-gray-600 text-xs ml-2">{checkIn.user.email}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              checkIn.type === 'LINKEDIN'
-                ? 'bg-blue-500/20 text-blue-400'
-                : 'bg-violet-500/20 text-violet-400'
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
+            checkIn.type === 'LINKEDIN'
+              ? 'bg-blue-500/20 text-blue-400'
+              : 'bg-violet-500/20 text-violet-400'
+          }`}>
+            {checkIn.type === 'LINKEDIN' ? 'LinkedIn +3pts' : 'Aula +1pt'}
+          </span>
+          <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded shrink-0">
+            Aula {checkIn.live.order}
+          </span>
+          <span className="text-xs text-gray-600 shrink-0">
+            {new Date(checkIn.createdAt).toLocaleDateString('pt-BR', {
+              day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+            })}
+          </span>
+          {!isPending && (
+            <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+              checkIn.status === 'APPROVED'
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : 'bg-red-500/20 text-red-400'
             }`}>
-              {checkIn.type === 'LINKEDIN' ? 'LinkedIn +3pts' : 'Aula +1pt'}
+              {checkIn.status === 'APPROVED' ? '✓ Aprovado' : '✗ Rejeitado'}
             </span>
-            <span className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">
-              Aula {checkIn.live.order}: {checkIn.live.title}
-            </span>
-          </div>
+          )}
         </div>
 
-        {checkIn.insight && (
-          <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-4 py-3 border-l-2 border-violet-500/40 italic mb-3">
-            "{checkIn.insight}"
-          </blockquote>
-        )}
+        {/* Content + actions side-by-side */}
+        <div className="flex gap-3 items-start">
+          {/* Left: insight + linkedin */}
+          <div className="flex-1 min-w-0 space-y-2">
+            {checkIn.insight && (
+              <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-3 py-2 border-l-2 border-violet-500/40 italic">
+                "{checkIn.insight}"
+              </blockquote>
+            )}
+            {checkIn.linkedinUrl && (
+              <a
+                href={checkIn.linkedinUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-400 hover:text-blue-300 break-all flex items-center gap-1"
+              >
+                <span>🔗</span>
+                <span className="truncate">{checkIn.linkedinUrl}</span>
+              </a>
+            )}
+            {checkIn.adminNote && (
+              <p className="text-xs text-red-400">Nota: {checkIn.adminNote}</p>
+            )}
+            {checkIn.reviewedBy && (
+              <p className="text-xs text-gray-600">
+                Revisado por {checkIn.reviewedBy}{checkIn.reviewedAt ? ` em ${new Date(checkIn.reviewedAt).toLocaleDateString('pt-BR')}` : ''}
+              </p>
+            )}
+          </div>
 
-        {checkIn.linkedinUrl && (
-          <a
-            href={checkIn.linkedinUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-violet-400 hover:text-violet-300 break-all block mb-3"
-          >
-            {checkIn.linkedinUrl}
-          </a>
-        )}
-
-        {checkIn.adminNote && (
-          <p className="text-xs text-red-400 mb-2">Nota: {checkIn.adminNote}</p>
-        )}
-
-        {checkIn.reviewedBy && (
-          <p className="text-xs text-gray-600 mb-2">
-            Revisado por {checkIn.reviewedBy} em{' '}
-            {checkIn.reviewedAt
-              ? new Date(checkIn.reviewedAt).toLocaleDateString('pt-BR')
-              : '—'}
-          </p>
-        )}
-
-        <p className="text-xs text-gray-600 mb-3">
-          Enviado em {new Date(checkIn.createdAt).toLocaleDateString('pt-BR', {
-            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-          })}
-        </p>
-
-        {isPending && (
-          <>
-            <div className="mb-2">
+          {/* Right: actions */}
+          {isPending && (
+            <div className="flex flex-col gap-2 shrink-0 w-36">
               <input
                 type="text"
-                className="input text-sm"
-                placeholder="Nota para o usuário (opcional)"
+                className="input text-xs py-1"
+                placeholder="Nota (opcional)"
                 value={notes[checkIn.id] || ''}
                 onChange={(e) => setNotes((p) => ({ ...p, [checkIn.id]: e.target.value }))}
               />
-            </div>
-            <div className="flex gap-2">
               <button
                 onClick={() => reviewCheckIn(checkIn.id, 'APPROVED')}
                 disabled={processing === checkIn.id}
-                className="btn-success flex-1"
+                className="btn-success text-sm py-1.5"
               >
                 {processing === checkIn.id ? '...' : '✓ Aprovar'}
               </button>
               <button
                 onClick={() => reviewCheckIn(checkIn.id, 'REJECTED')}
                 disabled={processing === checkIn.id}
-                className="btn-danger flex-1"
+                className="btn-danger text-sm py-1.5"
               >
                 {processing === checkIn.id ? '...' : '✗ Rejeitar'}
               </button>
             </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
     )
   }
@@ -176,7 +181,7 @@ export default function AdminClient({
   const currentList = tab === 'pending' ? pendingCheckIns : tab === 'approved' ? approvedCheckIns : rejectedCheckIns
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
+    <div className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-6">Painel Admin</h1>
 
       {/* Stats */}

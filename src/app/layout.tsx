@@ -12,6 +12,20 @@ export const metadata: Metadata = {
     siteName: 'ProductRats',
     locale: 'pt_BR',
     type: 'website',
+    images: [
+      {
+        url: '/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'ProductRats — Maratona PM3',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ProductRats — Maratona PM3',
+    description: 'Participe da Maratona PM3, assista às aulas, publique no LinkedIn e concorra a prêmios!',
+    images: ['/og.png'],
   },
 }
 
