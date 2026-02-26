@@ -6,6 +6,18 @@ import confetti from 'canvas-confetti'
 
 // ─── Level system ────────────────────────────────────────────────────────────
 
+function getDaysUntil(scheduledAt: string | null): string {
+  if (!scheduledAt) return 'Em breve'
+  const now = new Date()
+  const target = new Date(scheduledAt)
+  const diffMs = target.getTime() - now.getTime()
+  if (diffMs <= 0) return 'Em breve'
+  const diffHours = diffMs / (1000 * 60 * 60)
+  if (diffHours < 24) return `Abre em ${Math.ceil(diffHours)}h`
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  return `Abre em ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`
+}
+
 function getUserLevel(aulaCount: number, total: number) {
   if (total > 0 && aulaCount >= total) return { label: 'Maratonista PM3', icon: '🥇', color: 'text-yellow-400' }
   if (aulaCount >= 3) return { label: 'Corredor', icon: '🥈', color: 'text-gray-300' }
@@ -350,7 +362,7 @@ export default function DashboardClient({
                 </div>
                 <div className="shrink-0 flex gap-1 flex-wrap justify-end">
                   {!aulaCI && !live.isActive && (
-                    <span className="text-xs text-gray-600">🔒 Em breve</span>
+                    <span className="text-xs text-gray-600">🔒 {getDaysUntil(live.scheduledAt)}</span>
                   )}
                   {isNext && !aulaCI && (
                     <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full font-medium">
