@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Navbar from '@/components/Navbar'
+import BottomNav from '@/components/BottomNav'
 import { getSession } from '@/lib/auth'
 
 export const metadata: Metadata = {
@@ -42,7 +43,8 @@ export default async function RootLayout({
         <Navbar
           user={session ? { name: session.name, role: session.role } : null}
         />
-        <main>{children}</main>
+        <main className="pb-16 md:pb-0">{children}</main>
+        <BottomNav />
       </body>
     </html>
   )
