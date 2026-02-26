@@ -39,32 +39,18 @@ export default function Navbar({ user }: NavbarProps) {
       <div className="max-w-5xl mx-auto px-4 h-14 grid grid-cols-3 items-center gap-2">
         {/* Left: nav links — hidden on mobile (BottomNav handles it) */}
         <div className="hidden md:flex items-center gap-4 overflow-x-auto">
+          {user && navLink('/dashboard', 'Check-ins')}
+          {user && navLink('/meu-progresso', 'Progresso')}
           {navLink('/ranking', 'Ranking')}
           {navLink('/feed', 'Feed')}
-          {user && navLink('/meu-progresso', 'Progresso')}
-          {user && navLink('/dashboard', 'Check-ins')}
           {user?.role === 'ADMIN' && navLink('/admin', 'Admin')}
         </div>
 
-        {/* Center: logo */}
+        {/* Center: logo — replace public/logo-pm3.svg with your official file */}
         <div className="flex justify-center">
           <Link href="/" aria-label="ProductRats — Maratona PM3">
-            <svg width="130" height="38" viewBox="0 0 130 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="pm3g" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#7C3AED" />
-                  <stop offset="100%" stopColor="#F97066" />
-                </linearGradient>
-              </defs>
-              {/* Brand mark: gradient rounded rect */}
-              <rect x="0" y="3" width="32" height="32" rx="8" fill="url(#pm3g)" />
-              {/* "M" monogram inside brand mark */}
-              <text x="16" y="24" textAnchor="middle" fill="white" fontSize="16" fontWeight="700" fontFamily="system-ui, sans-serif">M</text>
-              {/* "Maratona" label */}
-              <text x="42" y="16" fill="#D1D5DB" fontSize="9" fontWeight="400" fontFamily="system-ui, sans-serif" letterSpacing="0.05em">MARATONA</text>
-              {/* "PM3" main text */}
-              <text x="41" y="33" fill="white" fontSize="19" fontWeight="700" fontFamily="system-ui, sans-serif">PM3</text>
-            </svg>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-pm3.svg" alt="Maratona PM3" className="h-9 w-auto" />
           </Link>
         </div>
 
