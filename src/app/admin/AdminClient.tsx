@@ -49,12 +49,36 @@ interface Props {
 
 type Tab = 'checkins' | 'participants' | 'lives'
 
+interface ConfirmState {
+  message: string
+  onConfirm: () => Promise<void>
+}
+
+function AdminConfirmModal({ state, onCancel }: { state: ConfirmState; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div className="card p-6 max-w-sm w-full space-y-4">
+        <p className="text-sm text-gray-300">{state.message}</p>
+        <div className="flex gap-3">
+          <button onClick={() => state.onConfirm()} className="btn-danger flex-1">
+            Confirmar
+          </button>
+          <button onClick={onCancel} className="btn-secondary flex-1">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminClient({ checkIns, lives, users }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('checkins')
   const [processing, setProcessing] = useState<string | null>(null)
   const [editingLive, setEditingLive] = useState<string | null>(null)
   const [liveForms, setLiveForms] = useState<Record<string, Partial<Live>>>({})
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null)
 
   // Point adjustment state
   const [adjUserId, setAdjUserId] = useState('')
@@ -76,40 +100,59 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
     router.refresh()
   }
 
-  async function deleteCheckIn(id: string) {
-    if (!confirm('Excluir este check-in permanentemente?')) return
-    setProcessing(id)
-    await fetch(`/api/admin/checkins/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete' }),
+  function deleteCheckIn(id: string) {
+    setConfirmState({
+      message: 'Excluir este check-in permanentemente?',
+      onConfirm: async () => {
+        setConfirmState(null)
+        setProcessing(id)
+        await fetch(`/api/admin/checkins/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete' }),
+        })
+        setProcessing(null)
+        router.refresh()
+      },
     })
-    setProcessing(null)
-    router.refresh()
   }
 
-  async function toggleBan(userId: string, isBanned: boolean) {
+  function toggleBan(userId: string, isBanned: boolean) {
     const action = isBanned ? 'unban' : 'ban'
-    const msg = isBanned
-      ? 'Desbanir este participante?'
+    const message = isBanned
+      ? 'Desbanir este participante? O login será liberado.'
       : 'Banir este participante? O login será bloqueado.'
-    if (!confirm(msg)) return
-    setProcessing(userId)
-    await fetch(`/api/admin/users/${userId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action }),
+    setConfirmState({
+      message,
+      onConfirm: async () => {
+        setConfirmState(null)
+        setProcessing(userId)
+        await fetch(`/api/admin/users/${userId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        })
+        setProcessing(null)
+        router.refresh()
+      },
     })
-    setProcessing(null)
-    router.refresh()
   }
 
-  async function deleteUser(userId: string) {
-    if (!confirm('Excluir conta e todos os check-ins deste participante? Esta ação é irreversível.')) return
-    setProcessing(userId)
-    await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' })
-    setProcessing(null)
-    router.refresh()
+  function deleteUser(userId: string) {
+    setConfirmState({
+      message: 'Excluir conta e todos os check-ins deste participante? Esta ação é irreversível.',
+      onConfirm: async () => {
+        setConfirmState(null)
+        setProcessing(userId)
+        const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' })
+        setProcessing(null)
+        if (res.ok) {
+          router.refresh()
+        } else {
+          alert('Erro ao excluir usuário. Tente novamente.')
+        }
+      },
+    })
   }
 
   async function applyPointAdjustment() {
@@ -178,6 +221,7 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
+      {confirmState && <AdminConfirmModal state={confirmState} onCancel={() => setConfirmState(null)} />}
       <h1 className="text-2xl font-bold mb-6">Painel Admin</h1>
 
       {/* Stats */}

@@ -26,7 +26,7 @@ async function getLeaderboard() {
       points: calcPoints(u.checkIns, u.pointAdjustments),
       aulaCount: calcAulaCount(u.checkIns),
     }))
-    .sort((a, b) => b.points - a.points)
+    .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'pt-BR'))
 }
 
 const PRIZES = [
