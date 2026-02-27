@@ -173,7 +173,7 @@ function getDaysUntil(scheduledAt: string | null): string {
   const now = new Date()
   const target = new Date(scheduledAt)
   const diffMs = target.getTime() - now.getTime()
-  if (diffMs <= 0) return 'Em breve'
+  if (diffMs <= 0) return 'Encerrada'
   const diffHours = diffMs / (1000 * 60 * 60)
   if (diffHours < 24) return `Abre em ${Math.ceil(diffHours)}h`
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
@@ -447,10 +447,11 @@ export default function DashboardClient({
         {lives.map((live) => {
           const aulaCI = aulaCheckInMap[live.id]
           const linkedinCI = linkedinCheckInMap[live.id]
-          const aulaApproved = aulaCI?.status === 'APPROVED'
+          const aulaApproved = aulaCI?.status === 'APPROVED' && !aulaCI?.isInvalid
+          const aulaInvalid = aulaCI?.status === 'APPROVED' && !!aulaCI?.isInvalid
           const aulaRejected = aulaCI?.status === 'REJECTED'
           const canSubmitAula = live.isActive && (!aulaCI || aulaRejected)
-          const canSubmitLinkedin = live.isActive && (!linkedinCI || linkedinCI.status === 'REJECTED')
+          const canSubmitLinkedin = live.isActive && aulaApproved && (!linkedinCI || linkedinCI.status === 'REJECTED')
           const isNext = live.id === nextLiveId
 
           const insightValue = insights[live.id] || ''
@@ -459,7 +460,8 @@ export default function DashboardClient({
           const urlValue = urls[live.id] || ''
 
           let cardClass = 'card p-5'
-          if (aulaApproved) cardClass += ' bg-emerald-500/5 border-emerald-800/30'
+          if (aulaInvalid) cardClass += ' bg-amber-500/5 border-amber-800/30'
+          else if (aulaApproved) cardClass += ' bg-emerald-500/5 border-emerald-800/30'
           else if (!live.isActive && !aulaCI) cardClass += ' opacity-60'
           else if (isNext) cardClass += ' border-violet-800/50'
 
@@ -481,6 +483,9 @@ export default function DashboardClient({
                   </span>
                   <div className="min-w-0">
                     <p className="font-semibold text-base leading-snug">{live.title}</p>
+                    {live.description && (
+                      <p className="text-xs text-gray-500 mt-0.5 leading-snug">{live.description}</p>
+                    )}
                     {live.scheduledAt && (
                       <p className="text-xs text-gray-600 mt-0.5">
                         {new Date(live.scheduledAt).toLocaleDateString('pt-BR', {
@@ -512,16 +517,29 @@ export default function DashboardClient({
                   </span>
                   <div className="flex gap-1">
                     {aulaApproved && <span className="badge-approved">✓ Registrado</span>}
+                    {aulaInvalid && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-full">
+                        ⚠️ Invalidado
+                      </span>
+                    )}
                     {aulaRejected && <span className="badge-rejected">✗ Rejeitado</span>}
                   </div>
                 </div>
 
-                {aulaApproved && aulaCI?.insight && editingCheckInId !== aulaCI.id && (
+                {aulaInvalid && (
+                  <div className="mb-3 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                    <p className="text-xs text-amber-400">
+                      ⚠️ <strong>Check-in invalidado pelo admin.</strong> Este registro não conta para sua pontuação. Entre em contato se acreditar que é um engano.
+                    </p>
+                  </div>
+                )}
+
+                {(aulaApproved || aulaInvalid) && aulaCI?.insight && editingCheckInId !== aulaCI.id && (
                   <div>
                     <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-4 py-3 border-l-2 border-violet-500/40 italic mb-2">
                       "{aulaCI.insight}"
                     </blockquote>
-                    {aulaCI.updatedAt !== aulaCI.createdAt && (
+                    {new Date(aulaCI.updatedAt).getTime() !== new Date(aulaCI.createdAt).getTime() && (
                       <p className="text-xs text-gray-600 mb-2">Editado em {formatDate(aulaCI.updatedAt)}</p>
                     )}
                     <div className="flex gap-2">
@@ -643,9 +661,15 @@ export default function DashboardClient({
                     </div>
                   </div>
 
-                  {!linkedinCI && (
+                  {!linkedinCI && aulaApproved && (
                     <p className="text-xs text-gray-500 mb-3">
                       Compartilhe seu insight no LinkedIn e ganhe 3 pontos extras no ranking.
+                    </p>
+                  )}
+
+                  {!linkedinCI && !aulaApproved && live.isActive && (
+                    <p className="text-xs text-gray-600 mb-3">
+                      🔒 Faça o check-in da aula primeiro para liberar o bônus LinkedIn.
                     </p>
                   )}
 
@@ -659,7 +683,7 @@ export default function DashboardClient({
                       >
                         {linkedinCI.linkedinUrl}
                       </a>
-                      {linkedinCI.updatedAt !== linkedinCI.createdAt && (
+                      {new Date(linkedinCI.updatedAt).getTime() !== new Date(linkedinCI.createdAt).getTime() && (
                         <p className="text-gray-600 mt-1">Editado em {formatDate(linkedinCI.updatedAt)}</p>
                       )}
                       <div className="flex gap-2 mt-2">

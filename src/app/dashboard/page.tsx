@@ -20,6 +20,7 @@ export default async function DashboardPage() {
       where: { role: 'USER' },
       select: {
         id: true,
+        name: true,
         checkIns: {
           select: { id: true, type: true, status: true, isInvalid: true },
         },
@@ -33,8 +34,8 @@ export default async function DashboardPage() {
   const totalLives = lives.length
 
   const sorted = allUsers
-    .map((u) => ({ id: u.id, points: calcPoints(u.checkIns, u.pointAdjustments) }))
-    .sort((a, b) => b.points - a.points)
+    .map((u) => ({ id: u.id, name: u.name, points: calcPoints(u.checkIns, u.pointAdjustments) }))
+    .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'pt-BR'))
   const userRank = sorted.findIndex((u) => u.id === session.userId) + 1
   const totalParticipants = sorted.length
   const userPoints = sorted.find((u) => u.id === session.userId)?.points ?? 0

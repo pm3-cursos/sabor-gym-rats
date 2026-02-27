@@ -27,7 +27,7 @@ export default function BottomNav() {
               }`}
             >
               <span className="text-base leading-none">{link.icon}</span>
-              <span className={`font-medium ${active ? '' : ''}`}>{link.label}</span>
+              <span className="font-medium">{link.label}</span>
             </Link>
           )
         })}

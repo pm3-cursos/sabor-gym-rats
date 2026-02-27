@@ -29,6 +29,7 @@ export default async function MeuProgressoPage() {
       where: { role: 'USER' },
       select: {
         id: true,
+        name: true,
         checkIns: {
           select: { type: true, status: true, isInvalid: true },
         },
@@ -43,10 +44,11 @@ export default async function MeuProgressoPage() {
   const additionalBadges = getAdditionalBadges(linkedinCount)
 
   const sorted = allUsers
-    .map((u) => ({ id: u.id, points: calcPoints(u.checkIns, u.pointAdjustments) }))
-    .sort((a, b) => b.points - a.points)
+    .map((u) => ({ id: u.id, name: u.name, points: calcPoints(u.checkIns, u.pointAdjustments) }))
+    .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'pt-BR'))
   const userRank = sorted.findIndex((u) => u.id === session.userId) + 1
   const totalParticipants = sorted.length
+  const userPoints = sorted.find((u) => u.id === session.userId)?.points ?? 0
 
   const level = getLevelWithNext(approvedCount)
   const safeTotal = totalLives > 0 ? totalLives : 1
@@ -81,6 +83,7 @@ export default async function MeuProgressoPage() {
             <div className="text-right">
               <div className="text-2xl font-bold text-white">#{userRank}</div>
               <div className="text-xs text-gray-500">de {totalParticipants} participantes</div>
+              <div className="text-sm font-bold text-violet-400 mt-0.5">{userPoints} pts</div>
             </div>
           )}
         </div>

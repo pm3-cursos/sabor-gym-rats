@@ -66,6 +66,19 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // LinkedIn bonus requires an approved (non-invalid) AULA check-in for the same live
+  if (type === 'LINKEDIN') {
+    const aulaCI = await prisma.checkIn.findUnique({
+      where: { userId_liveId_type: { userId: session.userId, liveId, type: 'AULA' } },
+    })
+    if (!aulaCI || aulaCI.status !== 'APPROVED' || aulaCI.isInvalid) {
+      return NextResponse.json(
+        { error: 'Faça o check-in da aula primeiro antes de enviar o bônus LinkedIn.' },
+        { status: 400 },
+      )
+    }
+  }
+
   const existing = await prisma.checkIn.findUnique({
     where: { userId_liveId_type: { userId: session.userId, liveId, type } },
   })

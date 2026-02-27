@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
 interface NavbarProps {
@@ -9,7 +9,6 @@ interface NavbarProps {
 }
 
 export default function Navbar({ user }: NavbarProps) {
-  const router = useRouter()
   const pathname = usePathname()
   const [loading, setLoading] = useState(false)
 
