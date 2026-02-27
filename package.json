@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "db:studio": "prisma studio",
-    "setup:prod": "if [ -n \"$DATABASE_URL\" ]; then prisma db push --skip-generate --accept-data-loss && ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts; else echo 'Skipping setup:prod - DATABASE_URL not set'; fi",
+    "setup:prod": "if [ -n \"$DATABASE_URL\" ]; then prisma migrate deploy && ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts; else echo 'Skipping setup:prod - DATABASE_URL not set'; fi",
     "postinstall": "prisma generate"
   },
   "dependencies": {
