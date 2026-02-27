@@ -16,8 +16,7 @@ export default function Navbar({ user }: NavbarProps) {
   async function handleLogout() {
     setLoading(true)
     await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
-    router.refresh()
+    window.location.href = '/login'
   }
 
   function navLink(href: string, label: string) {

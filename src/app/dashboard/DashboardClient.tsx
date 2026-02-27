@@ -5,6 +5,29 @@ import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
 import { getUserLevel, getAdditionalBadges } from '@/lib/points'
 
+// ─── Confirm modal ────────────────────────────────────────────────────────────
+
+function ConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div className="card p-6 max-w-sm w-full space-y-4">
+        <h3 className="font-semibold">Remover check-in?</h3>
+        <p className="text-sm text-gray-400">
+          O check-in e os pontos correspondentes serão removidos permanentemente.
+        </p>
+        <div className="flex gap-3">
+          <button onClick={onConfirm} className="btn-danger flex-1">
+            Remover
+          </button>
+          <button onClick={onCancel} className="btn-secondary flex-1">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Recording modal ──────────────────────────────────────────────────────────
 
 function RecordingModal({ url, title, onClose }: { url: string; title: string; onClose: () => void }) {
@@ -141,6 +164,7 @@ interface Props {
   totalLives: number
   userRank: number
   totalParticipants: number
+  userPoints: number
   nextLiveId: string | null
 }
 
@@ -176,6 +200,7 @@ export default function DashboardClient({
   totalLives,
   userRank,
   totalParticipants,
+  userPoints,
   nextLiveId,
 }: Props) {
   const router = useRouter()
@@ -193,6 +218,8 @@ export default function DashboardClient({
   const [editInsight, setEditInsight] = useState('')
   const [editUrl, setEditUrl] = useState('')
   const [editError, setEditError] = useState('')
+  // Delete confirm state
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const level = getUserLevel(approvedCount)
   const additionalBadges = getAdditionalBadges(linkedinCount)
@@ -314,9 +341,14 @@ export default function DashboardClient({
   }
 
   async function handleDeleteCheckIn(id: string) {
-    if (!window.confirm('Tem certeza? O check-in e os pontos serão removidos.')) return
-    setSubmitting(id)
-    await fetch(`/api/checkins/${id}`, { method: 'DELETE' })
+    setConfirmDeleteId(id)
+  }
+
+  async function confirmDelete() {
+    if (!confirmDeleteId) return
+    setSubmitting(confirmDeleteId)
+    setConfirmDeleteId(null)
+    await fetch(`/api/checkins/${confirmDeleteId}`, { method: 'DELETE' })
     setSubmitting(null)
     router.refresh()
   }
@@ -338,6 +370,13 @@ export default function DashboardClient({
         />
       )}
 
+      {confirmDeleteId && (
+        <ConfirmModal
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
+
       {/* Header */}
       <div className="mb-8">
         <div className={`text-sm font-semibold mb-0.5 ${level.color}`}>
@@ -354,6 +393,8 @@ export default function DashboardClient({
             Você está em{' '}
             <span className="text-white font-semibold">#{userRank}</span> de{' '}
             <span className="text-white font-semibold">{totalParticipants}</span> participantes
+            {' · '}
+            <span className="text-violet-400 font-semibold">{userPoints} pts</span>
           </p>
         )}
       </div>
@@ -439,7 +480,7 @@ export default function DashboardClient({
                     {aulaApproved ? '✓' : live.order}
                   </span>
                   <div className="min-w-0">
-                    <p className="font-medium text-sm leading-snug">{live.title}</p>
+                    <p className="font-semibold text-base leading-snug">{live.title}</p>
                     {live.scheduledAt && (
                       <p className="text-xs text-gray-600 mt-0.5">
                         {new Date(live.scheduledAt).toLocaleDateString('pt-BR', {
@@ -463,27 +504,11 @@ export default function DashboardClient({
                 </div>
               </div>
 
-              {/* Recording button — destacado no topo */}
-              <div className="mb-4">
-                {live.recordingUrl ? (
-                  <button
-                    onClick={() => setRecordingLiveId(live.id)}
-                    className="btn-primary text-sm w-full"
-                  >
-                    ▶ Assistir aula gravada
-                  </button>
-                ) : (
-                  <div className="border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
-                    <span className="text-sm text-gray-500">🎥 Gravação disponível em breve</span>
-                  </div>
-                )}
-              </div>
-
               {/* AULA section */}
-              <div className="border border-gray-800 rounded-lg p-4 mb-3">
+              <div className="border border-violet-800/50 bg-violet-500/5 rounded-lg p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
-                    AULA – +1 ponto
+                    🏁 Aula: +1 ponto
                   </span>
                   <div className="flex gap-1">
                     {aulaApproved && <span className="badge-approved">✓ Registrado</span>}
@@ -502,16 +527,16 @@ export default function DashboardClient({
                     <div className="flex gap-2">
                       <button
                         onClick={() => startEdit(aulaCI)}
-                        className="text-xs text-gray-500 hover:text-violet-400 transition-colors"
+                        className="text-xs px-2.5 py-1 rounded bg-gray-800/60 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
                       >
                         ✏️ Editar
                       </button>
                       <button
                         onClick={() => handleDeleteCheckIn(aulaCI.id)}
                         disabled={submitting === aulaCI.id}
-                        className="text-xs text-gray-500 hover:text-red-400 transition-colors"
+                        className="text-xs px-2.5 py-1 rounded bg-gray-800/60 hover:bg-red-900/40 text-gray-400 hover:text-red-400 transition-colors"
                       >
-                        🗑 Excluir
+                        🗑 Remover
                       </button>
                     </div>
                   </div>
@@ -605,10 +630,7 @@ export default function DashboardClient({
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
-                        🚀 BÔNUS LINKEDIN – +3 pontos
-                      </span>
-                      <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">
-                        Bônus
+                        🚀 Bônus LinkedIn: +3 pontos (opcional)
                       </span>
                     </div>
                     <div className="flex gap-1">
@@ -643,16 +665,16 @@ export default function DashboardClient({
                       <div className="flex gap-2 mt-2">
                         <button
                           onClick={() => startEdit(linkedinCI)}
-                          className="text-gray-500 hover:text-violet-400 transition-colors"
+                          className="text-xs px-2.5 py-1 rounded bg-gray-800/60 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
                         >
                           ✏️ Editar
                         </button>
                         <button
                           onClick={() => handleDeleteCheckIn(linkedinCI.id)}
                           disabled={submitting === linkedinCI.id}
-                          className="text-gray-500 hover:text-red-400 transition-colors"
+                          className="text-xs px-2.5 py-1 rounded bg-gray-800/60 hover:bg-red-900/40 text-gray-400 hover:text-red-400 transition-colors"
                         >
-                          🗑 Excluir
+                          🗑 Remover
                         </button>
                       </div>
                     </div>
@@ -730,6 +752,22 @@ export default function DashboardClient({
                   )}
                 </div>
               )}
+
+              {/* Recording — last */}
+              <div className="mt-3">
+                {live.recordingUrl ? (
+                  <button
+                    onClick={() => setRecordingLiveId(live.id)}
+                    className="btn-primary text-sm w-full"
+                  >
+                    ▶ Assistir aula gravada
+                  </button>
+                ) : (
+                  <div className="border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
+                    <span className="text-sm text-gray-500">🎥 Gravação disponível em breve</span>
+                  </div>
+                )}
+              </div>
             </div>
           )
         })}
