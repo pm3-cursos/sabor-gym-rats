@@ -2,17 +2,15 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
-import { calcPoints, calcAulaCount, calcLinkedinCount, getUserLevel, getAdditionalBadges } from '@/lib/points'
+import { calcPoints, calcAulaCount } from '@/lib/points'
 
 export const dynamic = 'force-dynamic'
 
-function getLevelWithNext(aulaCount: number) {
-  const base = getUserLevel(aulaCount)
-  let next: { label: string; at: number } | null = null
-  if (aulaCount === 0) next = { label: 'Iniciante', at: 1 }
-  else if (aulaCount < 3) next = { label: 'Corredor', at: 3 }
-  else if (aulaCount < 6) next = { label: 'Maratonista PM3', at: 6 }
-  return { ...base, next }
+function getUserLevel(points: number, total: number) {
+  if (total > 0 && points >= total) return { label: 'Maratonista PM3', icon: '🥇', color: 'text-yellow-400', next: null }
+  if (points >= 3) return { label: 'Corredor', icon: '🥈', color: 'text-gray-300', next: { label: 'Maratonista PM3', at: total } }
+  if (points >= 1) return { label: 'Iniciante', icon: '🥉', color: 'text-amber-500', next: { label: 'Corredor', at: 3 } }
+  return { label: 'Na largada', icon: '🏁', color: 'text-gray-500', next: { label: 'Iniciante', at: 1 } }
 }
 
 export default async function MeuProgressoPage() {
@@ -29,26 +27,23 @@ export default async function MeuProgressoPage() {
       where: { role: 'USER' },
       select: {
         id: true,
-        checkIns: {
-          select: { type: true, status: true, isInvalid: true },
-        },
-        pointAdjustments: { select: { amount: true } },
+        checkIns: { where: { status: 'APPROVED' }, select: { type: true, status: true } },
       },
     }),
   ])
 
   const totalLives = lives.length
   const approvedCount = calcAulaCount(checkIns)
-  const linkedinCount = calcLinkedinCount(checkIns)
-  const additionalBadges = getAdditionalBadges(linkedinCount)
+  const pendingCount = checkIns.filter((c) => c.status === 'PENDING').length
 
+  // Rank by weighted points
   const sorted = allUsers
-    .map((u) => ({ id: u.id, points: calcPoints(u.checkIns, u.pointAdjustments) }))
+    .map((u) => ({ id: u.id, points: calcPoints(u.checkIns) }))
     .sort((a, b) => b.points - a.points)
   const userRank = sorted.findIndex((u) => u.id === session.userId) + 1
   const totalParticipants = sorted.length
 
-  const level = getLevelWithNext(approvedCount)
+  const level = getUserLevel(approvedCount, totalLives)
   const safeTotal = totalLives > 0 ? totalLives : 1
   const pct = Math.min(100, Math.round((approvedCount / safeTotal) * 100))
 
@@ -66,11 +61,6 @@ export default async function MeuProgressoPage() {
             <div className={`text-xl font-bold ${level.color}`}>
               {level.icon} {level.label}
             </div>
-            {additionalBadges.map((b) => (
-              <span key={b.label} className={`text-xs font-medium mr-2 ${b.color}`}>
-                {b.icon} {b.label}
-              </span>
-            ))}
             {level.next && (
               <p className="text-xs text-gray-500 mt-0.5">
                 Próximo nível: {level.next.label} (a partir de {level.next.at} aula{level.next.at !== 1 ? 's' : ''})
@@ -93,8 +83,8 @@ export default async function MeuProgressoPage() {
           <div className="text-xs text-gray-500 mt-1">aulas completas</div>
         </div>
         <div className="card p-4 text-center">
-          <div className="text-2xl font-bold text-blue-400">{linkedinCount}</div>
-          <div className="text-xs text-gray-500 mt-1">posts LinkedIn</div>
+          <div className="text-2xl font-bold text-amber-400">{pendingCount}</div>
+          <div className="text-xs text-gray-500 mt-1">em revisão</div>
         </div>
         <div className="card p-4 text-center">
           <div className="text-2xl font-bold text-gray-400">{totalLives - approvedCount}</div>
@@ -131,6 +121,7 @@ export default async function MeuProgressoPage() {
           {lives.map((live) => {
             const checkIn = checkIns.find((c) => c.liveId === live.id && c.type === 'AULA')
             const isApproved = checkIn?.status === 'APPROVED'
+            const isPending = checkIn?.status === 'PENDING'
             const isRejected = checkIn?.status === 'REJECTED'
 
             return (
@@ -139,6 +130,8 @@ export default async function MeuProgressoPage() {
                   className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 ${
                     isApproved
                       ? 'bg-emerald-500/20 text-emerald-400'
+                      : isPending
+                      ? 'bg-amber-500/20 text-amber-400'
                       : isRejected
                       ? 'bg-red-500/20 text-red-400'
                       : 'bg-gray-800 text-gray-600'
@@ -158,6 +151,7 @@ export default async function MeuProgressoPage() {
                 </div>
                 <div className="shrink-0 text-right">
                   {isApproved && <span className="badge-approved text-xs">✓ Completa</span>}
+                  {isPending && <span className="badge-pending text-xs">⏳ Revisão</span>}
                   {isRejected && <span className="badge-rejected text-xs">✗ Rejeitado</span>}
                   {!checkIn && !live.isActive && (
                     <span className="text-xs text-gray-600">Em breve</span>

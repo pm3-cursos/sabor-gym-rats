@@ -1,12 +1,18 @@
 import { prisma } from '@/lib/db'
 import { getSession } from '@/lib/auth'
-import { calcPoints, calcAulaCount, getUserLevel } from '@/lib/points'
+import { calcPoints, calcAulaCount } from '@/lib/points'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import LeaderboardClient from './LeaderboardClient'
 import HomeStatsClient from './HomeStatsClient'
 
 export const dynamic = 'force-dynamic'
+
+function getUserLevel(points: number) {
+  if (points >= 6) return { label: 'Maratonista PM3', icon: '🥇', color: 'text-yellow-400' }
+  if (points >= 3) return { label: 'Corredor', icon: '🥈', color: 'text-gray-300' }
+  if (points >= 1) return { label: 'Iniciante', icon: '🥉', color: 'text-amber-500' }
+  return { label: 'Na largada', icon: '🏁', color: 'text-gray-500' }
+}
 
 async function getLeaderboard() {
   const users = await prisma.user.findMany({
@@ -15,9 +21,8 @@ async function getLeaderboard() {
       id: true,
       name: true,
       checkIns: {
-        select: { type: true, status: true, isInvalid: true },
+        select: { type: true, status: true },
       },
-      pointAdjustments: { select: { amount: true } },
     },
   })
 
@@ -25,18 +30,16 @@ async function getLeaderboard() {
     .map((u) => ({
       id: u.id,
       name: u.name,
-      points: calcPoints(u.checkIns, u.pointAdjustments),
+      points: calcPoints(u.checkIns),
       aulaCount: calcAulaCount(u.checkIns),
     }))
     .sort((a, b) => b.points - a.points)
 }
 
 export default async function Home() {
-  const session = await getSession()
-  if (session) redirect('/dashboard')
-
-  const [leaderboard, totalLives] = await Promise.all([
+  const [leaderboard, session, totalLives] = await Promise.all([
     getLeaderboard(),
+    getSession(),
     prisma.live.count(),
   ])
 
@@ -110,9 +113,9 @@ export default async function Home() {
         leaderboard={leaderboard.map((u, i) => ({
           ...u,
           rank: i + 1,
-          level: getUserLevel(u.aulaCount),
+          level: getUserLevel(u.points),
         }))}
-        currentUserId={null}
+        currentUserId={session?.userId ?? null}
         totalLives={totalLives}
       />
     </div>

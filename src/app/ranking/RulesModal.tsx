@@ -43,30 +43,22 @@ export default function RulesModal() {
                   <span>Check-in de publicação no LinkedIn — publique sobre a aula e envie o link da publicação.</span>
                 </li>
               </ul>
+              <p className="text-xs text-gray-500 mt-2">
+                Todo check-in de aula deve ter um comentário para ser validado.
+              </p>
             </section>
 
             {/* Quem ganha */}
             <section>
               <h3 className="font-semibold text-violet-400 mb-2">Quem ganha?</h3>
               <p className="text-sm text-gray-300">
-                Quem tiver mais pontos ao final da Maratona (prevista para encerrar em{' '}
-                <strong className="text-white">24/03</strong>).
+                Quem tiver mais pontos ao final da Maratona (prevista para encerrar em <strong className="text-white">24/03</strong>).
               </p>
             </section>
 
             {/* Prêmios */}
             <section>
-              <h3 className="font-semibold text-violet-400 mb-2">O que ganha?</h3>
-
-              {/* Aviso de validação */}
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2.5 mb-3">
-                <p className="text-xs text-amber-400 leading-relaxed">
-                  ⚠️ <strong>Atenção:</strong> Os prêmios serão entregues somente após validação dos
-                  check-ins. Participantes com check-ins inválidos não estarão aptos ao prêmio, mesmo
-                  que estejam nas primeiras posições do ranking.
-                </p>
-              </div>
-
+              <h3 className="font-semibold text-violet-400 mb-3">O que ganha?</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
                   <span className="text-2xl shrink-0">🥇</span>
@@ -92,20 +84,6 @@ export default function RulesModal() {
               </div>
             </section>
 
-            {/* Certificado Especial */}
-            <section>
-              <h3 className="font-semibold text-violet-400 mb-2">🎓 Certificado Especial</h3>
-              <div className="bg-violet-500/10 border border-violet-500/20 rounded-lg p-3">
-                <p className="text-sm text-gray-300">
-                  Todos os participantes que assistirem às{' '}
-                  <strong className="text-white">6 aulas</strong> receberão um{' '}
-                  <strong className="text-violet-300">
-                    Certificado de Participação especial da Maratona PM3
-                  </strong>.
-                </p>
-              </div>
-            </section>
-
             {/* Desempate */}
             <section>
               <h3 className="font-semibold text-violet-400 mb-2">Critérios de desempate</h3>
@@ -116,7 +94,7 @@ export default function RulesModal() {
                 <li className="flex gap-3 text-sm">
                   <span className="text-violet-400 font-bold shrink-0">1º</span>
                   <span className="text-gray-300">
-                    Maior número de posts sobre a Maratona PM3 no LinkedIn.
+                    Maior número de posts sobre a Maratona ProductRats no LinkedIn.
                   </span>
                 </li>
                 <li className="flex gap-3 text-sm">
@@ -128,7 +106,7 @@ export default function RulesModal() {
                 <li className="flex gap-3 text-sm">
                   <span className="text-violet-400 font-bold shrink-0">3º</span>
                   <span className="text-gray-300">
-                    A equipe PM3 escolherá o que considera o melhor post de divulgação da Maratona PM3 no LinkedIn.
+                    A equipe PM3 escolherá o que considera o melhor post de divulgação da Maratona no LinkedIn.
                   </span>
                 </li>
               </ol>
