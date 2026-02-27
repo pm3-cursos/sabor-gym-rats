@@ -11,7 +11,7 @@
     "db:push": "prisma db push",
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "db:studio": "prisma studio",
-    "setup:prod": "if [ -n \"$DATABASE_URL\" ]; then prisma migrate deploy && ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts; else echo 'Skipping setup:prod - DATABASE_URL not set'; fi",
+    "setup:prod": "if [ -n \"$DATABASE_URL\" ]; then (prisma migrate deploy || (prisma migrate resolve --applied 20260227000000_init && prisma migrate deploy)) && ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts; else echo 'Skipping setup:prod - DATABASE_URL not set'; fi",
     "postinstall": "prisma generate"
   },
   "dependencies": {
