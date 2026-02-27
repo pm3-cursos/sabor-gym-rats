@@ -21,6 +21,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 })
     }
 
+    if (user.isBanned) {
+      return NextResponse.json({ error: 'Sua conta foi suspensa.' }, { status: 403 })
+    }
+
     const token = await createToken({
       userId: user.id,
       email: user.email,

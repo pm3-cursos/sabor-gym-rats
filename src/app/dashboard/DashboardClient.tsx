@@ -3,84 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
-
-// ─── Level system ────────────────────────────────────────────────────────────
-
-function getDaysUntil(scheduledAt: string | null): string {
-  if (!scheduledAt) return 'Em breve'
-  const now = new Date()
-  const target = new Date(scheduledAt)
-  const diffMs = target.getTime() - now.getTime()
-  if (diffMs <= 0) return 'Em breve'
-  const diffHours = diffMs / (1000 * 60 * 60)
-  if (diffHours < 24) return `Abre em ${Math.ceil(diffHours)}h`
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-  return `Abre em ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`
-}
-
-function getUserLevel(aulaCount: number, total: number) {
-  if (total > 0 && aulaCount >= total) return { label: 'Maratonista PM3', icon: '🥇', color: 'text-yellow-400' }
-  if (aulaCount >= 3) return { label: 'Corredor', icon: '🥈', color: 'text-gray-300' }
-  if (aulaCount >= 1) return { label: 'Iniciante', icon: '🥉', color: 'text-amber-500' }
-  return { label: 'Na largada', icon: '🏁', color: 'text-gray-500' }
-}
-
-// ─── Email verification banner ────────────────────────────────────────────────
-
-function EmailVerificationBanner() {
-  const [sending, setSending] = useState(false)
-  const [sent, setSent] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
-
-  async function resend() {
-    setSending(true)
-    await fetch('/api/auth/reenviar-verificacao', { method: 'POST' })
-    setSending(false)
-    setSent(true)
-  }
-
-  if (collapsed) {
-    return (
-      <div className="mb-4 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-2 flex items-center justify-between gap-3">
-        <p className="text-amber-400 text-xs">📬 Confirme seu e-mail para ativar sua conta.</p>
-        <button
-          onClick={() => setCollapsed(false)}
-          className="text-amber-400 hover:text-amber-300 text-xs underline shrink-0"
-        >
-          Ver detalhes
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="mb-6 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-      <p className="text-amber-400 text-sm">
-        📬 Confirme seu e-mail para ativar sua conta. Verifique sua caixa de entrada.
-      </p>
-      <div className="flex items-center gap-3 shrink-0">
-        {sent ? (
-          <span className="text-emerald-400 text-xs">E-mail reenviado ✓</span>
-        ) : (
-          <button
-            onClick={resend}
-            disabled={sending}
-            className="text-amber-400 hover:text-amber-300 text-xs underline disabled:opacity-50"
-          >
-            {sending ? 'Enviando...' : 'Reenviar e-mail'}
-          </button>
-        )}
-        <button
-          onClick={() => setCollapsed(true)}
-          className="text-gray-600 hover:text-gray-400 text-xs"
-          aria-label="Minimizar aviso"
-        >
-          ✕
-        </button>
-      </div>
-    </div>
-  )
-}
+import { getUserLevel, getAdditionalBadges } from '@/lib/points'
 
 // ─── Recording modal ──────────────────────────────────────────────────────────
 
@@ -138,7 +61,7 @@ function CelebrationOverlay({
   onClose: () => void
 }) {
   const shareText = encodeURIComponent(
-    `Acabei de completar a PM3 Marathon! 🏋️🥇\nAssisti a todas as aulas da série PM3, publiquei meus insights no LinkedIn e cruzei a linha de chegada!\n#ProductRats #MaratonaPM3 #ProductManagement`,
+    `Acabei de completar a Maratona PM3! 🏋️🥇\nAssisti a todas as aulas, publiquei meus insights no LinkedIn e cruzei a linha de chegada!\n#MaratonaPM3 #ProductManagement`,
   )
   const shareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${shareText}`
 
@@ -204,29 +127,52 @@ interface CheckIn {
   insight: string | null
   status: string
   adminNote: string | null
+  isInvalid: boolean
   createdAt: string
+  updatedAt: string
 }
 
 interface Props {
   userName: string
-  emailVerified: boolean
   lives: Live[]
   checkIns: CheckIn[]
   approvedCount: number
+  linkedinCount: number
   totalLives: number
   userRank: number
   totalParticipants: number
   nextLiveId: string | null
 }
 
+function getDaysUntil(scheduledAt: string | null): string {
+  if (!scheduledAt) return 'Em breve'
+  const now = new Date()
+  const target = new Date(scheduledAt)
+  const diffMs = target.getTime() - now.getTime()
+  if (diffMs <= 0) return 'Em breve'
+  const diffHours = diffMs / (1000 * 60 * 60)
+  if (diffHours < 24) return `Abre em ${Math.ceil(diffHours)}h`
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  return `Abre em ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`
+}
+
+function formatDate(isoStr: string) {
+  return new Date(isoStr).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function DashboardClient({
   userName,
-  emailVerified,
   lives,
   checkIns,
   approvedCount,
+  linkedinCount,
   totalLives,
   userRank,
   totalParticipants,
@@ -242,8 +188,14 @@ export default function DashboardClient({
   const [linkedinSuccess, setLinkedinSuccess] = useState<Record<string, boolean>>({})
   const [showCelebration, setShowCelebration] = useState(false)
   const [recordingLiveId, setRecordingLiveId] = useState<string | null>(null)
+  // Edit state
+  const [editingCheckInId, setEditingCheckInId] = useState<string | null>(null)
+  const [editInsight, setEditInsight] = useState('')
+  const [editUrl, setEditUrl] = useState('')
+  const [editError, setEditError] = useState('')
 
-  const level = getUserLevel(approvedCount, totalLives)
+  const level = getUserLevel(approvedCount)
+  const additionalBadges = getAdditionalBadges(linkedinCount)
   const safeTotal = totalLives > 0 ? totalLives : 1
   const pct = Math.min(100, Math.round((approvedCount / safeTotal) * 100))
   const remaining = totalLives - approvedCount
@@ -278,8 +230,11 @@ export default function DashboardClient({
       }
       setAulaErrors((prev) => ({ ...prev, [liveId]: '' }))
     } else {
-      if (!url || !url.includes('linkedin.com')) {
-        setLinkedinErrors((prev) => ({ ...prev, [liveId]: 'Cole o link da sua publicação no LinkedIn.' }))
+      if (!url || !url.startsWith('https://www.linkedin.com/') || !url.includes('posts/')) {
+        setLinkedinErrors((prev) => ({
+          ...prev,
+          [liveId]: 'Cole o link oficial de uma publicação do LinkedIn (linkedin.com/posts/).',
+        }))
         return
       }
       setLinkedinErrors((prev) => ({ ...prev, [liveId]: '' }))
@@ -317,11 +272,53 @@ export default function DashboardClient({
     router.refresh()
   }
 
-  function buildLinkedInShareUrl(liveTitle: string, insight: string) {
-    const text = encodeURIComponent(
-      `Acabei de assistir "${liveTitle}" da série PM3! 🏋️\n${insight ? insight + '\n' : ''}#ProductRats #MaratonaPM3 #ProductManagement`,
-    )
-    return `https://www.linkedin.com/feed/?shareActive=true&text=${text}`
+  function startEdit(checkIn: CheckIn) {
+    setEditingCheckInId(checkIn.id)
+    setEditInsight(checkIn.insight || '')
+    setEditUrl(checkIn.linkedinUrl || '')
+    setEditError('')
+  }
+
+  async function saveEdit(checkIn: CheckIn) {
+    setEditError('')
+    const body: Record<string, string> = {}
+    if (checkIn.type === 'AULA') {
+      const trimmed = editInsight.trim()
+      if (trimmed.length < 10) {
+        setEditError('Mínimo 10 caracteres.')
+        return
+      }
+      body.insight = trimmed
+    } else {
+      const trimmed = editUrl.trim()
+      if (!trimmed.startsWith('https://www.linkedin.com/') || !trimmed.includes('posts/')) {
+        setEditError('Cole o link oficial do LinkedIn (linkedin.com/posts/).')
+        return
+      }
+      body.linkedinUrl = trimmed
+    }
+    setSubmitting(checkIn.id)
+    const res = await fetch(`/api/checkins/${checkIn.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    setSubmitting(null)
+    if (!res.ok) {
+      const data = await res.json()
+      setEditError(data.error || 'Erro ao salvar.')
+      return
+    }
+    setEditingCheckInId(null)
+    router.refresh()
+  }
+
+  async function handleDeleteCheckIn(id: string) {
+    if (!window.confirm('Tem certeza? O check-in e os pontos serão removidos.')) return
+    setSubmitting(id)
+    await fetch(`/api/checkins/${id}`, { method: 'DELETE' })
+    setSubmitting(null)
+    router.refresh()
   }
 
   const closeCelebration = useCallback(() => setShowCelebration(false), [])
@@ -341,14 +338,17 @@ export default function DashboardClient({
         />
       )}
 
-      {!emailVerified && <EmailVerificationBanner />}
-
       {/* Header */}
       <div className="mb-8">
-        <div className={`text-sm font-semibold mb-1 ${level.color}`}>
+        <div className={`text-sm font-semibold mb-0.5 ${level.color}`}>
           {level.icon} {level.label}
         </div>
-        <h1 className="text-2xl font-bold mb-1">Olá, {userName}!</h1>
+        {additionalBadges.map((b) => (
+          <span key={b.label} className={`text-xs font-medium mr-2 ${b.color}`}>
+            {b.icon} {b.label}
+          </span>
+        ))}
+        <h1 className="text-2xl font-bold mb-1 mt-1">Olá, {userName}!</h1>
         {totalParticipants > 0 && userRank > 0 && (
           <p className="text-gray-400 text-sm">
             Você está em{' '}
@@ -360,7 +360,7 @@ export default function DashboardClient({
 
       {/* Progress card */}
       <div className="card p-5 mb-8">
-        <h2 className="font-semibold text-gray-300 mb-4">Seu progresso na PM3 Marathon</h2>
+        <h2 className="font-semibold text-gray-300 mb-4">Seu progresso na Maratona PM3</h2>
         <div className="flex items-end gap-3 mb-4">
           <span
             className={`text-5xl font-bold tabular-nums ${
@@ -383,7 +383,7 @@ export default function DashboardClient({
         </div>
         {totalLives > 0 && approvedCount >= totalLives ? (
           <p className="text-emerald-400 text-sm font-medium text-center">
-            🏆 Parabéns! Você completou a PM3 Marathon e está apto a concorrer ao prêmio!
+            🏆 Parabéns! Você completou a Maratona PM3 e está apto a concorrer ao prêmio!
           </p>
         ) : remaining > 0 ? (
           <p className="text-gray-500 text-xs text-center">
@@ -407,7 +407,6 @@ export default function DashboardClient({
           const aulaCI = aulaCheckInMap[live.id]
           const linkedinCI = linkedinCheckInMap[live.id]
           const aulaApproved = aulaCI?.status === 'APPROVED'
-          const aulaPending = aulaCI?.status === 'PENDING'
           const aulaRejected = aulaCI?.status === 'REJECTED'
           const canSubmitAula = live.isActive && (!aulaCI || aulaRejected)
           const canSubmitLinkedin = live.isActive && (!linkedinCI || linkedinCI.status === 'REJECTED')
@@ -434,8 +433,6 @@ export default function DashboardClient({
                         ? 'bg-emerald-500/20 text-emerald-400'
                         : aulaRejected
                         ? 'bg-red-500/20 text-red-400'
-                        : aulaPending
-                        ? 'bg-amber-500/20 text-amber-400'
                         : 'bg-gray-800 text-gray-500'
                     }`}
                   >
@@ -466,6 +463,22 @@ export default function DashboardClient({
                 </div>
               </div>
 
+              {/* Recording button — destacado no topo */}
+              <div className="mb-4">
+                {live.recordingUrl ? (
+                  <button
+                    onClick={() => setRecordingLiveId(live.id)}
+                    className="btn-primary text-sm w-full"
+                  >
+                    ▶ Assistir aula gravada
+                  </button>
+                ) : (
+                  <div className="border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
+                    <span className="text-sm text-gray-500">🎥 Gravação disponível em breve</span>
+                  </div>
+                )}
+              </div>
+
               {/* AULA section */}
               <div className="border border-gray-800 rounded-lg p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
@@ -473,16 +486,62 @@ export default function DashboardClient({
                     AULA – +1 ponto
                   </span>
                   <div className="flex gap-1">
-                    {aulaApproved && <span className="badge-approved">✓ Aprovado</span>}
-                    {aulaPending && <span className="badge-pending">⏳ Revisão</span>}
+                    {aulaApproved && <span className="badge-approved">✓ Registrado</span>}
                     {aulaRejected && <span className="badge-rejected">✗ Rejeitado</span>}
                   </div>
                 </div>
 
-                {(aulaPending || aulaApproved) && aulaCI?.insight && (
-                  <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-4 py-3 border-l-2 border-violet-500/40 italic mb-3">
-                    "{aulaCI.insight}"
-                  </blockquote>
+                {aulaApproved && aulaCI?.insight && editingCheckInId !== aulaCI.id && (
+                  <div>
+                    <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-4 py-3 border-l-2 border-violet-500/40 italic mb-2">
+                      "{aulaCI.insight}"
+                    </blockquote>
+                    {aulaCI.updatedAt !== aulaCI.createdAt && (
+                      <p className="text-xs text-gray-600 mb-2">Editado em {formatDate(aulaCI.updatedAt)}</p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEdit(aulaCI)}
+                        className="text-xs text-gray-500 hover:text-violet-400 transition-colors"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCheckIn(aulaCI.id)}
+                        disabled={submitting === aulaCI.id}
+                        className="text-xs text-gray-500 hover:text-red-400 transition-colors"
+                      >
+                        🗑 Excluir
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {aulaApproved && editingCheckInId === aulaCI?.id && (
+                  <div className="space-y-2">
+                    <textarea
+                      className="input text-sm resize-none w-full"
+                      rows={3}
+                      value={editInsight}
+                      onChange={(e) => setEditInsight(e.target.value)}
+                    />
+                    {editError && <p className="text-xs text-red-400">{editError}</p>}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => saveEdit(aulaCI!)}
+                        disabled={submitting === aulaCI?.id}
+                        className="btn-primary text-xs py-1.5"
+                      >
+                        {submitting === aulaCI?.id ? 'Salvando...' : 'Salvar'}
+                      </button>
+                      <button
+                        onClick={() => setEditingCheckInId(null)}
+                        className="btn-secondary text-xs py-1.5"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
                 )}
 
                 {aulaRejected && aulaCI?.adminNote && (
@@ -535,13 +594,12 @@ export default function DashboardClient({
 
                 {aulaSuccess[live.id] && (
                   <p className="text-sm text-emerald-400">
-                    Você avançou mais um km na Maratona PM3! 🏃
+                    ✅ Check-in registrado! Você avançou mais um km na Maratona PM3! 🏃
                   </p>
                 )}
-
               </div>
 
-              {/* LINKEDIN section — only show when live is active or already has a check-in */}
+              {/* LINKEDIN section */}
               {(live.isActive || linkedinCI) && (
                 <div className="border border-gray-800 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -554,9 +612,12 @@ export default function DashboardClient({
                       </span>
                     </div>
                     <div className="flex gap-1">
-                      {linkedinCI?.status === 'APPROVED' && <span className="badge-approved">✓ Aprovado</span>}
-                      {linkedinCI?.status === 'PENDING' && <span className="badge-pending">⏳ Revisão</span>}
-                      {linkedinCI?.status === 'REJECTED' && <span className="badge-rejected">✗ Rejeitado</span>}
+                      {linkedinCI?.status === 'APPROVED' && (
+                        <span className="badge-approved">✓ Registrado</span>
+                      )}
+                      {linkedinCI?.status === 'REJECTED' && (
+                        <span className="badge-rejected">✗ Rejeitado</span>
+                      )}
                     </div>
                   </div>
 
@@ -566,19 +627,64 @@ export default function DashboardClient({
                     </p>
                   )}
 
-                  {(linkedinCI?.status === 'PENDING' || linkedinCI?.status === 'APPROVED') &&
-                    linkedinCI?.linkedinUrl && (
-                      <div className="text-xs text-gray-500 bg-gray-800/40 rounded-lg px-3 py-2 mb-3">
-                        <a
-                          href={linkedinCI.linkedinUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-violet-400 hover:text-violet-300 break-all"
+                  {linkedinCI?.status === 'APPROVED' && linkedinCI?.linkedinUrl && editingCheckInId !== linkedinCI.id && (
+                    <div className="text-xs text-gray-500 bg-gray-800/40 rounded-lg px-3 py-2 mb-3">
+                      <a
+                        href={linkedinCI.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-violet-400 hover:text-violet-300 break-all"
+                      >
+                        {linkedinCI.linkedinUrl}
+                      </a>
+                      {linkedinCI.updatedAt !== linkedinCI.createdAt && (
+                        <p className="text-gray-600 mt-1">Editado em {formatDate(linkedinCI.updatedAt)}</p>
+                      )}
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => startEdit(linkedinCI)}
+                          className="text-gray-500 hover:text-violet-400 transition-colors"
                         >
-                          {linkedinCI.linkedinUrl}
-                        </a>
+                          ✏️ Editar
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCheckIn(linkedinCI.id)}
+                          disabled={submitting === linkedinCI.id}
+                          className="text-gray-500 hover:text-red-400 transition-colors"
+                        >
+                          🗑 Excluir
+                        </button>
                       </div>
-                    )}
+                    </div>
+                  )}
+
+                  {linkedinCI?.status === 'APPROVED' && editingCheckInId === linkedinCI?.id && (
+                    <div className="space-y-2 mb-3">
+                      <input
+                        type="url"
+                        className="input text-sm w-full"
+                        value={editUrl}
+                        onChange={(e) => setEditUrl(e.target.value)}
+                        placeholder="https://www.linkedin.com/posts/..."
+                      />
+                      {editError && <p className="text-xs text-red-400">{editError}</p>}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => saveEdit(linkedinCI!)}
+                          disabled={submitting === linkedinCI?.id}
+                          className="btn-primary text-xs py-1.5"
+                        >
+                          {submitting === linkedinCI?.id ? 'Salvando...' : 'Salvar'}
+                        </button>
+                        <button
+                          onClick={() => setEditingCheckInId(null)}
+                          className="btn-secondary text-xs py-1.5"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {linkedinCI?.status === 'REJECTED' && linkedinCI?.adminNote && (
                     <div className="mb-3 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
@@ -619,27 +725,11 @@ export default function DashboardClient({
 
                   {linkedinSuccess[live.id] && (
                     <p className="text-sm text-emerald-400">
-                      🎯 Publicação enviada! Aguarde a aprovação.
+                      🎯 Publicação registrada! +3 pontos adicionados!
                     </p>
                   )}
                 </div>
               )}
-
-              {/* Recording button */}
-              <div className="mt-3">
-                {live.recordingUrl ? (
-                  <button
-                    onClick={() => setRecordingLiveId(live.id)}
-                    className="btn-secondary text-sm w-full"
-                  >
-                    🎥 Assistir gravação
-                  </button>
-                ) : (
-                  <div className="border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
-                    <span className="text-sm text-gray-500">🎥 Gravação disponível em breve</span>
-                  </div>
-                )}
-              </div>
             </div>
           )
         })}

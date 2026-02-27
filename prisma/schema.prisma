@@ -14,11 +14,14 @@ model User {
   password      String
   role          Role     @default(USER)
   emailVerified Boolean  @default(false)
+  isBanned      Boolean  @default(false)
   createdAt     DateTime @default(now())
 
   checkIns            CheckIn[]
   passwordResetTokens PasswordResetToken[]
   emailVerifyTokens   EmailVerificationToken[]
+  pointAdjustments    PointAdjustment[]
+  reactions           Reaction[]
 }
 
 model Live {
@@ -42,15 +45,39 @@ model CheckIn {
   insight     String?
   linkedinUrl String?
   status      CheckInStatus @default(PENDING)
+  isInvalid   Boolean       @default(false)
   adminNote   String?
   createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   reviewedAt  DateTime?
   reviewedBy  String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  live Live @relation(fields: [liveId], references: [id])
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  live      Live       @relation(fields: [liveId], references: [id])
+  reactions Reaction[]
 
   @@unique([userId, liveId, type])
+}
+
+model PointAdjustment {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  reason    String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  checkInId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+  checkIn   CheckIn  @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([checkInId, userId])
 }
 
 model PasswordResetToken {

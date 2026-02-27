@@ -2,16 +2,9 @@ import { prisma } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import LeaderboardClient from '../LeaderboardClient'
 import RulesModal from './RulesModal'
-import { calcPoints, calcAulaCount } from '@/lib/points'
+import { calcPoints, calcAulaCount, getUserLevel } from '@/lib/points'
 
 export const dynamic = 'force-dynamic'
-
-function getUserLevel(points: number) {
-  if (points >= 6) return { label: 'Maratonista PM3', icon: '🥇', color: 'text-yellow-400' }
-  if (points >= 3) return { label: 'Corredor', icon: '🥈', color: 'text-gray-300' }
-  if (points >= 1) return { label: 'Iniciante', icon: '🥉', color: 'text-amber-500' }
-  return { label: 'Na largada', icon: '🏁', color: 'text-gray-500' }
-}
 
 async function getLeaderboard() {
   const users = await prisma.user.findMany({
@@ -20,9 +13,9 @@ async function getLeaderboard() {
       id: true,
       name: true,
       checkIns: {
-        where: { status: 'APPROVED' },
-        select: { type: true, status: true },
+        select: { type: true, status: true, isInvalid: true },
       },
+      pointAdjustments: { select: { amount: true } },
     },
   })
 
@@ -30,7 +23,7 @@ async function getLeaderboard() {
     .map((u) => ({
       id: u.id,
       name: u.name,
-      points: calcPoints(u.checkIns),
+      points: calcPoints(u.checkIns, u.pointAdjustments),
       aulaCount: calcAulaCount(u.checkIns),
     }))
     .sort((a, b) => b.points - a.points)
@@ -71,13 +64,12 @@ const PRIZES = [
 
 function PodiumSection({
   leaderboard,
-  totalLives,
+  currentUserId,
 }: {
   leaderboard: { id: string; name: string; points: number; aulaCount: number }[]
-  totalLives: number
+  currentUserId: string | null
 }) {
-  // Display order on podium: 2nd (left), 1st (center), 3rd (right)
-  const podiumOrder = [1, 0, 2] // indices into PRIZES: 2nd, 1st, 3rd
+  const podiumOrder = [1, 0, 2]
 
   return (
     <div className="card p-5 mb-6">
@@ -86,31 +78,40 @@ function PodiumSection({
         <span className="text-xs text-gray-600">Top 3</span>
       </div>
 
-      {/* Podium visual */}
       <div className="flex items-end justify-center gap-3 mb-6">
         {podiumOrder.map((prizeIndex) => {
           const p = PRIZES[prizeIndex]
           const user = leaderboard[prizeIndex]
           const initial = user ? user.name.charAt(0).toUpperCase() : '?'
           const isFirst = p.rank === 1
+          const isCurrentUser = user && currentUserId && user.id === currentUserId
 
           return (
-            <div key={p.rank} className={`flex flex-col items-center ${isFirst ? 'order-2' : prizeIndex === 1 ? 'order-1' : 'order-3'}`} style={{ minWidth: 0, flex: '1 1 0' }}>
-              {/* Avatar + name + score */}
+            <div
+              key={p.rank}
+              className={`flex flex-col items-center ${isFirst ? 'order-2' : prizeIndex === 1 ? 'order-1' : 'order-3'}`}
+              style={{ minWidth: 0, flex: '1 1 0' }}
+            >
               <div className="flex flex-col items-center mb-2 px-1">
-                <div className={`w-12 h-12 rounded-full ${p.bg} ${p.ring} flex items-center justify-center text-lg font-bold ${p.color} mb-1.5 ${isFirst ? 'w-14 h-14' : ''}`}>
+                <div
+                  className={`w-12 h-12 rounded-full ${p.bg} ${p.ring} flex items-center justify-center text-lg font-bold ${p.color} mb-1.5 ${isFirst ? 'w-14 h-14' : ''} ${isCurrentUser ? 'ring-violet-400' : ''}`}
+                >
                   {user ? initial : '—'}
                 </div>
-                <p className={`text-xs font-semibold text-center leading-tight truncate w-full max-w-[80px] ${isFirst ? 'text-white' : 'text-gray-300'}`}>
+                <p
+                  className={`text-xs font-semibold text-center leading-tight truncate w-full max-w-[80px] ${isFirst ? 'text-white' : 'text-gray-300'} ${isCurrentUser ? 'text-violet-300' : ''}`}
+                >
                   {user ? user.name.split(' ')[0] : '—'}
+                  {isCurrentUser && <span className="block text-violet-400 text-[10px]">(você)</span>}
                 </p>
                 <p className={`text-sm font-bold tabular-nums mt-0.5 ${p.color}`}>
                   {user ? `${user.points} pts` : '—'}
                 </p>
               </div>
 
-              {/* Platform */}
-              <div className={`w-full ${p.platform} ${p.bg} border ${p.border} rounded-t-lg flex items-start justify-center pt-1.5`}>
+              <div
+                className={`w-full ${p.platform} ${p.bg} border ${p.border} rounded-t-lg flex items-start justify-center pt-1.5`}
+              >
                 <span className="text-lg">{p.emoji}</span>
               </div>
             </div>
@@ -165,7 +166,7 @@ export default async function RankingPage() {
       </div>
 
       {/* Podium + Prizes */}
-      <PodiumSection leaderboard={leaderboard} totalLives={totalLives} />
+      <PodiumSection leaderboard={leaderboard} currentUserId={session?.userId ?? null} />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
@@ -188,7 +189,7 @@ export default async function RankingPage() {
         leaderboard={leaderboard.map((u, i) => ({
           ...u,
           rank: i + 1,
-          level: getUserLevel(u.points),
+          level: getUserLevel(u.aulaCount),
         }))}
         currentUserId={session?.userId ?? null}
         totalLives={totalLives}
