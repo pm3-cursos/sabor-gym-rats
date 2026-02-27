@@ -80,6 +80,30 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
   const [liveForms, setLiveForms] = useState<Record<string, Partial<Live>>>({})
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null)
 
+  // Search / filter state
+  const [userSearch, setUserSearch] = useState('')
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
+  const [ciFilterLiveId, setCiFilterLiveId] = useState('')
+  const [ciFilterType, setCiFilterType] = useState<'' | 'AULA' | 'LINKEDIN'>('')
+  const [ciFilterValid, setCiFilterValid] = useState<'' | 'valid' | 'invalid'>('')
+
+  // Derived filtered data
+  const filteredUsers = userSearch
+    ? users.filter(
+        (u) =>
+          u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+          u.email.toLowerCase().includes(userSearch.toLowerCase()),
+      )
+    : users
+
+  const filteredCheckIns = checkIns.filter((c) => {
+    if (ciFilterLiveId && c.live.id !== ciFilterLiveId) return false
+    if (ciFilterType && c.type !== ciFilterType) return false
+    if (ciFilterValid === 'valid' && c.isInvalid) return false
+    if (ciFilterValid === 'invalid' && !c.isInvalid) return false
+    return true
+  })
+
   // Point adjustment state
   const [adjUserId, setAdjUserId] = useState('')
   const [adjAmount, setAdjAmount] = useState('')
@@ -222,7 +246,16 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       {confirmState && <AdminConfirmModal state={confirmState} onCancel={() => setConfirmState(null)} />}
-      <h1 className="text-2xl font-bold mb-6">Painel Admin</h1>
+      <div className="flex items-center justify-between mb-6 gap-3">
+        <h1 className="text-2xl font-bold">Painel Admin</h1>
+        <a
+          href="/api/admin/export"
+          download
+          className="btn-secondary text-sm flex items-center gap-1.5 no-underline"
+        >
+          📥 Exportar CSV
+        </a>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-8">
@@ -313,13 +346,58 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
       {/* Tab: Check-ins */}
       {tab === 'checkins' && (
         <div className="space-y-4">
-          {checkIns.length === 0 ? (
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2">
+            <select
+              className="input text-sm flex-1 min-w-[150px]"
+              value={ciFilterLiveId}
+              onChange={(e) => setCiFilterLiveId(e.target.value)}
+            >
+              <option value="">Todas as aulas</option>
+              {lives.map((l) => (
+                <option key={l.id} value={l.id}>
+                  Aula {l.order} — {l.title}
+                </option>
+              ))}
+            </select>
+            <select
+              className="input text-sm w-36"
+              value={ciFilterType}
+              onChange={(e) => setCiFilterType(e.target.value as '' | 'AULA' | 'LINKEDIN')}
+            >
+              <option value="">Todos os tipos</option>
+              <option value="AULA">Aula</option>
+              <option value="LINKEDIN">LinkedIn</option>
+            </select>
+            <select
+              className="input text-sm w-36"
+              value={ciFilterValid}
+              onChange={(e) => setCiFilterValid(e.target.value as '' | 'valid' | 'invalid')}
+            >
+              <option value="">Todos os status</option>
+              <option value="valid">Válidos</option>
+              <option value="invalid">Inválidos</option>
+            </select>
+            {(ciFilterLiveId || ciFilterType || ciFilterValid) && (
+              <button
+                onClick={() => { setCiFilterLiveId(''); setCiFilterType(''); setCiFilterValid('') }}
+                className="text-xs text-gray-500 hover:text-white px-2"
+              >
+                ✕ Limpar
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-gray-600">
+            {filteredCheckIns.length} de {checkIns.length} check-in{checkIns.length !== 1 ? 's' : ''}
+          </p>
+
+          {filteredCheckIns.length === 0 ? (
             <div className="card p-10 text-center text-gray-600">
-              <div className="text-3xl mb-2">✓</div>
-              Nenhum check-in registrado ainda.
+              <div className="text-3xl mb-2">🔍</div>
+              Nenhum check-in encontrado.
             </div>
           ) : (
-            checkIns.map((c) => (
+            filteredCheckIns.map((c) => (
               <div
                 key={c.id}
                 className={`card p-4 ${c.isInvalid ? 'opacity-50 border-red-800/40' : ''}`}
@@ -405,52 +483,138 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
       {/* Tab: Participantes */}
       {tab === 'participants' && (
         <div className="space-y-3">
-          {users.length === 0 ? (
-            <div className="card p-10 text-center text-gray-600">Nenhum participante ainda.</div>
+          {/* Search */}
+          <input
+            type="text"
+            className="input text-sm w-full"
+            placeholder="🔍 Buscar por nome ou e-mail..."
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+          />
+          {userSearch && (
+            <p className="text-xs text-gray-600">
+              {filteredUsers.length} de {users.length} participante{users.length !== 1 ? 's' : ''}
+            </p>
+          )}
+
+          {filteredUsers.length === 0 ? (
+            <div className="card p-10 text-center text-gray-600">
+              {userSearch ? 'Nenhum participante encontrado.' : 'Nenhum participante ainda.'}
+            </div>
           ) : (
-            users.map((u) => (
+            filteredUsers.map((u) => (
               <div
                 key={u.id}
-                className={`card p-4 flex flex-wrap items-center gap-3 ${
-                  u.isBanned ? 'opacity-50 border-red-800/30' : ''
-                }`}
+                className={`card p-4 ${u.isBanned ? 'opacity-60 border-red-800/30' : ''}`}
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-sm">{u.name}</span>
-                    {u.isBanned && (
-                      <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium">
-                        Banido
+                {/* Row header — click to expand */}
+                <div
+                  className="flex flex-wrap items-center gap-3 cursor-pointer select-none"
+                  onClick={() => setExpandedUserId(expandedUserId === u.id ? null : u.id)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{u.name}</span>
+                      {u.isBanned && (
+                        <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium">
+                          Banido
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-600 ml-auto">
+                        {expandedUserId === u.id ? '▲' : '▼'}
                       </span>
+                    </div>
+                    <span className="text-gray-600 text-xs">{u.email}</span>
+                    <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                      <span className="font-medium text-violet-400">{u.points} pts</span>
+                      <span>{u.aulaCount} aulas</span>
+                      <span>{u.checkInsCount} check-ins</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => toggleBan(u.id, u.isBanned)}
+                      disabled={processing === u.id}
+                      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                        u.isBanned
+                          ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                          : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+                      }`}
+                    >
+                      {processing === u.id ? '...' : u.isBanned ? '✅ Desbanir' : '🚫 Banir'}
+                    </button>
+                    <button
+                      onClick={() => deleteUser(u.id)}
+                      disabled={processing === u.id}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      🗑 Excluir
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expanded: check-in history */}
+                {expandedUserId === u.id && (
+                  <div className="mt-3 pt-3 border-t border-gray-800/60">
+                    <p className="text-xs text-gray-500 mb-2 font-medium">Histórico de check-ins</p>
+                    {checkIns.filter((c) => c.user.id === u.id).length === 0 ? (
+                      <p className="text-xs text-gray-600 italic">Sem check-ins registrados.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {checkIns
+                          .filter((c) => c.user.id === u.id)
+                          .sort((a, b) => a.live.order - b.live.order)
+                          .map((c) => (
+                            <div
+                              key={c.id}
+                              className={`text-xs rounded-lg px-3 py-2 flex flex-col gap-0.5 ${
+                                c.isInvalid
+                                  ? 'bg-red-900/10 border border-red-800/30'
+                                  : 'bg-gray-800/40'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium text-gray-300">
+                                  Aula {c.live.order}
+                                </span>
+                                <span
+                                  className={`px-1.5 py-0.5 rounded text-xs ${
+                                    c.type === 'LINKEDIN'
+                                      ? 'bg-blue-500/20 text-blue-400'
+                                      : 'bg-violet-500/20 text-violet-400'
+                                  }`}
+                                >
+                                  {c.type === 'LINKEDIN' ? '+3pts LinkedIn' : '+1pt Aula'}
+                                </span>
+                                {c.isInvalid && (
+                                  <span className="text-red-400">🚫 Inválido</span>
+                                )}
+                                <span className="text-gray-600 ml-auto">
+                                  {new Date(c.createdAt).toLocaleDateString('pt-BR', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                  })}
+                                </span>
+                              </div>
+                              {c.insight && (
+                                <p className="text-gray-500 italic line-clamp-2">"{c.insight}"</p>
+                              )}
+                              {c.linkedinUrl && (
+                                <a
+                                  href={c.linkedinUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:text-blue-300 truncate"
+                                >
+                                  {c.linkedinUrl}
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                      </div>
                     )}
                   </div>
-                  <span className="text-gray-600 text-xs">{u.email}</span>
-                  <div className="flex gap-3 mt-1 text-xs text-gray-500">
-                    <span>{u.points} pts</span>
-                    <span>{u.aulaCount} aulas</span>
-                    <span>{u.checkInsCount} check-ins</span>
-                  </div>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    onClick={() => toggleBan(u.id, u.isBanned)}
-                    disabled={processing === u.id}
-                    className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                      u.isBanned
-                        ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-                        : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
-                    }`}
-                  >
-                    {processing === u.id ? '...' : u.isBanned ? '✅ Desbanir' : '🚫 Banir'}
-                  </button>
-                  <button
-                    onClick={() => deleteUser(u.id)}
-                    disabled={processing === u.id}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    🗑 Excluir
-                  </button>
-                </div>
+                )}
               </div>
             ))
           )}
