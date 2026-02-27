@@ -37,6 +37,7 @@ export default async function DashboardPage() {
     .sort((a, b) => b.points - a.points)
   const userRank = sorted.findIndex((u) => u.id === session.userId) + 1
   const totalParticipants = sorted.length
+  const userPoints = sorted.find((u) => u.id === session.userId)?.points ?? 0
 
   const approvedAulaLiveIds = new Set(
     checkIns
@@ -74,6 +75,7 @@ export default async function DashboardPage() {
       totalLives={totalLives}
       userRank={userRank}
       totalParticipants={totalParticipants}
+      userPoints={userPoints}
       nextLiveId={nextLiveId}
     />
   )
