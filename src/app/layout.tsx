@@ -45,9 +45,6 @@ export default async function RootLayout({
         />
         <main className="pb-16 md:pb-0">{children}</main>
         <BottomNav />
-        <footer className="border-t border-gray-800 py-4 text-center pb-20 md:pb-4">
-          <p className="text-xs text-gray-600">Aplicação oficial PM3</p>
-        </footer>
       </body>
     </html>
   )

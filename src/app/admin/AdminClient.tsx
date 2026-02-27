@@ -9,10 +9,8 @@ interface CheckIn {
   linkedinUrl: string | null
   insight: string | null
   status: string
-  isInvalid: boolean
   adminNote: string | null
   createdAt: string
-  updatedAt: string
   reviewedAt: string | null
   reviewedBy: string | null
   user: { id: string; name: string; email: string }
@@ -30,110 +28,37 @@ interface Live {
   checkInsCount: number
 }
 
-interface UserRow {
-  id: string
-  name: string
-  email: string
-  isBanned: boolean
-  createdAt: string
-  checkInsCount: number
-  points: number
-  aulaCount: number
-}
-
 interface Props {
-  checkIns: CheckIn[]
+  pendingCheckIns: CheckIn[]
+  approvedCheckIns: CheckIn[]
+  rejectedCheckIns: CheckIn[]
   lives: Live[]
-  users: UserRow[]
 }
 
-type Tab = 'checkins' | 'participants' | 'lives'
+type Tab = 'pending' | 'approved' | 'rejected' | 'lives'
 
-export default function AdminClient({ checkIns, lives, users }: Props) {
+export default function AdminClient({
+  pendingCheckIns,
+  approvedCheckIns,
+  rejectedCheckIns,
+  lives,
+}: Props) {
   const router = useRouter()
-  const [tab, setTab] = useState<Tab>('checkins')
+  const [tab, setTab] = useState<Tab>('pending')
   const [processing, setProcessing] = useState<string | null>(null)
+  const [notes, setNotes] = useState<Record<string, string>>({})
   const [editingLive, setEditingLive] = useState<string | null>(null)
   const [liveForms, setLiveForms] = useState<Record<string, Partial<Live>>>({})
 
-  // Point adjustment state
-  const [adjUserId, setAdjUserId] = useState('')
-  const [adjAmount, setAdjAmount] = useState('')
-  const [adjReason, setAdjReason] = useState('')
-  const [adjError, setAdjError] = useState('')
-
-  const validCount = checkIns.filter((c) => c.status === 'APPROVED' && !c.isInvalid).length
-  const invalidCount = checkIns.filter((c) => c.isInvalid).length
-
-  async function toggleInvalidate(id: string) {
+  async function reviewCheckIn(id: string, status: 'APPROVED' | 'REJECTED') {
     setProcessing(id)
     await fetch(`/api/admin/checkins/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'invalidate' }),
+      body: JSON.stringify({ status, adminNote: notes[id] || null }),
     })
     setProcessing(null)
     router.refresh()
-  }
-
-  async function deleteCheckIn(id: string) {
-    if (!confirm('Excluir este check-in permanentemente?')) return
-    setProcessing(id)
-    await fetch(`/api/admin/checkins/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete' }),
-    })
-    setProcessing(null)
-    router.refresh()
-  }
-
-  async function toggleBan(userId: string, isBanned: boolean) {
-    const action = isBanned ? 'unban' : 'ban'
-    const msg = isBanned
-      ? 'Desbanir este participante?'
-      : 'Banir este participante? O login será bloqueado.'
-    if (!confirm(msg)) return
-    setProcessing(userId)
-    await fetch(`/api/admin/users/${userId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action }),
-    })
-    setProcessing(null)
-    router.refresh()
-  }
-
-  async function deleteUser(userId: string) {
-    if (!confirm('Excluir conta e todos os check-ins deste participante? Esta ação é irreversível.')) return
-    setProcessing(userId)
-    await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' })
-    setProcessing(null)
-    router.refresh()
-  }
-
-  async function applyPointAdjustment() {
-    setAdjError('')
-    const amount = parseInt(adjAmount)
-    if (!adjUserId || isNaN(amount)) {
-      setAdjError('Selecione um participante e informe um valor.')
-      return
-    }
-    setProcessing('adj')
-    const res = await fetch('/api/admin/point-adjustments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: adjUserId, amount, reason: adjReason }),
-    })
-    setProcessing(null)
-    if (res.ok) {
-      setAdjUserId('')
-      setAdjAmount('')
-      setAdjReason('')
-      router.refresh()
-    } else {
-      setAdjError('Erro ao aplicar ajuste.')
-    }
   }
 
   async function updateLive(id: string) {
@@ -150,31 +75,111 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
     router.refresh()
   }
 
-  function convertYoutubeUrl(url: string): string {
-    try {
-      const u = new URL(url)
-      if (
-        (u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') &&
-        u.pathname === '/watch'
-      ) {
-        const v = u.searchParams.get('v')
-        if (v) return `https://www.youtube.com/embed/${v}`
-      }
-      if (u.hostname === 'youtu.be') {
-        const v = u.pathname.slice(1)
-        if (v) return `https://www.youtube.com/embed/${v}`
-      }
-    } catch {
-      // not a valid URL, return as-is
-    }
-    return url
+  function CheckInCard({ checkIn }: { checkIn: CheckIn }) {
+    const isPending = checkIn.status === 'PENDING'
+    return (
+      <div className="card p-4">
+        {/* Top row: user + meta */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <div className="flex-1 min-w-0">
+            <span className="font-medium text-sm">{checkIn.user.name}</span>
+            <span className="text-gray-600 text-xs ml-2">{checkIn.user.email}</span>
+          </div>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
+            checkIn.type === 'LINKEDIN'
+              ? 'bg-blue-500/20 text-blue-400'
+              : 'bg-violet-500/20 text-violet-400'
+          }`}>
+            {checkIn.type === 'LINKEDIN' ? 'LinkedIn +3pts' : 'Aula +1pt'}
+          </span>
+          <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded shrink-0">
+            Aula {checkIn.live.order}
+          </span>
+          <span className="text-xs text-gray-600 shrink-0">
+            {new Date(checkIn.createdAt).toLocaleDateString('pt-BR', {
+              day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+            })}
+          </span>
+          {!isPending && (
+            <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+              checkIn.status === 'APPROVED'
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : 'bg-red-500/20 text-red-400'
+            }`}>
+              {checkIn.status === 'APPROVED' ? '✓ Aprovado' : '✗ Rejeitado'}
+            </span>
+          )}
+        </div>
+
+        {/* Content + actions side-by-side */}
+        <div className="flex gap-3 items-start">
+          {/* Left: insight + linkedin */}
+          <div className="flex-1 min-w-0 space-y-2">
+            {checkIn.insight && (
+              <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-3 py-2 border-l-2 border-violet-500/40 italic">
+                "{checkIn.insight}"
+              </blockquote>
+            )}
+            {checkIn.linkedinUrl && (
+              <a
+                href={checkIn.linkedinUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-400 hover:text-blue-300 break-all flex items-center gap-1"
+              >
+                <span>🔗</span>
+                <span className="truncate">{checkIn.linkedinUrl}</span>
+              </a>
+            )}
+            {checkIn.adminNote && (
+              <p className="text-xs text-red-400">Nota: {checkIn.adminNote}</p>
+            )}
+            {checkIn.reviewedBy && (
+              <p className="text-xs text-gray-600">
+                Revisado por {checkIn.reviewedBy}{checkIn.reviewedAt ? ` em ${new Date(checkIn.reviewedAt).toLocaleDateString('pt-BR')}` : ''}
+              </p>
+            )}
+          </div>
+
+          {/* Right: actions */}
+          {isPending && (
+            <div className="flex flex-col gap-2 shrink-0 w-36">
+              <input
+                type="text"
+                className="input text-xs py-1"
+                placeholder="Nota (opcional)"
+                value={notes[checkIn.id] || ''}
+                onChange={(e) => setNotes((p) => ({ ...p, [checkIn.id]: e.target.value }))}
+              />
+              <button
+                onClick={() => reviewCheckIn(checkIn.id, 'APPROVED')}
+                disabled={processing === checkIn.id}
+                className="btn-success text-sm py-1.5"
+              >
+                {processing === checkIn.id ? '...' : '✓ Aprovar'}
+              </button>
+              <button
+                onClick={() => reviewCheckIn(checkIn.id, 'REJECTED')}
+                disabled={processing === checkIn.id}
+                className="btn-danger text-sm py-1.5"
+              >
+                {processing === checkIn.id ? '...' : '✗ Rejeitar'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
   }
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
-    { id: 'checkins', label: 'Check-ins', count: checkIns.length },
-    { id: 'participants', label: 'Participantes', count: users.length },
+    { id: 'pending', label: 'Pendentes', count: pendingCheckIns.length },
+    { id: 'approved', label: 'Aprovados', count: approvedCheckIns.length },
+    { id: 'rejected', label: 'Rejeitados', count: rejectedCheckIns.length },
     { id: 'lives', label: 'Lives' },
   ]
+
+  const currentList = tab === 'pending' ? pendingCheckIns : tab === 'approved' ? approvedCheckIns : rejectedCheckIns
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -183,67 +188,17 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         <div className="card p-4 text-center">
-          <div className="text-2xl font-bold text-emerald-400">{validCount}</div>
-          <div className="text-xs text-gray-500 mt-1">Check-ins válidos</div>
+          <div className="text-2xl font-bold text-amber-400">{pendingCheckIns.length}</div>
+          <div className="text-xs text-gray-500 mt-1">Pendentes</div>
         </div>
         <div className="card p-4 text-center">
-          <div className="text-2xl font-bold text-red-400">{invalidCount}</div>
-          <div className="text-xs text-gray-500 mt-1">Inválidos</div>
+          <div className="text-2xl font-bold text-emerald-400">{approvedCheckIns.length}</div>
+          <div className="text-xs text-gray-500 mt-1">Aprovados</div>
         </div>
         <div className="card p-4 text-center">
-          <div className="text-2xl font-bold text-violet-400">{users.length}</div>
-          <div className="text-xs text-gray-500 mt-1">Participantes</div>
+          <div className="text-2xl font-bold text-red-400">{rejectedCheckIns.length}</div>
+          <div className="text-xs text-gray-500 mt-1">Rejeitados</div>
         </div>
-      </div>
-
-      {/* Ajuste de pontos */}
-      <div className="card p-5 mb-6">
-        <h2 className="font-semibold mb-3 text-sm">⚖️ Ajuste manual de pontos</h2>
-        <div className="flex flex-wrap gap-2 items-end">
-          <div className="flex-1 min-w-[160px]">
-            <label className="text-xs text-gray-400 mb-1 block">Participante</label>
-            <select
-              className="input text-sm"
-              value={adjUserId}
-              onChange={(e) => setAdjUserId(e.target.value)}
-            >
-              <option value="">Selecionar...</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name} ({u.points} pts)
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="w-24">
-            <label className="text-xs text-gray-400 mb-1 block">Pontos (±)</label>
-            <input
-              type="number"
-              className="input text-sm"
-              placeholder="-5 ou +3"
-              value={adjAmount}
-              onChange={(e) => setAdjAmount(e.target.value)}
-            />
-          </div>
-          <div className="flex-1 min-w-[120px]">
-            <label className="text-xs text-gray-400 mb-1 block">Motivo (opcional)</label>
-            <input
-              type="text"
-              className="input text-sm"
-              placeholder="Ex: check-in incorreto"
-              value={adjReason}
-              onChange={(e) => setAdjReason(e.target.value)}
-            />
-          </div>
-          <button
-            onClick={applyPointAdjustment}
-            disabled={processing === 'adj'}
-            className="btn-primary text-sm"
-          >
-            {processing === 'adj' ? 'Aplicando...' : 'Aplicar'}
-          </button>
-        </div>
-        {adjError && <p className="text-xs text-red-400 mt-2">{adjError}</p>}
       </div>
 
       {/* Tabs */}
@@ -253,7 +208,9 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-              tab === t.id ? 'bg-violet-600 text-white' : 'text-gray-400 hover:text-white'
+              tab === t.id
+                ? 'bg-violet-600 text-white'
+                : 'text-gray-400 hover:text-white'
             }`}
           >
             {t.label}
@@ -266,158 +223,28 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
         ))}
       </div>
 
-      {/* Tab: Check-ins */}
-      {tab === 'checkins' && (
+      {/* Check-ins tabs */}
+      {tab !== 'lives' && (
         <div className="space-y-4">
-          {checkIns.length === 0 ? (
+          {currentList.length === 0 ? (
             <div className="card p-10 text-center text-gray-600">
-              <div className="text-3xl mb-2">✓</div>
-              Nenhum check-in registrado ainda.
+              <div className="text-3xl mb-2">
+                {tab === 'pending' ? '🎉' : tab === 'approved' ? '✓' : '—'}
+              </div>
+              Nenhum check-in {tab === 'pending' ? 'pendente' : tab === 'approved' ? 'aprovado' : 'rejeitado'}
             </div>
           ) : (
-            checkIns.map((c) => (
-              <div
-                key={c.id}
-                className={`card p-4 ${c.isInvalid ? 'opacity-50 border-red-800/40' : ''}`}
-              >
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <span className="font-medium text-sm">{c.user.name}</span>
-                    <span className="text-gray-600 text-xs ml-2">{c.user.email}</span>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
-                      c.type === 'LINKEDIN'
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : 'bg-violet-500/20 text-violet-400'
-                    }`}
-                  >
-                    {c.type === 'LINKEDIN' ? 'LinkedIn +3pts' : 'Aula +1pt'}
-                  </span>
-                  <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded shrink-0">
-                    Aula {c.live.order}
-                  </span>
-                  {c.isInvalid && (
-                    <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full shrink-0 font-medium">
-                      🚫 Inválido
-                    </span>
-                  )}
-                  <span className="text-xs text-gray-600 shrink-0">
-                    {new Date(c.createdAt).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
-                </div>
-
-                <div className="flex gap-3 items-start">
-                  <div className="flex-1 min-w-0 space-y-2">
-                    {c.insight && (
-                      <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-3 py-2 border-l-2 border-violet-500/40 italic">
-                        "{c.insight}"
-                      </blockquote>
-                    )}
-                    {c.linkedinUrl && (
-                      <a
-                        href={c.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-400 hover:text-blue-300 break-all flex items-center gap-1"
-                      >
-                        <span>🔗</span>
-                        <span className="truncate">{c.linkedinUrl}</span>
-                      </a>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2 shrink-0">
-                    <button
-                      onClick={() => toggleInvalidate(c.id)}
-                      disabled={processing === c.id}
-                      className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                        c.isInvalid
-                          ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-                          : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                      }`}
-                    >
-                      {processing === c.id ? '...' : c.isInvalid ? '✅ Revalidar' : '🚫 Invalidar'}
-                    </button>
-                    <button
-                      onClick={() => deleteCheckIn(c.id)}
-                      disabled={processing === c.id}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                    >
-                      🗑 Excluir
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
+            currentList.map((c) => <CheckInCard key={c.id} checkIn={c} />)
           )}
         </div>
       )}
 
-      {/* Tab: Participantes */}
-      {tab === 'participants' && (
-        <div className="space-y-3">
-          {users.length === 0 ? (
-            <div className="card p-10 text-center text-gray-600">Nenhum participante ainda.</div>
-          ) : (
-            users.map((u) => (
-              <div
-                key={u.id}
-                className={`card p-4 flex flex-wrap items-center gap-3 ${
-                  u.isBanned ? 'opacity-50 border-red-800/30' : ''
-                }`}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-sm">{u.name}</span>
-                    {u.isBanned && (
-                      <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium">
-                        Banido
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-gray-600 text-xs">{u.email}</span>
-                  <div className="flex gap-3 mt-1 text-xs text-gray-500">
-                    <span>{u.points} pts</span>
-                    <span>{u.aulaCount} aulas</span>
-                    <span>{u.checkInsCount} check-ins</span>
-                  </div>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    onClick={() => toggleBan(u.id, u.isBanned)}
-                    disabled={processing === u.id}
-                    className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                      u.isBanned
-                        ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-                        : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
-                    }`}
-                  >
-                    {processing === u.id ? '...' : u.isBanned ? '✅ Desbanir' : '🚫 Banir'}
-                  </button>
-                  <button
-                    onClick={() => deleteUser(u.id)}
-                    disabled={processing === u.id}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    🗑 Excluir
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* Tab: Lives */}
+      {/* Lives tab */}
       {tab === 'lives' && (
         <div className="space-y-3">
           {lives.map((live) => {
             const isEditing = editingLive === live.id
+            const form = liveForms[live.id] || {}
 
             return (
               <div key={live.id} className="card p-5">
@@ -489,23 +316,13 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
                     <div>
                       <label className="text-xs text-gray-400 mb-1 block">
                         🎥 URL da gravação
-                        <span className="text-gray-600 ml-1">
-                          (cole a URL do YouTube — converte automaticamente para embed)
-                        </span>
+                        <span className="text-gray-600 ml-1">(embed: youtube.com/embed/ID, Loom, Vimeo)</span>
                       </label>
                       <input
                         type="url"
                         className="input text-sm"
-                        placeholder="https://www.youtube.com/watch?v=... ou embed"
+                        placeholder="https://www.youtube.com/embed/..."
                         defaultValue={live.recordingUrl || ''}
-                        onBlur={(e) => {
-                          const converted = convertYoutubeUrl(e.target.value)
-                          e.target.value = converted
-                          setLiveForms((p) => ({
-                            ...p,
-                            [live.id]: { ...p[live.id], recordingUrl: converted },
-                          }))
-                        }}
                         onChange={(e) =>
                           setLiveForms((p) => ({
                             ...p,
@@ -551,11 +368,7 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
                       {live.scheduledAt && (
                         <p className="text-xs text-gray-600 pl-7">
                           {new Date(live.scheduledAt).toLocaleDateString('pt-BR', {
-                            weekday: 'short',
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
+                            weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
                           })}
                         </p>
                       )}

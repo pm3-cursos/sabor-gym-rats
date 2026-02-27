@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import AdminClient from './AdminClient'
-import { calcPoints, calcAulaCount } from '@/lib/points'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,48 +9,29 @@ export default async function AdminPage() {
   const session = await getSession()
   if (!session || session.role !== 'ADMIN') redirect('/dashboard')
 
-  const [checkIns, lives, usersRaw] = await Promise.all([
+  const [checkIns, lives] = await Promise.all([
     prisma.checkIn.findMany({
       include: {
         user: { select: { id: true, name: true, email: true } },
         live: { select: { id: true, title: true, order: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     }),
     prisma.live.findMany({
       orderBy: { order: 'asc' },
       include: { _count: { select: { checkIns: true } } },
     }),
-    prisma.user.findMany({
-      where: { role: 'USER' },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        isBanned: true,
-        createdAt: true,
-        checkIns: { select: { type: true, status: true, isInvalid: true } },
-        pointAdjustments: { select: { amount: true } },
-        _count: { select: { checkIns: true } },
-      },
-      orderBy: { createdAt: 'asc' },
-    }),
   ])
 
-  const users = usersRaw.map((u) => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    isBanned: u.isBanned,
-    createdAt: u.createdAt.toISOString(),
-    checkInsCount: u._count.checkIns,
-    points: calcPoints(u.checkIns, u.pointAdjustments),
-    aulaCount: calcAulaCount(u.checkIns),
-  }))
+  const pending = checkIns.filter((c) => c.status === 'PENDING')
+  const approved = checkIns.filter((c) => c.status === 'APPROVED')
+  const rejected = checkIns.filter((c) => c.status === 'REJECTED')
 
   return (
     <AdminClient
-      checkIns={checkIns.map(serializeCheckIn)}
+      pendingCheckIns={pending.map(serializeCheckIn)}
+      approvedCheckIns={approved.map(serializeCheckIn)}
+      rejectedCheckIns={rejected.map(serializeCheckIn)}
       lives={lives.map((l) => ({
         id: l.id,
         title: l.title,
@@ -62,7 +42,6 @@ export default async function AdminPage() {
         recordingUrl: l.recordingUrl ?? null,
         checkInsCount: l._count.checkIns,
       }))}
-      users={users}
     />
   )
 }
@@ -73,10 +52,8 @@ function serializeCheckIn(c: {
   linkedinUrl: string | null
   insight: string | null
   status: string
-  isInvalid: boolean
   adminNote: string | null
   createdAt: Date
-  updatedAt: Date
   reviewedAt: Date | null
   reviewedBy: string | null
   user: { id: string; name: string; email: string }
@@ -88,10 +65,8 @@ function serializeCheckIn(c: {
     linkedinUrl: c.linkedinUrl,
     insight: c.insight,
     status: c.status,
-    isInvalid: c.isInvalid,
     adminNote: c.adminNote,
     createdAt: c.createdAt.toISOString(),
-    updatedAt: c.updatedAt.toISOString(),
     reviewedAt: c.reviewedAt?.toISOString() ?? null,
     reviewedBy: c.reviewedBy,
     user: c.user,

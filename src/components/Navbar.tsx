@@ -46,9 +46,9 @@ export default function Navbar({ user }: NavbarProps) {
           {user?.role === 'ADMIN' && navLink('/admin', 'Admin')}
         </div>
 
-        {/* Center: logo */}
+        {/* Center: logo — replace public/logo-pm3.svg with your official file */}
         <div className="flex justify-center">
-          <Link href={user ? '/dashboard' : '/'} aria-label="Maratona PM3">
+          <Link href="/" aria-label="ProductRats — Maratona PM3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-pm3.svg" alt="Maratona PM3" className="h-9 w-auto" />
           </Link>
