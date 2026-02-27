@@ -16,6 +16,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'userId e amount são obrigatórios.' }, { status: 400 })
   }
 
+  const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+  if (!userExists) {
+    return NextResponse.json({ error: 'Usuário não encontrado.' }, { status: 404 })
+  }
+
   const adj = await prisma.pointAdjustment.create({
     data: { userId, amount, reason: reason || null },
   })

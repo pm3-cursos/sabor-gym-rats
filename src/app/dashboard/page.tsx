@@ -65,6 +65,7 @@ export default async function DashboardPage() {
         insight: c.insight,
         status: c.status,
         adminNote: c.adminNote,
+        isInvalid: c.isInvalid,
         createdAt: c.createdAt.toISOString(),
         updatedAt: c.updatedAt.toISOString(),
       }))}

@@ -127,6 +127,7 @@ interface CheckIn {
   insight: string | null
   status: string
   adminNote: string | null
+  isInvalid: boolean
   createdAt: string
   updatedAt: string
 }

@@ -8,7 +8,7 @@ const EMOJIS = ['💡', '🔥', '🙌', '👏', '🤔']
 
 async function getFeed(currentUserId: string | null) {
   const items = await prisma.checkIn.findMany({
-    where: { status: 'APPROVED', type: 'AULA' },
+    where: { status: 'APPROVED', type: 'AULA', isInvalid: false },
     select: {
       id: true,
       insight: true,

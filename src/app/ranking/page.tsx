@@ -150,7 +150,7 @@ export default async function RankingPage() {
   ])
 
   const total = leaderboard.length
-  const champions = leaderboard.filter((u) => u.aulaCount >= 6)
+  const champions = leaderboard.filter((u) => u.aulaCount >= totalLives)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
