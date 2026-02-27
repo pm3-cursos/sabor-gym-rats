@@ -21,7 +21,6 @@ async function getFeed(currentUserId: string | null) {
       },
     },
     orderBy: { createdAt: 'desc' },
-    take: 60,
   })
 
   return items.map((item) => {
