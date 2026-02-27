@@ -45,8 +45,16 @@ export default async function RootLayout({
         />
         <main className={session ? 'pb-16 md:pb-0' : ''}>{children}</main>
         {session && <BottomNav />}
-        <footer className={`border-t border-gray-800 py-4 text-center ${session ? 'pb-20 md:pb-4' : 'pb-4'}`}>
+        <footer className={`border-t border-gray-800 py-4 text-center space-y-1 ${session ? 'pb-20 md:pb-4' : 'pb-4'}`}>
           <p className="text-xs text-gray-600">Aplicação oficial PM3</p>
+          <a
+            href="https://pm3com-my.sharepoint.com/:b:/g/personal/admins_pm3_com_br/IQBY8GwpRNwNRI07LSDG7hRvATPm2QpuB6D9P41cRDsIMqo?e=5VmnkS"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-gray-600 hover:text-gray-400 underline transition-colors"
+          >
+            Termos e Condições
+          </a>
         </footer>
       </body>
     </html>

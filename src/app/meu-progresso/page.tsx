@@ -133,8 +133,9 @@ export default async function MeuProgressoPage() {
         <ul className="divide-y divide-gray-800/60">
           {lives.map((live) => {
             const checkIn = checkIns.find((c) => c.liveId === live.id && c.type === 'AULA')
-            const isApproved = checkIn?.status === 'APPROVED'
+            const isApproved = checkIn?.status === 'APPROVED' && !checkIn.isInvalid
             const isRejected = checkIn?.status === 'REJECTED'
+            const isPending = !checkIn && live.isActive
 
             return (
               <li key={live.id} className="px-5 py-4 flex items-start gap-3">
@@ -158,17 +159,31 @@ export default async function MeuProgressoPage() {
                       "{checkIn.insight}"
                     </p>
                   )}
-                </div>
-                <div className="shrink-0 text-right">
-                  {isApproved && <span className="badge-approved text-xs">✓ Completa</span>}
-                  {isRejected && <span className="badge-rejected text-xs">✗ Rejeitado</span>}
-                  {!checkIn && !live.isActive && (
-                    <span className="text-xs text-gray-600">Em breve</span>
-                  )}
-                  {!checkIn && live.isActive && (
-                    <Link href="/dashboard" className="text-xs text-violet-400 hover:text-violet-300">
+                  {isPending && (
+                    <Link
+                      href={`/dashboard#live-${live.id}`}
+                      className="inline-block mt-2 text-xs bg-violet-600 hover:bg-violet-500 text-white px-3 py-1 rounded-full transition-colors"
+                    >
                       Fazer check-in →
                     </Link>
+                  )}
+                </div>
+                <div className="shrink-0 text-right">
+                  {isApproved && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">
+                      ✓ Aula assistida
+                    </span>
+                  )}
+                  {isRejected && <span className="badge-rejected text-xs">✗ Rejeitado</span>}
+                  {!checkIn && !live.isActive && (
+                    <span className="inline-flex items-center text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded-full">
+                      Em breve
+                    </span>
+                  )}
+                  {isPending && (
+                    <span className="inline-flex items-center text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-medium">
+                      Pendente
+                    </span>
                   )}
                 </div>
               </li>

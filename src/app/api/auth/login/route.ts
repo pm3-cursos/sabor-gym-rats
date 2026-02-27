@@ -22,7 +22,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (user.isBanned) {
-      return NextResponse.json({ error: 'Sua conta foi suspensa.' }, { status: 403 })
+      return NextResponse.json(
+        { error: 'Sua conta foi banida. Entre em contato com o suporte.' },
+        { status: 403 },
+      )
     }
 
     const token = await createToken({

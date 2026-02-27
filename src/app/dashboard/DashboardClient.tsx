@@ -5,6 +5,122 @@ import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
 import { getUserLevel, getAdditionalBadges } from '@/lib/points'
 
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
+function Toast({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 3000)
+    return () => clearTimeout(t)
+  }, [onDismiss])
+  return (
+    <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white text-sm px-5 py-2.5 rounded-full shadow-lg whitespace-nowrap">
+      ✓ {message}
+    </div>
+  )
+}
+
+// ─── Edit check-in modal ──────────────────────────────────────────────────────
+
+interface EditCheckIn {
+  id: string
+  type: string
+  insight: string | null
+  linkedinUrl: string | null
+}
+
+function EditCheckInModal({
+  checkIn,
+  onSave,
+  onCancel,
+  saving,
+}: {
+  checkIn: EditCheckIn
+  onSave: (data: { insight?: string; linkedinUrl?: string }) => Promise<void>
+  onCancel: () => void
+  saving: boolean
+}) {
+  const [insight, setInsight] = useState(checkIn.insight || '')
+  const [url, setUrl] = useState(checkIn.linkedinUrl || '')
+  const [error, setError] = useState('')
+
+  async function handleSave() {
+    setError('')
+    if (checkIn.type === 'AULA') {
+      if (insight.trim().length < 10) {
+        setError('Mínimo 10 caracteres.')
+        return
+      }
+      try {
+        await onSave({ insight: insight.trim() })
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Erro ao salvar.')
+      }
+    } else {
+      const trimmed = url.trim()
+      if (!trimmed.startsWith('https://www.linkedin.com/') || !trimmed.includes('posts/')) {
+        setError('Cole o link oficial do LinkedIn (linkedin.com/posts/).')
+        return
+      }
+      try {
+        await onSave({ linkedinUrl: trimmed })
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Erro ao salvar.')
+      }
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div className="card p-6 max-w-md w-full space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold">Editar check-in</h3>
+          <button onClick={onCancel} className="text-gray-500 hover:text-white transition-colors text-lg">✕</button>
+        </div>
+        {checkIn.type === 'AULA' ? (
+          <div className="space-y-1">
+            <label className="text-xs text-gray-400 block">Seu insight</label>
+            <textarea
+              className="input text-sm resize-none w-full"
+              rows={4}
+              value={insight}
+              onChange={(e) => setInsight(e.target.value)}
+              autoFocus
+            />
+            <div
+              className={`text-xs text-right tabular-nums ${
+                insight.trim().length < 10 ? 'text-gray-600' : 'text-emerald-400'
+              }`}
+            >
+              {insight.trim().length} / 10 mín.
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <label className="text-xs text-gray-400 block">URL da publicação LinkedIn</label>
+            <input
+              type="url"
+              className="input text-sm w-full"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://www.linkedin.com/posts/..."
+              autoFocus
+            />
+          </div>
+        )}
+        {error && <p className="text-xs text-red-400">{error}</p>}
+        <div className="flex gap-3">
+          <button onClick={handleSave} disabled={saving} className="btn-primary flex-1">
+            {saving ? 'Salvando...' : 'Salvar alterações'}
+          </button>
+          <button onClick={onCancel} className="btn-secondary flex-1">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Confirm modal ────────────────────────────────────────────────────────────
 
 function ConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
@@ -213,11 +329,9 @@ export default function DashboardClient({
   const [linkedinSuccess, setLinkedinSuccess] = useState<Record<string, boolean>>({})
   const [showCelebration, setShowCelebration] = useState(false)
   const [recordingLiveId, setRecordingLiveId] = useState<string | null>(null)
-  // Edit state
-  const [editingCheckInId, setEditingCheckInId] = useState<string | null>(null)
-  const [editInsight, setEditInsight] = useState('')
-  const [editUrl, setEditUrl] = useState('')
-  const [editError, setEditError] = useState('')
+  // Edit modal state
+  const [editingCheckIn, setEditingCheckIn] = useState<EditCheckIn | null>(null)
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
   // Delete confirm state
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
@@ -299,44 +413,21 @@ export default function DashboardClient({
     router.refresh()
   }
 
-  function startEdit(checkIn: CheckIn) {
-    setEditingCheckInId(checkIn.id)
-    setEditInsight(checkIn.insight || '')
-    setEditUrl(checkIn.linkedinUrl || '')
-    setEditError('')
-  }
-
-  async function saveEdit(checkIn: CheckIn) {
-    setEditError('')
-    const body: Record<string, string> = {}
-    if (checkIn.type === 'AULA') {
-      const trimmed = editInsight.trim()
-      if (trimmed.length < 10) {
-        setEditError('Mínimo 10 caracteres.')
-        return
-      }
-      body.insight = trimmed
-    } else {
-      const trimmed = editUrl.trim()
-      if (!trimmed.startsWith('https://www.linkedin.com/') || !trimmed.includes('posts/')) {
-        setEditError('Cole o link oficial do LinkedIn (linkedin.com/posts/).')
-        return
-      }
-      body.linkedinUrl = trimmed
-    }
-    setSubmitting(checkIn.id)
-    const res = await fetch(`/api/checkins/${checkIn.id}`, {
+  async function handleSaveEdit(data: { insight?: string; linkedinUrl?: string }) {
+    if (!editingCheckIn) return
+    setSubmitting(editingCheckIn.id)
+    const res = await fetch(`/api/checkins/${editingCheckIn.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify(data),
     })
     setSubmitting(null)
     if (!res.ok) {
-      const data = await res.json()
-      setEditError(data.error || 'Erro ao salvar.')
-      return
+      const json = await res.json()
+      throw new Error(json.error || 'Erro ao salvar.')
     }
-    setEditingCheckInId(null)
+    setEditingCheckIn(null)
+    setToastMsg('Check-in atualizado com sucesso!')
     router.refresh()
   }
 
@@ -375,6 +466,19 @@ export default function DashboardClient({
           onConfirm={confirmDelete}
           onCancel={() => setConfirmDeleteId(null)}
         />
+      )}
+
+      {editingCheckIn && (
+        <EditCheckInModal
+          checkIn={editingCheckIn}
+          onSave={handleSaveEdit}
+          onCancel={() => setEditingCheckIn(null)}
+          saving={submitting === editingCheckIn.id}
+        />
+      )}
+
+      {toastMsg && (
+        <Toast message={toastMsg} onDismiss={() => setToastMsg(null)} />
       )}
 
       {/* Header */}
@@ -466,7 +570,7 @@ export default function DashboardClient({
           else if (isNext) cardClass += ' border-violet-800/50'
 
           return (
-            <div key={live.id} className={`${cardClass} card-hover`}>
+            <div key={live.id} id={`live-${live.id}`} className={`${cardClass} card-hover`}>
               {/* Card header */}
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="flex items-center gap-2 min-w-0">
@@ -534,7 +638,7 @@ export default function DashboardClient({
                   </div>
                 )}
 
-                {(aulaApproved || aulaInvalid) && aulaCI?.insight && editingCheckInId !== aulaCI.id && (
+                {(aulaApproved || aulaInvalid) && aulaCI?.insight && (
                   <div>
                     <blockquote className="text-sm text-gray-300 bg-gray-800/60 rounded-lg px-4 py-3 border-l-2 border-violet-500/40 italic mb-2">
                       "{aulaCI.insight}"
@@ -544,10 +648,10 @@ export default function DashboardClient({
                     )}
                     <div className="flex gap-2">
                       <button
-                        onClick={() => startEdit(aulaCI)}
+                        onClick={() => setEditingCheckIn(aulaCI)}
                         className="text-xs px-2.5 py-1 rounded bg-gray-800/60 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
                       >
-                        ✏️ Editar
+                        ✏️ Editar check-in
                       </button>
                       <button
                         onClick={() => handleDeleteCheckIn(aulaCI.id)}
@@ -555,33 +659,6 @@ export default function DashboardClient({
                         className="text-xs px-2.5 py-1 rounded bg-gray-800/60 hover:bg-red-900/40 text-gray-400 hover:text-red-400 transition-colors"
                       >
                         🗑 Remover
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {aulaApproved && editingCheckInId === aulaCI?.id && (
-                  <div className="space-y-2">
-                    <textarea
-                      className="input text-sm resize-none w-full"
-                      rows={3}
-                      value={editInsight}
-                      onChange={(e) => setEditInsight(e.target.value)}
-                    />
-                    {editError && <p className="text-xs text-red-400">{editError}</p>}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => saveEdit(aulaCI!)}
-                        disabled={submitting === aulaCI?.id}
-                        className="btn-primary text-xs py-1.5"
-                      >
-                        {submitting === aulaCI?.id ? 'Salvando...' : 'Salvar'}
-                      </button>
-                      <button
-                        onClick={() => setEditingCheckInId(null)}
-                        className="btn-secondary text-xs py-1.5"
-                      >
-                        Cancelar
                       </button>
                     </div>
                   </div>
@@ -673,7 +750,7 @@ export default function DashboardClient({
                     </p>
                   )}
 
-                  {linkedinCI?.status === 'APPROVED' && linkedinCI?.linkedinUrl && editingCheckInId !== linkedinCI.id && (
+                  {linkedinCI?.status === 'APPROVED' && linkedinCI?.linkedinUrl && (
                     <div className="text-xs text-gray-500 bg-gray-800/40 rounded-lg px-3 py-2 mb-3">
                       <a
                         href={linkedinCI.linkedinUrl}
@@ -688,10 +765,10 @@ export default function DashboardClient({
                       )}
                       <div className="flex gap-2 mt-2">
                         <button
-                          onClick={() => startEdit(linkedinCI)}
+                          onClick={() => setEditingCheckIn(linkedinCI)}
                           className="text-xs px-2.5 py-1 rounded bg-gray-800/60 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
                         >
-                          ✏️ Editar
+                          ✏️ Editar check-in
                         </button>
                         <button
                           onClick={() => handleDeleteCheckIn(linkedinCI.id)}
@@ -699,34 +776,6 @@ export default function DashboardClient({
                           className="text-xs px-2.5 py-1 rounded bg-gray-800/60 hover:bg-red-900/40 text-gray-400 hover:text-red-400 transition-colors"
                         >
                           🗑 Remover
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {linkedinCI?.status === 'APPROVED' && editingCheckInId === linkedinCI?.id && (
-                    <div className="space-y-2 mb-3">
-                      <input
-                        type="url"
-                        className="input text-sm w-full"
-                        value={editUrl}
-                        onChange={(e) => setEditUrl(e.target.value)}
-                        placeholder="https://www.linkedin.com/posts/..."
-                      />
-                      {editError && <p className="text-xs text-red-400">{editError}</p>}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => saveEdit(linkedinCI!)}
-                          disabled={submitting === linkedinCI?.id}
-                          className="btn-primary text-xs py-1.5"
-                        >
-                          {submitting === linkedinCI?.id ? 'Salvando...' : 'Salvar'}
-                        </button>
-                        <button
-                          onClick={() => setEditingCheckInId(null)}
-                          className="btn-secondary text-xs py-1.5"
-                        >
-                          Cancelar
                         </button>
                       </div>
                     </div>
