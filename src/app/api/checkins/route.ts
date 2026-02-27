@@ -43,9 +43,13 @@ export async function POST(request: NextRequest) {
   }
 
   if (type === 'LINKEDIN') {
-    if (!linkedinUrl || !linkedinUrl.includes('linkedin.com')) {
+    const url = linkedinUrl?.trim() ?? ''
+    if (!url.startsWith('https://www.linkedin.com/') || !url.includes('posts/')) {
       return NextResponse.json(
-        { error: 'Por favor, envie um link válido do LinkedIn.' },
+        {
+          error:
+            'Cole o link oficial de uma publicação do LinkedIn (deve conter linkedin.com/posts/).',
+        },
         { status: 400 },
       )
     }
@@ -66,15 +70,9 @@ export async function POST(request: NextRequest) {
     where: { userId_liveId_type: { userId: session.userId, liveId, type } },
   })
 
-  if (existing?.status === 'PENDING') {
-    return NextResponse.json(
-      { error: 'Você já enviou este check-in. Aguarde a aprovação.' },
-      { status: 409 },
-    )
-  }
   if (existing?.status === 'APPROVED') {
     return NextResponse.json(
-      { error: 'Este check-in já foi aprovado.' },
+      { error: 'Este check-in já foi registrado.' },
       { status: 409 },
     )
   }
@@ -87,7 +85,7 @@ export async function POST(request: NextRequest) {
     update: {
       insight: insightValue,
       linkedinUrl: linkedinValue,
-      status: 'PENDING',
+      status: 'APPROVED',
       adminNote: null,
       reviewedAt: null,
       reviewedBy: null,
@@ -98,7 +96,7 @@ export async function POST(request: NextRequest) {
       type,
       insight: insightValue,
       linkedinUrl: linkedinValue,
-      status: 'PENDING',
+      status: 'APPROVED',
     },
     include: { live: true },
   })
