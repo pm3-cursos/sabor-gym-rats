@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isBanned, setIsBanned] = useState(false)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -26,6 +27,7 @@ export default function LoginPage() {
     setLoading(false)
 
     if (!res.ok) {
+      setIsBanned(res.status === 403)
       setError(data.error || 'Erro ao entrar.')
       return
     }
@@ -45,7 +47,8 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="card p-6 space-y-4">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg">
+            <div className={`border text-sm px-4 py-3 rounded-lg ${isBanned ? 'bg-red-900/20 border-red-500/40 text-red-300' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
+              {isBanned && <p className="font-semibold mb-0.5">Conta suspensa</p>}
               {error}
             </div>
           )}

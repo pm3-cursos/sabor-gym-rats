@@ -3,15 +3,18 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const links = [
+const BASE_LINKS = [
   { href: '/dashboard', label: 'Check-ins', icon: '✅' },
   { href: '/meu-progresso', label: 'Progresso', icon: '📈' },
   { href: '/ranking', label: 'Ranking', icon: '🏆' },
   { href: '/feed', label: 'Feed', icon: '📰' },
 ]
 
-export default function BottomNav() {
+export default function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname()
+  const links = isAdmin
+    ? [...BASE_LINKS, { href: '/admin', label: 'Admin', icon: '⚙️' }]
+    : BASE_LINKS
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-gray-950 border-t border-gray-800 pb-safe">

@@ -15,6 +15,12 @@ export default function CadastroPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+
+    if (!name.trim().includes(' ')) {
+      setError('Por favor, informe seu nome completo (nome e sobrenome).')
+      return
+    }
+
     setLoading(true)
 
     const res = await fetch('/api/auth/cadastro', {
