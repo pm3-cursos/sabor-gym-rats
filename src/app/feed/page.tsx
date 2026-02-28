@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db'
 import { getSession } from '@/lib/auth'
-import FeedCard from './FeedCard'
+import FeedList from './FeedList'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +13,8 @@ async function getFeed(currentUserId: string | null) {
       id: true,
       insight: true,
       linkedinUrl: true,
+      userId: true,
+      liveId: true,
       createdAt: true,
       user: { select: { name: true } },
       live: { select: { title: true, order: true } },
@@ -22,6 +24,25 @@ async function getFeed(currentUserId: string | null) {
     },
     orderBy: { createdAt: 'desc' },
   })
+
+  // Fetch LinkedIn URLs from LINKEDIN-type sibling check-ins
+  const linkedinCheckIns = items.length > 0
+    ? await prisma.checkIn.findMany({
+        where: {
+          type: 'LINKEDIN',
+          status: 'APPROVED',
+          isInvalid: false,
+          userId: { in: items.map((i) => i.userId) },
+          liveId: { in: items.map((i) => i.liveId) },
+        },
+        select: { userId: true, liveId: true, linkedinUrl: true },
+      })
+    : []
+
+  const linkedinMap = new Map<string, string>()
+  for (const li of linkedinCheckIns) {
+    if (li.linkedinUrl) linkedinMap.set(`${li.userId}_${li.liveId}`, li.linkedinUrl)
+  }
 
   return items.map((item) => {
     const counts: Record<string, number> = {}
@@ -35,7 +56,7 @@ async function getFeed(currentUserId: string | null) {
     return {
       id: item.id,
       insight: item.insight,
-      linkedinUrl: item.linkedinUrl,
+      linkedinUrl: linkedinMap.get(`${item.userId}_${item.liveId}`) ?? null,
       createdAt: item.createdAt.toISOString(),
       userName: item.user.name,
       liveTitle: item.live.title,
@@ -63,18 +84,15 @@ export default async function FeedPage() {
         <div className="card p-10 text-center text-gray-600">
           <div className="text-4xl mb-3">📭</div>
           <p>Nenhum check-in registrado ainda. Seja o primeiro!</p>
+          <a
+            href="/dashboard"
+            className="inline-block mt-4 text-sm bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-full transition-colors"
+          >
+            Fazer meu check-in
+          </a>
         </div>
       ) : (
-        <div className="space-y-4">
-          {items.map((item) => (
-            <FeedCard
-              key={item.id}
-              item={item}
-              isLoggedIn={!!session}
-              emojis={EMOJIS}
-            />
-          ))}
-        </div>
+        <FeedList items={items} isLoggedIn={!!session} emojis={EMOJIS} />
       )}
     </div>
   )

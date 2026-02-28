@@ -167,6 +167,14 @@ export default async function MeuProgressoPage() {
                       Fazer check-in →
                     </Link>
                   )}
+                  {isRejected && (
+                    <Link
+                      href={`/dashboard#live-${live.id}`}
+                      className="inline-block mt-2 text-xs bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded-full transition-colors"
+                    >
+                      Reenviar check-in →
+                    </Link>
+                  )}
                 </div>
                 <div className="shrink-0 text-right">
                   {isApproved && (
@@ -177,7 +185,9 @@ export default async function MeuProgressoPage() {
                   {isRejected && <span className="badge-rejected text-xs">✗ Rejeitado</span>}
                   {!checkIn && !live.isActive && (
                     <span className="inline-flex items-center text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded-full">
-                      Em breve
+                      {live.scheduledAt
+                        ? new Date(live.scheduledAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+                        : 'Em breve'}
                     </span>
                   )}
                   {isPending && (
@@ -192,8 +202,8 @@ export default async function MeuProgressoPage() {
         </ul>
       </div>
 
-      <Link href="/dashboard" className="btn-primary block text-center">
-        Ir para Check-ins
+      <Link href="/ranking" className="btn-secondary block text-center">
+        Ver meu ranking →
       </Link>
     </div>
   )

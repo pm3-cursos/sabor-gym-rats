@@ -13,7 +13,7 @@ function Toast({ message, onDismiss }: { message: string; onDismiss: () => void 
     return () => clearTimeout(t)
   }, [onDismiss])
   return (
-    <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white text-sm px-5 py-2.5 rounded-full shadow-lg whitespace-nowrap">
+    <div className="fixed bottom-28 md:bottom-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white text-sm px-5 py-2.5 rounded-full shadow-lg whitespace-nowrap">
       ✓ {message}
     </div>
   )
@@ -82,6 +82,7 @@ function EditCheckInModal({
             <textarea
               className="input text-sm resize-none w-full"
               rows={4}
+              placeholder="O que você aprendeu nesta aula? Qual foi o seu maior insight?"
               value={insight}
               onChange={(e) => setInsight(e.target.value)}
               autoFocus
@@ -91,7 +92,9 @@ function EditCheckInModal({
                 insight.trim().length < 10 ? 'text-gray-600' : 'text-emerald-400'
               }`}
             >
-              {insight.trim().length} / 10 mín.
+              {insight.trim().length < 10
+                ? `Faltam ${10 - insight.trim().length} caracteres`
+                : `✓ ${insight.trim().length} caracteres`}
             </div>
           </div>
         ) : (
@@ -328,6 +331,7 @@ export default function DashboardClient({
   const [aulaSuccess, setAulaSuccess] = useState<Record<string, boolean>>({})
   const [linkedinSuccess, setLinkedinSuccess] = useState<Record<string, boolean>>({})
   const [showCelebration, setShowCelebration] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [recordingLiveId, setRecordingLiveId] = useState<string | null>(null)
   // Edit modal state
   const [editingCheckIn, setEditingCheckIn] = useState<EditCheckIn | null>(null)
@@ -351,6 +355,20 @@ export default function DashboardClient({
       localStorage.setItem('pm3-celebration-shown', '1')
     }
   }, [approvedCount, totalLives])
+
+  useEffect(() => {
+    const hash = window.location.hash
+    if (!hash) return
+    setTimeout(() => {
+      document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }, [])
+
+  useEffect(() => {
+    if (approvedCount === 0 && !localStorage.getItem('pm3-onboarding-dismissed')) {
+      setShowOnboarding(true)
+    }
+  }, [approvedCount])
 
   const aulaCheckInMap: Record<string, CheckIn> = {}
   const linkedinCheckInMap: Record<string, CheckIn> = {}
@@ -479,6 +497,30 @@ export default function DashboardClient({
 
       {toastMsg && (
         <Toast message={toastMsg} onDismiss={() => setToastMsg(null)} />
+      )}
+
+      {/* Onboarding banner */}
+      {showOnboarding && (
+        <div className="card p-5 mb-6 border-violet-800/50 bg-violet-500/5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-2xl mb-1">👋</div>
+              <h3 className="font-semibold mb-1">Bem-vindo à Maratona PM3!</h3>
+              <p className="text-sm text-gray-400">
+                Assista às aulas ao vivo, registre seu insight e ganhe pontos. Os 3 participantes com mais pontos vencem prêmios incríveis!
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                localStorage.setItem('pm3-onboarding-dismissed', '1')
+                setShowOnboarding(false)
+              }}
+              className="text-gray-600 hover:text-white transition-colors shrink-0 text-lg"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Header */}
@@ -696,7 +738,11 @@ export default function DashboardClient({
                             : 'text-red-400'
                         }`}
                       >
-                        {insightLen} / 10 mín.
+                        {insightLen === 0
+                          ? 'Mínimo 10 caracteres'
+                          : insightValid
+                          ? `✓ ${insightLen} caracteres`
+                          : `Faltam ${10 - insightLen} caracteres`}
                       </div>
                     </div>
                     {aulaErrors[live.id] && (

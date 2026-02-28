@@ -44,7 +44,7 @@ export default async function RootLayout({
           user={session ? { name: session.name, role: session.role } : null}
         />
         <main className={session ? 'pb-16 md:pb-0' : ''}>{children}</main>
-        {session && <BottomNav />}
+        {session && <BottomNav isAdmin={session.role === 'ADMIN'} />}
         <footer className={`border-t border-gray-800 py-4 text-center space-y-1 ${session ? 'pb-20 md:pb-4' : 'pb-4'}`}>
           <p className="text-xs text-gray-600">Aplicação oficial PM3</p>
           <a

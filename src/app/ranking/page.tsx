@@ -196,10 +196,17 @@ export default async function RankingPage() {
       />
 
       {!session && (
-        <p className="text-center text-sm text-gray-500 mt-6">
-          <a href="/cadastro" className="text-violet-400 hover:text-violet-300">Cadastre-se</a>
-          {' '}para participar e aparecer no ranking!
-        </p>
+        <div className="mt-8 card p-6 text-center border-violet-800/50 bg-violet-500/5">
+          <div className="text-3xl mb-3">🏁</div>
+          <h3 className="font-bold text-lg mb-1">Quer aparecer no ranking?</h3>
+          <p className="text-sm text-gray-400 mb-4">
+            Cadastre-se gratuitamente, assista às aulas e concorra a prêmios incríveis!
+          </p>
+          <div className="flex gap-3 justify-center">
+            <a href="/cadastro" className="btn-primary">Criar conta grátis</a>
+            <a href="/login" className="btn-secondary">Entrar</a>
+          </div>
+        </div>
       )}
     </div>
   )
