@@ -26,7 +26,7 @@ export default function FeedList({
   isLoggedIn: boolean
   emojis: string[]
 }) {
-  const liveOrders = [...new Set(items.map((i) => i.liveOrder))].sort((a, b) => a - b)
+  const liveOrders = Array.from(new Set(items.map((i) => i.liveOrder))).sort((a, b) => a - b)
   const [filterOrder, setFilterOrder] = useState<number | null>(null)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
