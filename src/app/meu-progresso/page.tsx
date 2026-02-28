@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { calcPoints, calcAulaCount, calcLinkedinCount, getUserLevel, getAdditionalBadges } from '@/lib/points'
+import MeuProgressoAulas from './MeuProgressoAulas'
 
 export const dynamic = 'force-dynamic'
 
@@ -125,82 +126,27 @@ export default async function MeuProgressoPage() {
         </div>
       </div>
 
-      {/* Aulas list */}
-      <div className="card overflow-hidden mb-6">
-        <div className="px-5 py-4 border-b border-gray-800">
-          <h2 className="font-semibold">Minhas aulas</h2>
-        </div>
-        <ul className="divide-y divide-gray-800/60">
-          {lives.map((live) => {
-            const checkIn = checkIns.find((c) => c.liveId === live.id && c.type === 'AULA')
-            const isApproved = checkIn?.status === 'APPROVED' && !checkIn.isInvalid
-            const isRejected = checkIn?.status === 'REJECTED'
-            const isPending = !checkIn && live.isActive
-
-            return (
-              <li key={live.id} className="px-5 py-4 flex items-start gap-3">
-                <span
-                  className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 ${
-                    isApproved
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : isRejected
-                      ? 'bg-red-500/20 text-red-400'
-                      : 'bg-gray-800 text-gray-600'
-                  }`}
-                >
-                  {isApproved ? '✓' : live.order}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${!live.isActive && !checkIn ? 'text-gray-600' : ''}`}>
-                    {live.title}
-                  </p>
-                  {checkIn?.insight && (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2 italic">
-                      "{checkIn.insight}"
-                    </p>
-                  )}
-                  {isPending && (
-                    <Link
-                      href={`/dashboard#live-${live.id}`}
-                      className="inline-block mt-2 text-xs bg-violet-600 hover:bg-violet-500 text-white px-3 py-1 rounded-full transition-colors"
-                    >
-                      Fazer check-in →
-                    </Link>
-                  )}
-                  {isRejected && (
-                    <Link
-                      href={`/dashboard#live-${live.id}`}
-                      className="inline-block mt-2 text-xs bg-red-700 hover:bg-red-600 text-white px-3 py-1 rounded-full transition-colors"
-                    >
-                      Reenviar check-in →
-                    </Link>
-                  )}
-                </div>
-                <div className="shrink-0 text-right">
-                  {isApproved && (
-                    <span className="inline-flex items-center gap-1 text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">
-                      ✓ Aula assistida
-                    </span>
-                  )}
-                  {isRejected && <span className="badge-rejected text-xs">✗ Rejeitado</span>}
-                  {!checkIn && !live.isActive && (
-                    <span className="inline-flex items-center text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded-full">
-                      {live.scheduledAt
-                        ? new Date(live.scheduledAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-                        : 'Em breve'}
-                    </span>
-                  )}
-                  {isPending && (
-                    <span className="inline-flex items-center text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-medium">
-                      Pendente
-                    </span>
-                  )}
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
+      {/* Aulas list — interactive (edit/delete) */}
+      <MeuProgressoAulas
+        lives={lives.map((l) => ({
+          id: l.id,
+          title: l.title,
+          order: l.order,
+          isActive: l.isActive,
+          scheduledAt: l.scheduledAt ? l.scheduledAt.toISOString() : null,
+        }))}
+        checkIns={checkIns.map((c) => ({
+          id: c.id,
+          liveId: c.liveId,
+          type: c.type,
+          insight: c.insight,
+          linkedinUrl: c.linkedinUrl,
+          status: c.status,
+          isInvalid: c.isInvalid,
+          createdAt: c.createdAt.toISOString(),
+          updatedAt: c.updatedAt.toISOString(),
+        }))}
+      />
 
       <Link href="/ranking" className="btn-secondary block text-center">
         Ver meu ranking →

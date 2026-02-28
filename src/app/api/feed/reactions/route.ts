@@ -39,5 +39,21 @@ export async function POST(request: NextRequest) {
     data: { checkInId, userId: session.userId, emoji },
   })
 
+  // Notify check-in owner (not self)
+  const checkIn = await prisma.checkIn.findUnique({
+    where: { id: checkInId },
+    select: { userId: true, live: { select: { title: true, order: true } } },
+  })
+  if (checkIn && checkIn.userId !== session.userId) {
+    await prisma.notification.create({
+      data: {
+        userId: checkIn.userId,
+        type: 'REACTION',
+        title: `${emoji} ${session.name} reagiu ao seu check-in`,
+        message: `Aula ${checkIn.live.order}: ${checkIn.live.title}`,
+      },
+    })
+  }
+
   return NextResponse.json({ action: 'added', reaction }, { status: 201 })
 }

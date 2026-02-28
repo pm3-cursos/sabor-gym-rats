@@ -25,5 +25,16 @@ export async function POST(request: NextRequest) {
     data: { userId, amount, reason: reason || null },
   })
 
+  await prisma.notification.create({
+    data: {
+      userId,
+      type: 'SCORE_ADJUSTMENT',
+      title: amount >= 0
+        ? `➕ Ajuste de pontuação: +${amount} pts`
+        : `➖ Ajuste de pontuação: ${amount} pts`,
+      message: reason || null,
+    },
+  })
+
   return NextResponse.json({ adjustment: adj }, { status: 201 })
 }

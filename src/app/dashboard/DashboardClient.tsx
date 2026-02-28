@@ -285,6 +285,7 @@ interface Props {
   totalParticipants: number
   userPoints: number
   nextLiveId: string | null
+  hasLinkedinProfile: boolean
 }
 
 function getDaysUntil(scheduledAt: string | null): string {
@@ -321,6 +322,7 @@ export default function DashboardClient({
   totalParticipants,
   userPoints,
   nextLiveId,
+  hasLinkedinProfile,
 }: Props) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState<string | null>(null)
@@ -338,6 +340,8 @@ export default function DashboardClient({
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   // Delete confirm state
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  // Rank delta banner
+  const [rankDelta, setRankDelta] = useState<number | null>(null)
 
   const level = getUserLevel(approvedCount)
   const additionalBadges = getAdditionalBadges(linkedinCount)
@@ -369,6 +373,18 @@ export default function DashboardClient({
       setShowOnboarding(true)
     }
   }, [approvedCount])
+
+  useEffect(() => {
+    if (userRank <= 0) return
+    const alreadyShown = sessionStorage.getItem('pm3-rank-delta-shown')
+    if (alreadyShown) return
+    const lastRank = parseInt(localStorage.getItem('pm3-last-rank') ?? '0')
+    if (lastRank && lastRank !== userRank) {
+      setRankDelta(lastRank - userRank) // positive = moved up
+    }
+    sessionStorage.setItem('pm3-rank-delta-shown', '1')
+    localStorage.setItem('pm3-last-rank', String(userRank))
+  }, [userRank])
 
   const aulaCheckInMap: Record<string, CheckIn> = {}
   const linkedinCheckInMap: Record<string, CheckIn> = {}
@@ -523,6 +539,18 @@ export default function DashboardClient({
         </div>
       )}
 
+      {/* Rank delta banner */}
+      {rankDelta !== null && (
+        <div className={`card p-4 mb-6 flex items-center justify-between gap-3 ${rankDelta > 0 ? 'border-emerald-800/40 bg-emerald-500/5' : 'border-red-800/40 bg-red-500/5'}`}>
+          <p className="text-sm">
+            {rankDelta > 0
+              ? `⬆️ Você subiu ${rankDelta} posição${rankDelta !== 1 ? 'ões' : ''} desde o seu último acesso`
+              : `⬇️ Você desceu ${Math.abs(rankDelta)} posição${Math.abs(rankDelta) !== 1 ? 'ões' : ''} desde o seu último acesso`}
+          </p>
+          <button onClick={() => setRankDelta(null)} className="text-gray-500 hover:text-white shrink-0 transition-colors">✕</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8">
         <div className={`text-sm font-semibold mb-0.5 ${level.color}`}>
@@ -577,6 +605,26 @@ export default function DashboardClient({
             Faltam {remaining} {remaining === 1 ? 'aula' : 'aulas'} para cruzar a linha de chegada 🏁
           </p>
         ) : null}
+
+        {/* Points + rank row */}
+        <div className="mt-3 pt-3 border-t border-gray-800/60">
+          {userPoints === 0 ? (
+            <p className="text-xs text-gray-500 text-center">
+              Você ainda não pontuou. Faça seu primeiro check-in! 🏁
+            </p>
+          ) : (
+            <div className="flex items-center justify-between text-xs text-gray-400">
+              <span>
+                Pontuação: <span className="text-violet-400 font-semibold">{userPoints} pts</span>
+              </span>
+              {totalParticipants > 0 && userRank > 0 && (
+                <span>
+                  #{userRank} de {totalParticipants} participantes
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Lives list */}
@@ -784,10 +832,24 @@ export default function DashboardClient({
                     </div>
                   </div>
 
-                  {!linkedinCI && aulaApproved && (
+                  {!linkedinCI && aulaApproved && hasLinkedinProfile && (
                     <p className="text-xs text-gray-500 mb-3">
                       Compartilhe seu insight no LinkedIn e ganhe 3 pontos extras no ranking.
                     </p>
+                  )}
+
+                  {!linkedinCI && aulaApproved && !hasLinkedinProfile && (
+                    <div className="mb-3 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2.5 space-y-2">
+                      <p className="text-xs text-amber-400">
+                        Para ganhar o bônus, adicione seu LinkedIn no cadastro.
+                      </p>
+                      <a
+                        href="/perfil"
+                        className="inline-block text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1 rounded-full transition-colors"
+                      >
+                        Atualizar meu perfil com LinkedIn →
+                      </a>
+                    </div>
                   )}
 
                   {!linkedinCI && !aulaApproved && live.isActive && (
@@ -835,7 +897,7 @@ export default function DashboardClient({
                     </div>
                   )}
 
-                  {canSubmitLinkedin && !linkedinSuccess[live.id] && (
+                  {canSubmitLinkedin && !linkedinSuccess[live.id] && hasLinkedinProfile && (
                     <div className="space-y-2">
                       {linkedinCI?.status === 'REJECTED' && (
                         <p className="text-xs text-amber-400">Seu check-in foi rejeitado. Envie novamente:</p>

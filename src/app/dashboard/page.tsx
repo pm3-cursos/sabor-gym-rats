@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [lives, checkIns, allUsers] = await Promise.all([
+  const [lives, checkIns, allUsers, currentUser] = await Promise.all([
     prisma.live.findMany({ orderBy: { order: 'asc' } }),
     prisma.checkIn.findMany({
       where: { userId: session.userId },
@@ -26,6 +26,10 @@ export default async function DashboardPage() {
         },
         pointAdjustments: { select: { amount: true } },
       },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { linkedinProfileUrl: true },
     }),
   ])
 
@@ -78,6 +82,7 @@ export default async function DashboardPage() {
       totalParticipants={totalParticipants}
       userPoints={userPoints}
       nextLiveId={nextLiveId}
+      hasLinkedinProfile={!!currentUser?.linkedinProfileUrl}
     />
   )
 }

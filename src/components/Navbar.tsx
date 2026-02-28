@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import NotificationBell from './NotificationBell'
 
 interface NavbarProps {
   user: { name: string; role: string } | null
@@ -41,6 +42,7 @@ export default function Navbar({ user }: NavbarProps) {
           {user && navLink('/meu-progresso', 'Progresso')}
           {navLink('/ranking', 'Ranking')}
           {navLink('/feed', 'Feed')}
+          {user && navLink('/perfil', 'Perfil')}
           {user?.role === 'ADMIN' && navLink('/admin', 'Admin')}
         </div>
 
@@ -55,13 +57,16 @@ export default function Navbar({ user }: NavbarProps) {
         {/* Right: user actions */}
         <div className="flex items-center gap-3 justify-end">
           {user ? (
-            <button
-              onClick={handleLogout}
-              disabled={loading}
-              className="text-sm text-gray-500 hover:text-red-400 transition-colors"
-            >
-              Sair
-            </button>
+            <>
+              <NotificationBell isLoggedIn={!!user} />
+              <button
+                onClick={handleLogout}
+                disabled={loading}
+                className="text-sm text-gray-500 hover:text-red-400 transition-colors"
+              >
+                Sair
+              </button>
+            </>
           ) : (
             <>
               <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">
