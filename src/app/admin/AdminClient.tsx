@@ -80,6 +80,12 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
   const [liveForms, setLiveForms] = useState<Record<string, Partial<Live>>>({})
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null)
 
+  // Admin per-check-in edit state (Participants tab)
+  const [adminEditCI, setAdminEditCI] = useState<CheckIn | null>(null)
+  const [adminEditInsight, setAdminEditInsight] = useState('')
+  const [adminEditUrl, setAdminEditUrl] = useState('')
+  const [adminEditError, setAdminEditError] = useState('')
+
   // Search / filter state
   const [userSearch, setUserSearch] = useState('')
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
@@ -127,6 +133,76 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
   function deleteCheckIn(id: string) {
     setConfirmState({
       message: 'Excluir este check-in permanentemente?',
+      onConfirm: async () => {
+        setConfirmState(null)
+        setProcessing(id)
+        await fetch(`/api/admin/checkins/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete' }),
+        })
+        setProcessing(null)
+        router.refresh()
+      },
+    })
+  }
+
+  function openAdminEdit(ci: CheckIn) {
+    setAdminEditCI(ci)
+    setAdminEditInsight(ci.insight || '')
+    setAdminEditUrl(ci.linkedinUrl || '')
+    setAdminEditError('')
+  }
+
+  async function saveAdminEdit() {
+    if (!adminEditCI) return
+    setAdminEditError('')
+    const body: Record<string, string> = { action: 'edit' }
+    if (adminEditCI.type === 'AULA') {
+      if (adminEditInsight.trim().length < 10) {
+        setAdminEditError('Mínimo 10 caracteres.')
+        return
+      }
+      body.insight = adminEditInsight.trim()
+    } else {
+      const trimmed = adminEditUrl.trim()
+      if (!trimmed.startsWith('https://www.linkedin.com/') || !trimmed.includes('posts/')) {
+        setAdminEditError('URL LinkedIn inválida.')
+        return
+      }
+      body.linkedinUrl = trimmed
+    }
+    setProcessing(adminEditCI.id)
+    await fetch(`/api/admin/checkins/${adminEditCI.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    setProcessing(null)
+    setAdminEditCI(null)
+    router.refresh()
+  }
+
+  function adminInvalidateCheckIn(id: string, isInvalid: boolean) {
+    setConfirmState({
+      message: isInvalid ? 'Revalidar este check-in?' : 'Invalidar este check-in? Os pontos serão removidos.',
+      onConfirm: async () => {
+        setConfirmState(null)
+        setProcessing(id)
+        await fetch(`/api/admin/checkins/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'invalidate' }),
+        })
+        setProcessing(null)
+        router.refresh()
+      },
+    })
+  }
+
+  function adminDeleteCheckIn(id: string) {
+    setConfirmState({
+      message: 'Excluir este check-in permanentemente? O usuário receberá uma notificação.',
       onConfirm: async () => {
         setConfirmState(null)
         setProcessing(id)
@@ -246,6 +322,57 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       {confirmState && <AdminConfirmModal state={confirmState} onCancel={() => setConfirmState(null)} />}
+
+      {/* Admin edit check-in modal */}
+      {adminEditCI && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="card p-6 max-w-md w-full space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Editar check-in (Admin)</h3>
+              <button onClick={() => setAdminEditCI(null)} className="text-gray-500 hover:text-white transition-colors text-lg">✕</button>
+            </div>
+            <p className="text-xs text-gray-500">
+              Aula {adminEditCI.live.order} · {adminEditCI.live.title} · {adminEditCI.user.name}
+            </p>
+            {adminEditCI.type === 'AULA' ? (
+              <div className="space-y-1">
+                <label className="text-xs text-gray-400 block">Insight</label>
+                <textarea
+                  className="input text-sm resize-none w-full"
+                  rows={4}
+                  value={adminEditInsight}
+                  onChange={(e) => setAdminEditInsight(e.target.value)}
+                  autoFocus
+                />
+                <div className={`text-xs text-right tabular-nums ${adminEditInsight.trim().length < 10 ? 'text-gray-600' : 'text-emerald-400'}`}>
+                  {adminEditInsight.trim().length < 10
+                    ? `Faltam ${10 - adminEditInsight.trim().length} caracteres`
+                    : `✓ ${adminEditInsight.trim().length} caracteres`}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <label className="text-xs text-gray-400 block">URL LinkedIn</label>
+                <input
+                  type="url"
+                  className="input text-sm w-full"
+                  value={adminEditUrl}
+                  onChange={(e) => setAdminEditUrl(e.target.value)}
+                  placeholder="https://www.linkedin.com/posts/..."
+                  autoFocus
+                />
+              </div>
+            )}
+            {adminEditError && <p className="text-xs text-red-400">{adminEditError}</p>}
+            <div className="flex gap-3">
+              <button onClick={saveAdminEdit} disabled={processing === adminEditCI.id} className="btn-primary flex-1">
+                {processing === adminEditCI.id ? 'Salvando...' : 'Salvar'}
+              </button>
+              <button onClick={() => setAdminEditCI(null)} className="btn-secondary flex-1">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6 gap-3">
         <h1 className="text-2xl font-bold">Painel Admin</h1>
         <a
@@ -609,6 +736,30 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
                                   {c.linkedinUrl}
                                 </a>
                               )}
+                              {/* Per-check-in admin actions */}
+                              <div className="flex gap-1.5 pt-1" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => openAdminEdit(c)}
+                                  disabled={processing === c.id}
+                                  className="text-xs px-2 py-0.5 rounded bg-gray-700/60 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                                >
+                                  ✏️ Editar
+                                </button>
+                                <button
+                                  onClick={() => adminInvalidateCheckIn(c.id, c.isInvalid)}
+                                  disabled={processing === c.id}
+                                  className={`text-xs px-2 py-0.5 rounded transition-colors ${c.isInvalid ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'}`}
+                                >
+                                  {c.isInvalid ? '✅ Revalidar' : '⚠️ Invalidar'}
+                                </button>
+                                <button
+                                  onClick={() => adminDeleteCheckIn(c.id)}
+                                  disabled={processing === c.id}
+                                  className="text-xs px-2 py-0.5 rounded bg-gray-700/60 hover:bg-red-900/40 text-gray-400 hover:text-red-400 transition-colors"
+                                >
+                                  🗑 Excluir
+                                </button>
+                              </div>
                             </div>
                           ))}
                       </div>

@@ -9,6 +9,7 @@ export default function CadastroPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [linkedinProfileUrl, setLinkedinProfileUrl] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -26,7 +27,7 @@ export default function CadastroPage() {
     const res = await fetch('/api/auth/cadastro', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, linkedinProfileUrl: linkedinProfileUrl.trim() || undefined }),
     })
 
     const data = await res.json()
@@ -95,6 +96,23 @@ export default function CadastroPage() {
               minLength={6}
               autoComplete="new-password"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              Perfil do LinkedIn <span className="text-gray-500 font-normal">(opcional)</span>
+            </label>
+            <input
+              type="url"
+              className="input"
+              placeholder="https://linkedin.com/in/seu-perfil"
+              value={linkedinProfileUrl}
+              onChange={(e) => setLinkedinProfileUrl(e.target.value)}
+              autoComplete="url"
+            />
+            <p className="text-xs text-gray-600 mt-1">
+              Necessário para ganhar bônus de +3 pts por publicação LinkedIn.
+            </p>
           </div>
 
           <button type="submit" disabled={loading} className="btn-primary w-full mt-2">

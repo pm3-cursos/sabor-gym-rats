@@ -4,10 +4,14 @@ import { hashPassword, createToken } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json()
+    const { name, email, password, linkedinProfileUrl } = await request.json()
 
     if (!name || !email || !password) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 })
+    }
+
+    if (linkedinProfileUrl && !linkedinProfileUrl.includes('linkedin.com/')) {
+      return NextResponse.json({ error: 'URL do LinkedIn inválida.' }, { status: 400 })
     }
 
     if (password.length < 6) {
@@ -29,6 +33,7 @@ export async function POST(request: NextRequest) {
         email: normalizedEmail,
         password: hashedPassword,
         role: 'USER',
+        linkedinProfileUrl: linkedinProfileUrl?.trim() || null,
       },
     })
 
