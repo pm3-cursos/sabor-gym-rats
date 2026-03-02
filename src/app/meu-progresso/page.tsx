@@ -56,7 +56,7 @@ export default async function MeuProgressoPage() {
   const pct = Math.min(100, Math.round((approvedCount / safeTotal) * 100))
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-1">Meu Progresso</h1>
         <p className="text-gray-400 text-sm">Olá, {session.name.split(' ')[0]}! Aqui está sua jornada na Maratona.</p>
@@ -148,7 +148,7 @@ export default async function MeuProgressoPage() {
         }))}
       />
 
-      <Link href="/ranking" className="btn-secondary block text-center">
+      <Link href="/ranking" className="btn-secondary w-full">
         Ver meu ranking →
       </Link>
     </div>

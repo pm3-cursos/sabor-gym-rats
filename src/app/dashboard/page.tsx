@@ -51,6 +51,12 @@ export default async function DashboardPage() {
   )
   const nextLiveId = lives.find((l) => l.isActive && !approvedAulaLiveIds.has(l.id))?.id ?? null
 
+  const hasAnyActiveLive = lives.some((l) => l.isActive)
+  const now = new Date()
+  const nextScheduledLive = !hasAnyActiveLive
+    ? lives.find((l) => !l.isActive && l.scheduledAt && new Date(l.scheduledAt) > now) ?? null
+    : null
+
   return (
     <DashboardClient
       userName={session.name}
@@ -83,6 +89,10 @@ export default async function DashboardPage() {
       userPoints={userPoints}
       nextLiveId={nextLiveId}
       linkedinProfileUrl={currentUser?.linkedinProfileUrl ?? null}
+      nextScheduledLive={nextScheduledLive ? {
+        title: nextScheduledLive.title,
+        scheduledAt: nextScheduledLive.scheduledAt!.toISOString(),
+      } : null}
     />
   )
 }

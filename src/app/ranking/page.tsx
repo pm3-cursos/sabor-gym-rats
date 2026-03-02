@@ -152,63 +152,72 @@ export default async function RankingPage() {
   const champions = leaderboard.filter((u) => u.aulaCount >= totalLives && totalLives > 0)
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold mb-1">Ranking da Maratona</h1>
-            <p className="text-gray-400 text-sm">
-              {total} participante{total !== 1 ? 's' : ''} · {champions.length} completo{champions.length !== 1 ? 's' : ''}
+    <div className="max-w-5xl mx-auto px-4 py-10">
+      <div className="lg:grid lg:grid-cols-[380px_1fr] lg:gap-8 lg:items-start">
+
+      {/* Left column — podium, stats, CTA */}
+      <div className="lg:sticky lg:top-20 mb-6 lg:mb-0">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-2xl font-bold mb-1">Ranking da Maratona</h1>
+              <p className="text-gray-400 text-sm">
+                {total} participante{total !== 1 ? 's' : ''} · {champions.length} completo{champions.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <RulesModal />
+          </div>
+        </div>
+
+        {/* Podium + Prizes */}
+        <PodiumSection leaderboard={leaderboard} currentUserId={session?.userId ?? null} />
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-violet-400">{total}</div>
+            <div className="text-xs text-gray-500 mt-1">participantes</div>
+          </div>
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-emerald-400">{champions.length}</div>
+            <div className="text-xs text-gray-500 mt-1">completos 🏆</div>
+          </div>
+          <div className="card p-4 text-center">
+            <div className="text-2xl font-bold text-amber-400">{totalLives}</div>
+            <div className="text-xs text-gray-500 mt-1">aulas no total</div>
+          </div>
+        </div>
+
+        {!session && (
+          <div className="card p-6 text-center border-violet-800/50 bg-violet-500/5">
+            <div className="text-3xl mb-3">🏁</div>
+            <h3 className="font-bold text-lg mb-1">Quer aparecer no ranking?</h3>
+            <p className="text-sm text-gray-400 mb-4">
+              Cadastre-se gratuitamente, assista às aulas e concorra a prêmios incríveis!
             </p>
+            <div className="flex gap-3 justify-center">
+              <a href="/cadastro" className="btn-primary">Criar conta grátis</a>
+              <a href="/login" className="btn-secondary">Entrar</a>
+            </div>
           </div>
-          <RulesModal />
-        </div>
-      </div>
+        )}
+      </div>{/* end left column */}
 
-      {/* Podium + Prizes */}
-      <PodiumSection leaderboard={leaderboard} currentUserId={session?.userId ?? null} />
+      {/* Right column — full leaderboard */}
+      <div>
+        <LeaderboardClient
+          leaderboard={leaderboard.map((u, i) => ({
+            ...u,
+            rank: i + 1,
+            level: getUserLevel(u.aulaCount),
+          }))}
+          currentUserId={session?.userId ?? null}
+          totalLives={totalLives}
+        />
+      </div>{/* end right column */}
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="card p-4 text-center">
-          <div className="text-2xl font-bold text-violet-400">{total}</div>
-          <div className="text-xs text-gray-500 mt-1">participantes</div>
-        </div>
-        <div className="card p-4 text-center">
-          <div className="text-2xl font-bold text-emerald-400">{champions.length}</div>
-          <div className="text-xs text-gray-500 mt-1">completos 🏆</div>
-        </div>
-        <div className="card p-4 text-center">
-          <div className="text-2xl font-bold text-amber-400">{totalLives}</div>
-          <div className="text-xs text-gray-500 mt-1">aulas no total</div>
-        </div>
-      </div>
-
-      {/* Leaderboard */}
-      <LeaderboardClient
-        leaderboard={leaderboard.map((u, i) => ({
-          ...u,
-          rank: i + 1,
-          level: getUserLevel(u.aulaCount),
-        }))}
-        currentUserId={session?.userId ?? null}
-        totalLives={totalLives}
-      />
-
-      {!session && (
-        <div className="mt-8 card p-6 text-center border-violet-800/50 bg-violet-500/5">
-          <div className="text-3xl mb-3">🏁</div>
-          <h3 className="font-bold text-lg mb-1">Quer aparecer no ranking?</h3>
-          <p className="text-sm text-gray-400 mb-4">
-            Cadastre-se gratuitamente, assista às aulas e concorra a prêmios incríveis!
-          </p>
-          <div className="flex gap-3 justify-center">
-            <a href="/cadastro" className="btn-primary">Criar conta grátis</a>
-            <a href="/login" className="btn-secondary">Entrar</a>
-          </div>
-        </div>
-      )}
+      </div>{/* end two-column grid */}
     </div>
   )
 }

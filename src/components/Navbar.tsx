@@ -38,7 +38,7 @@ export default function Navbar({ user }: NavbarProps) {
       <div className="max-w-5xl mx-auto px-4 h-14 grid grid-cols-3 items-center gap-2">
         {/* Left: nav links — hidden on mobile (BottomNav handles it) */}
         <div className="hidden md:flex items-center gap-4 overflow-x-auto">
-          {user && navLink('/dashboard', 'Check-ins')}
+          {user && navLink('/dashboard', 'Check-in')}
           {user && navLink('/meu-progresso', 'Progresso')}
           {navLink('/ranking', 'Ranking')}
           {navLink('/feed', 'Feed')}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import confetti from 'canvas-confetti'
 import { getUserLevel, getAdditionalBadges } from '@/lib/points'
 import { extractLinkedinUsername } from '@/lib/linkedin'
@@ -293,6 +294,7 @@ interface Props {
   userPoints: number
   nextLiveId: string | null
   linkedinProfileUrl: string | null
+  nextScheduledLive: { title: string; scheduledAt: string } | null
 }
 
 function getDaysUntil(scheduledAt: string | null): string {
@@ -330,6 +332,7 @@ export default function DashboardClient({
   userPoints,
   nextLiveId,
   linkedinProfileUrl,
+  nextScheduledLive,
 }: Props) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState<string | null>(null)
@@ -337,6 +340,7 @@ export default function DashboardClient({
   const [urls, setUrls] = useState<Record<string, string>>({})
   const [aulaErrors, setAulaErrors] = useState<Record<string, string>>({})
   const [linkedinErrors, setLinkedinErrors] = useState<Record<string, string>>({})
+  const [linkedinFailCount, setLinkedinFailCount] = useState<Record<string, number>>({})
   const [aulaSuccess, setAulaSuccess] = useState<Record<string, boolean>>({})
   const [linkedinSuccess, setLinkedinSuccess] = useState<Record<string, boolean>>({})
   const [showCelebration, setShowCelebration] = useState(false)
@@ -422,6 +426,7 @@ export default function DashboardClient({
         return
       }
       if (linkedinUsername && !url.toLowerCase().includes(linkedinUsername)) {
+        setLinkedinFailCount((prev) => ({ ...prev, [liveId]: (prev[liveId] ?? 0) + 1 }))
         setLinkedinErrors((prev) => ({
           ...prev,
           [liveId]: 'Este link não parece ser seu. Use um post publicado pelo seu perfil do LinkedIn.',
@@ -448,8 +453,15 @@ export default function DashboardClient({
 
     if (!res.ok) {
       const errMsg = data.error || 'Erro ao enviar.'
-      if (type === 'AULA') setAulaErrors((prev) => ({ ...prev, [liveId]: errMsg }))
-      else setLinkedinErrors((prev) => ({ ...prev, [liveId]: errMsg }))
+      if (type === 'AULA') {
+        setAulaErrors((prev) => ({ ...prev, [liveId]: errMsg }))
+      } else {
+        // Increment fail count for username-mismatch errors from the server
+        if (errMsg.includes('não parece ser seu') || errMsg.includes('perfil do LinkedIn')) {
+          setLinkedinFailCount((prev) => ({ ...prev, [liveId]: (prev[liveId] ?? 0) + 1 }))
+        }
+        setLinkedinErrors((prev) => ({ ...prev, [liveId]: errMsg }))
+      }
       return
     }
 
@@ -498,7 +510,7 @@ export default function DashboardClient({
   const recordingLive = recordingLiveId ? lives.find((l) => l.id === recordingLiveId) : null
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-5xl mx-auto px-4 py-10">
       {showCelebration && (
         <CelebrationOverlay userName={userName} userRank={userRank} onClose={closeCelebration} />
       )}
@@ -531,6 +543,11 @@ export default function DashboardClient({
       {toastMsg && (
         <Toast message={toastMsg} onDismiss={() => setToastMsg(null)} />
       )}
+
+      {/* Desktop: two-column layout — left sidebar + right lives list */}
+      <div className="lg:grid lg:grid-cols-[340px_1fr] lg:gap-8 lg:items-start">
+      {/* Left sidebar — sticky on desktop: greeting, progress, badges */}
+      <div className="lg:sticky lg:top-20 space-y-4 mb-6 lg:mb-0">
 
       {/* Onboarding banner */}
       {showOnboarding && (
@@ -624,6 +641,27 @@ export default function DashboardClient({
         ) : null}
       </div>
 
+      {/* Next scheduled class card — when no class is currently active */}
+      {nextScheduledLive && (
+        <div className="card p-4 border-violet-800/30 bg-violet-500/5">
+          <p className="text-xs text-gray-500 mb-0.5 font-medium uppercase tracking-wide">Próxima aula</p>
+          <p className="font-semibold text-sm leading-snug">{nextScheduledLive.title}</p>
+          <p className="text-violet-400 text-xs mt-1">
+            {new Date(nextScheduledLive.scheduledAt).toLocaleDateString('pt-BR', {
+              weekday: 'short', day: '2-digit', month: 'short',
+            })}{' '}
+            às{' '}
+            {new Date(nextScheduledLive.scheduledAt).toLocaleTimeString('pt-BR', {
+              hour: '2-digit', minute: '2-digit',
+            })}
+          </p>
+        </div>
+      )}
+
+      </div>{/* end left sidebar */}
+
+      {/* Right column — lives list */}
+      <div>
       {/* Lives list */}
       <div className="space-y-4">
         <h2 className="font-semibold text-gray-300">Aulas</h2>
@@ -812,7 +850,7 @@ export default function DashboardClient({
 
               {/* LINKEDIN section */}
               {(live.isActive || linkedinCI) && (
-                <div className="border border-gray-800 rounded-lg p-4">
+                <div className={`border rounded-lg p-4 ${canSubmitLinkedin && hasLinkedinProfile ? 'border-amber-700/40 bg-amber-500/5' : 'border-gray-800'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
@@ -908,15 +946,24 @@ export default function DashboardClient({
                           setUrls((prev) => ({ ...prev, [live.id]: e.target.value }))
                         }
                       />
-                      {linkedinUsername && (
-                        <p className="text-xs text-gray-500">
-                          Seu LinkedIn: <span className="text-gray-400 font-medium">@{linkedinUsername}</span> — o link deve pertencer ao seu perfil.
-                        </p>
-                      )}
                       {linkedinErrors[live.id] && (
-                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-                          <p className="text-xs text-red-400">{linkedinErrors[live.id]}</p>
-                        </div>
+                        (linkedinFailCount[live.id] ?? 0) >= 3 ? (
+                          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2.5 space-y-1.5">
+                            <p className="text-xs text-amber-400 font-medium">
+                              Parece que o link do seu perfil do LinkedIn está incorreto ou desatualizado.
+                            </p>
+                            <p className="text-xs text-amber-300/70">
+                              Certifique-se que o perfil está no formato correto e que o post foi publicado por você.
+                            </p>
+                            <Link href="/perfil" className="inline-block text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1.5 rounded-full font-medium transition-colors">
+                              Verificar meu LinkedIn nas Configurações →
+                            </Link>
+                          </div>
+                        ) : (
+                          <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                            <p className="text-xs text-red-400">{linkedinErrors[live.id]}</p>
+                          </div>
+                        )
                       )}
                       <button
                         onClick={() => handleSubmit(live.id, 'LINKEDIN')}
@@ -957,6 +1004,8 @@ export default function DashboardClient({
           )
         })}
       </div>
+      </div>{/* end right column */}
+      </div>{/* end two-column grid */}
     </div>
   )
 }
