@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const BASE_LINKS = [
-  { href: '/dashboard', label: 'Check-ins', icon: '✅' },
+  { href: '/dashboard', label: 'Check-in', icon: '✅' },
   { href: '/meu-progresso', label: 'Progresso', icon: '📈' },
   { href: '/ranking', label: 'Ranking', icon: '🏆' },
   { href: '/feed', label: 'Feed', icon: '📰' },
