@@ -8,15 +8,21 @@ datasource db {
 }
 
 model User {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   name               String
-  email              String   @unique
+  email              String    @unique
   password           String
-  role               Role     @default(USER)
-  emailVerified      Boolean  @default(false)
-  isBanned           Boolean  @default(false)
+  role               Role      @default(USER)
+  emailVerified      Boolean   @default(false)
+  isBanned           Boolean   @default(false)
   linkedinProfileUrl String?
-  createdAt          DateTime @default(now())
+  showFirstNameOnly  Boolean   @default(false)
+  reminderDays2      Boolean   @default(true)
+  reminderDays1      Boolean   @default(true)
+  reminder12h        Boolean   @default(true)
+  reminder1h         Boolean   @default(true)
+  deletedAt          DateTime?
+  createdAt          DateTime  @default(now())
 
   checkIns            CheckIn[]
   passwordResetTokens PasswordResetToken[]

@@ -605,26 +605,6 @@ export default function DashboardClient({
             Faltam {remaining} {remaining === 1 ? 'aula' : 'aulas'} para cruzar a linha de chegada 🏁
           </p>
         ) : null}
-
-        {/* Points + rank row */}
-        <div className="mt-3 pt-3 border-t border-gray-800/60">
-          {userPoints === 0 ? (
-            <p className="text-xs text-gray-500 text-center">
-              Você ainda não pontuou. Faça seu primeiro check-in! 🏁
-            </p>
-          ) : (
-            <div className="flex items-center justify-between text-xs text-gray-400">
-              <span>
-                Pontuação: <span className="text-violet-400 font-semibold">{userPoints} pts</span>
-              </span>
-              {totalParticipants > 0 && userRank > 0 && (
-                <span>
-                  #{userRank} de {totalParticipants} participantes
-                </span>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Lives list */}
