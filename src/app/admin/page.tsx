@@ -10,7 +10,7 @@ export default async function AdminPage() {
   const session = await getSession()
   if (!session || session.role !== 'ADMIN') redirect('/dashboard')
 
-  const [checkIns, lives, usersRaw, challengeSetting] = await Promise.all([
+  const [checkIns, lives, usersRaw, finalChallengesRaw, settings] = await Promise.all([
     prisma.checkIn.findMany({
       include: {
         user: { select: { id: true, name: true, email: true } },
@@ -36,8 +36,18 @@ export default async function AdminPage() {
       },
       orderBy: { createdAt: 'asc' },
     }),
-    prisma.appSettings.findUnique({ where: { key: 'challengeUrl' } }),
+    prisma.finalChallenge.findMany({
+      include: { user: { select: { id: true, name: true, email: true } } },
+      orderBy: { submittedAt: 'desc' },
+    }),
+    prisma.appSettings.findMany({
+      where: {
+        key: { in: ['challengeUrl', 'challengeShortDesc', 'challengeUnlockAt', 'showRanking', 'showFeed'] },
+      },
+    }),
   ])
+
+  const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]))
 
   const users = usersRaw.map((u) => ({
     id: u.id,
@@ -65,7 +75,20 @@ export default async function AdminPage() {
         checkInsCount: l._count.checkIns,
       }))}
       users={users}
-      challengeUrl={challengeSetting?.value ?? null}
+      finalChallenges={finalChallengesRaw.map((fc) => ({
+        id: fc.id,
+        userId: fc.userId,
+        userName: fc.user.name,
+        userEmail: fc.user.email,
+        challengeUrl: fc.challengeUrl,
+        submittedAt: fc.submittedAt.toISOString(),
+        points: fc.points,
+      }))}
+      challengeUrl={settingsMap['challengeUrl'] ?? null}
+      challengeShortDesc={settingsMap['challengeShortDesc'] ?? null}
+      challengeUnlockAt={settingsMap['challengeUnlockAt'] ?? null}
+      showRanking={settingsMap['showRanking'] === 'true'}
+      showFeed={settingsMap['showFeed'] === 'true'}
     />
   )
 }

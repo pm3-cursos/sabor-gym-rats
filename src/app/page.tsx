@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import LeaderboardClient from './LeaderboardClient'
 import HomeStatsClient from './HomeStatsClient'
+import HomeChallengeSection from './HomeChallengeSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,7 +63,7 @@ export default async function Home() {
       {/* CTA */}
       <div className="flex gap-3 justify-center mb-10">
         <Link href="/cadastro" className="btn-primary">
-          Participar agora
+          Participar da Maratona
         </Link>
         <Link href="/login" className="btn-secondary">
           Já tenho conta
@@ -72,7 +73,7 @@ export default async function Home() {
       {/* Two-column layout on desktop */}
       <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8">
 
-        {/* Left — Como funciona + Leaderboard preview */}
+        {/* Left — Como funciona + Challenge + Leaderboard preview */}
         <div className="space-y-6 mb-6 lg:mb-0">
           {/* Como funciona */}
           <div className="card p-5">
@@ -98,6 +99,9 @@ export default async function Home() {
               </li>
             </ol>
           </div>
+
+          {/* Challenge section */}
+          <HomeChallengeSection />
 
           {/* Compact Leaderboard — top 5, first names only */}
           <LeaderboardClient

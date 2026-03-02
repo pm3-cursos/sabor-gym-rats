@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import DashboardClient from './DashboardClient'
 import { calcPoints, calcAulaCount, calcLinkedinCount } from '@/lib/points'
-import { isFinalChallengeUnlocked } from '@/lib/date'
+import { FINAL_CHALLENGE_UNLOCK_UTC } from '@/lib/date'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,34 +11,40 @@ export default async function DashboardPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [lives, checkIns, allUsers, currentUser, finalChallenge, challengeSetting] = await Promise.all([
-    prisma.live.findMany({ orderBy: { order: 'asc' } }),
-    prisma.checkIn.findMany({
-      where: { userId: session.userId },
-      include: { live: true },
-    }),
-    prisma.user.findMany({
-      where: { role: 'USER' },
-      select: {
-        id: true,
-        name: true,
-        checkIns: {
-          select: { id: true, type: true, status: true, isInvalid: true },
+  const [lives, checkIns, allUsers, currentUser, finalChallenge, challengeUrlSetting, challengeUnlockSetting] =
+    await Promise.all([
+      prisma.live.findMany({ orderBy: { order: 'asc' } }),
+      prisma.checkIn.findMany({
+        where: { userId: session.userId },
+        include: { live: true },
+      }),
+      prisma.user.findMany({
+        where: { role: 'USER' },
+        select: {
+          id: true,
+          name: true,
+          checkIns: {
+            select: { id: true, type: true, status: true, isInvalid: true },
+          },
+          pointAdjustments: { select: { amount: true } },
+          finalChallenge: { select: { points: true } },
         },
-        pointAdjustments: { select: { amount: true } },
-        finalChallenge: { select: { points: true } },
-      },
-    }),
-    prisma.user.findUnique({
-      where: { id: session.userId },
-      select: {
-        linkedinProfileUrl: true,
-        welcomeDismissed: true,
-      },
-    }),
-    prisma.finalChallenge.findUnique({ where: { userId: session.userId } }),
-    prisma.appSettings.findUnique({ where: { key: 'challengeUrl' } }),
-  ])
+      }),
+      prisma.user.findUnique({
+        where: { id: session.userId },
+        select: {
+          linkedinProfileUrl: true,
+          welcomeDismissed: true,
+        },
+      }),
+      prisma.finalChallenge.findUnique({ where: { userId: session.userId } }),
+      prisma.appSettings.findUnique({ where: { key: 'challengeUrl' } }),
+      prisma.appSettings.findUnique({ where: { key: 'challengeUnlockAt' } }),
+    ])
+
+  const unlockDate = challengeUnlockSetting?.value
+    ? new Date(challengeUnlockSetting.value)
+    : FINAL_CHALLENGE_UNLOCK_UTC
 
   const approvedCount = calcAulaCount(checkIns)
   const linkedinCount = calcLinkedinCount(checkIns)
@@ -108,9 +114,9 @@ export default async function DashboardPage() {
         challengeUrl: finalChallenge.challengeUrl,
         submittedAt: finalChallenge.submittedAt.toISOString(),
       } : null}
-      isFinalChallengeUnlocked={isFinalChallengeUnlocked()}
+      isFinalChallengeUnlocked={new Date() >= unlockDate}
       welcomeDismissed={currentUser?.welcomeDismissed ?? false}
-      challengeUrl={challengeSetting?.value || null}
+      challengeUrl={challengeUrlSetting?.value || null}
     />
   )
 }

@@ -42,11 +42,26 @@ interface UserRow {
   aulaCount: number
 }
 
+interface FinalChallengeRow {
+  id: string
+  userId: string
+  userName: string
+  userEmail: string
+  challengeUrl: string
+  submittedAt: string
+  points: number
+}
+
 interface Props {
   checkIns: CheckIn[]
   lives: Live[]
   users: UserRow[]
+  finalChallenges: FinalChallengeRow[]
   challengeUrl: string | null
+  challengeShortDesc: string | null
+  challengeUnlockAt: string | null
+  showRanking: boolean
+  showFeed: boolean
 }
 
 type Tab = 'checkins' | 'participants' | 'lives' | 'settings'
@@ -74,7 +89,17 @@ function AdminConfirmModal({ state, onCancel }: { state: ConfirmState; onCancel:
   )
 }
 
-export default function AdminClient({ checkIns, lives, users, challengeUrl: initialChallengeUrl }: Props) {
+export default function AdminClient({
+  checkIns,
+  lives,
+  users,
+  finalChallenges,
+  challengeUrl: initialChallengeUrl,
+  challengeShortDesc: initialChallengeShortDesc,
+  challengeUnlockAt: initialChallengeUnlockAt,
+  showRanking: initialShowRanking,
+  showFeed: initialShowFeed,
+}: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('checkins')
   const [processing, setProcessing] = useState<string | null>(null)
@@ -82,6 +107,14 @@ export default function AdminClient({ checkIns, lives, users, challengeUrl: init
   const [liveForms, setLiveForms] = useState<Record<string, Partial<Live>>>({})
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null)
   const [challengeUrlInput, setChallengeUrlInput] = useState(initialChallengeUrl ?? '')
+  const [challengeShortDescInput, setChallengeShortDescInput] = useState(initialChallengeShortDesc ?? '')
+  const [challengeUnlockAtInput, setChallengeUnlockAtInput] = useState(
+    initialChallengeUnlockAt
+      ? new Date(initialChallengeUnlockAt).toISOString().slice(0, 16)
+      : '2026-03-17T00:00',
+  )
+  const [showRankingInput, setShowRankingInput] = useState(initialShowRanking)
+  const [showFeedInput, setShowFeedInput] = useState(initialShowFeed)
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [settingsError, setSettingsError] = useState('')
 
@@ -321,23 +354,43 @@ export default function AdminClient({ checkIns, lives, users, challengeUrl: init
   async function saveSettings() {
     setSettingsError('')
     setSettingsSaved(false)
-    const res = await fetch('/api/admin/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: 'challengeUrl', value: challengeUrlInput.trim() }),
-    })
-    if (res.ok) {
+
+    // Convert local datetime input → UTC ISO (treat input as BRT = UTC-3)
+    const unlockAtISO = challengeUnlockAtInput
+      ? new Date(challengeUnlockAtInput + ':00-03:00').toISOString()
+      : ''
+
+    const pairs = [
+      { key: 'challengeUrl', value: challengeUrlInput.trim() },
+      { key: 'challengeShortDesc', value: challengeShortDescInput.trim() },
+      { key: 'challengeUnlockAt', value: unlockAtISO },
+      { key: 'showRanking', value: showRankingInput ? 'true' : 'false' },
+      { key: 'showFeed', value: showFeedInput ? 'true' : 'false' },
+    ]
+
+    const results = await Promise.all(
+      pairs.map((pair) =>
+        fetch('/api/admin/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pair),
+        }),
+      ),
+    )
+
+    if (results.every((r) => r.ok)) {
       setSettingsSaved(true)
       setTimeout(() => setSettingsSaved(false), 3000)
+      router.refresh()
     } else {
-      setSettingsError('Erro ao salvar configuração.')
+      setSettingsError('Erro ao salvar uma ou mais configurações.')
     }
   }
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
-    { id: 'checkins', label: 'Check-ins', count: checkIns.length },
+    { id: 'checkins', label: 'Check-ins', count: checkIns.length + finalChallenges.length },
     { id: 'participants', label: 'Participantes', count: users.length },
-    { id: 'lives', label: 'Lives' },
+    { id: 'lives', label: 'Aulas' },
     { id: 'settings', label: 'Config.' },
   ]
 
@@ -495,7 +548,48 @@ export default function AdminClient({ checkIns, lives, users, challengeUrl: init
       {/* Tab: Check-ins */}
       {tab === 'checkins' && (
         <div className="space-y-4">
-          {/* Filters */}
+
+          {/* Final Challenge submissions */}
+          {finalChallenges.length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold text-violet-400 uppercase tracking-wide mb-2">
+                🏁 Desafio da Maratona PM3 — {finalChallenges.length} entrega{finalChallenges.length !== 1 ? 's' : ''}
+              </h3>
+              <div className="space-y-2">
+                {finalChallenges.map((fc) => (
+                  <div key={fc.id} className="card p-4 border-violet-800/30 bg-violet-500/5">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className="font-medium text-sm">{fc.userName}</span>
+                      <span className="text-gray-600 text-xs">{fc.userEmail}</span>
+                      <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full font-medium shrink-0">
+                        Desafio +{fc.points}pts
+                      </span>
+                      <span className="text-xs text-gray-600 ml-auto shrink-0">
+                        {new Date(fc.submittedAt).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                    <a
+                      href={fc.challengeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-400 hover:text-blue-300 break-all flex items-center gap-1"
+                    >
+                      <span>🔗</span>
+                      <span className="truncate">{fc.challengeUrl}</span>
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t border-gray-800/60 my-4" />
+            </div>
+          )}
+
+          {/* Lesson check-ins — Filters */}
           <div className="flex flex-wrap gap-2">
             <select
               className="input text-sm flex-1 min-w-[150px]"
@@ -706,8 +800,39 @@ export default function AdminClient({ checkIns, lives, users, challengeUrl: init
                 {expandedUserId === u.id && (
                   <div className="mt-3 pt-3 border-t border-gray-800/60">
                     <p className="text-xs text-gray-500 mb-2 font-medium">Histórico de check-ins</p>
+
+                    {/* Final Challenge submission in participant history */}
+                    {(() => {
+                      const fc = finalChallenges.find((f) => f.userId === u.id)
+                      if (!fc) return null
+                      return (
+                        <div className="text-xs rounded-lg px-3 py-2 bg-violet-900/20 border border-violet-800/30 mb-2 space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-violet-300">🏁 Desafio da Maratona PM3</span>
+                            <span className="px-1.5 py-0.5 rounded text-xs bg-violet-500/20 text-violet-400">
+                              +{fc.points}pts
+                            </span>
+                            <span className="text-gray-600 ml-auto">
+                              {new Date(fc.submittedAt).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: 'short',
+                              })}
+                            </span>
+                          </div>
+                          <a
+                            href={fc.challengeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 truncate block"
+                          >
+                            {fc.challengeUrl}
+                          </a>
+                        </div>
+                      )
+                    })()}
+
                     {checkIns.filter((c) => c.user.id === u.id).length === 0 ? (
-                      <p className="text-xs text-gray-600 italic">Sem check-ins registrados.</p>
+                      <p className="text-xs text-gray-600 italic">Sem check-ins de aulas registrados.</p>
                     ) : (
                       <div className="space-y-2">
                         {checkIns
@@ -982,13 +1107,27 @@ export default function AdminClient({ checkIns, lives, users, challengeUrl: init
       {/* Tab: Configurações */}
       {tab === 'settings' && (
         <div className="space-y-6">
+          {/* Challenge settings */}
           <div className="card p-5">
             <h2 className="font-semibold mb-4 text-sm">📋 Desafio da Maratona PM3</h2>
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">
-                  URL do desafio completo
-                  <span className="text-gray-600 ml-1">(deixe vazio para ocultar o botão no dashboard)</span>
+                  Descrição curta do desafio
+                  <span className="text-gray-600 ml-1">(exibida no dashboard)</span>
+                </label>
+                <textarea
+                  className="input text-sm resize-none"
+                  rows={2}
+                  placeholder="Você se tornará o PM de um app..."
+                  value={challengeShortDescInput}
+                  onChange={(e) => setChallengeShortDescInput(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">
+                  URL do material de apoio
+                  <span className="text-gray-600 ml-1">(deixe vazio para ocultar)</span>
                 </label>
                 <input
                   type="url"
@@ -998,14 +1137,59 @@ export default function AdminClient({ checkIns, lives, users, challengeUrl: init
                   onChange={(e) => setChallengeUrlInput(e.target.value)}
                 />
               </div>
-              <div className="flex items-center gap-3">
-                <button onClick={saveSettings} className="btn-primary text-sm">
-                  Salvar
-                </button>
-                {settingsSaved && <span className="text-xs text-emerald-400">✓ Salvo!</span>}
-                {settingsError && <span className="text-xs text-red-400">{settingsError}</span>}
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">
+                  Data/hora de liberação do desafio
+                  <span className="text-gray-600 ml-1">(Horário de Brasília — BRT)</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  className="input text-sm"
+                  value={challengeUnlockAtInput}
+                  onChange={(e) => setChallengeUnlockAtInput(e.target.value)}
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  Padrão: 17/03/2026 00:00 BRT
+                </p>
               </div>
             </div>
+          </div>
+
+          {/* Home navbar visibility */}
+          <div className="card p-5">
+            <h2 className="font-semibold mb-4 text-sm">🏠 Home — visibilidade do menu</h2>
+            <p className="text-xs text-gray-500 mb-3">
+              Controla quais links aparecem na navbar para usuários não logados (página inicial).
+            </p>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-violet-600"
+                  checked={showRankingInput}
+                  onChange={(e) => setShowRankingInput(e.target.checked)}
+                />
+                <span className="text-sm text-gray-300">Mostrar link "Ranking" na Home</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-violet-600"
+                  checked={showFeedInput}
+                  onChange={(e) => setShowFeedInput(e.target.checked)}
+                />
+                <span className="text-sm text-gray-300">Mostrar link "Feed" na Home</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Save */}
+          <div className="flex items-center gap-3">
+            <button onClick={saveSettings} className="btn-primary text-sm">
+              Salvar todas as configurações
+            </button>
+            {settingsSaved && <span className="text-xs text-emerald-400">✓ Salvo!</span>}
+            {settingsError && <span className="text-xs text-red-400">{settingsError}</span>}
           </div>
         </div>
       )}
