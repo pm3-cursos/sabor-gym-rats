@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { isFinalChallengeUnlocked } from '@/lib/date'
+import { FINAL_CHALLENGE_UNLOCK_UTC } from '@/lib/date'
+
+async function isUnlocked(): Promise<boolean> {
+  const setting = await prisma.appSettings.findUnique({ where: { key: 'challengeUnlockAt' } })
+  const unlockDate = setting?.value ? new Date(setting.value) : FINAL_CHALLENGE_UNLOCK_UTC
+  return new Date() >= unlockDate
+}
 
 export async function GET() {
   const session = await getSession()
@@ -22,7 +28,7 @@ export async function POST(request: NextRequest) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
 
-  if (!isFinalChallengeUnlocked()) {
+  if (!(await isUnlocked())) {
     return NextResponse.json(
       { error: 'A entrega final ainda não está disponível. Disponível a partir de 17/03.' },
       { status: 403 },

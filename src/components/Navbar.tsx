@@ -7,9 +7,11 @@ import NotificationBell from './NotificationBell'
 
 interface NavbarProps {
   user: { name: string; role: string } | null
+  showRankingOnHome?: boolean
+  showFeedOnHome?: boolean
 }
 
-export default function Navbar({ user }: NavbarProps) {
+export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome = false }: NavbarProps) {
   const pathname = usePathname()
   const [loading, setLoading] = useState(false)
 
@@ -40,8 +42,9 @@ export default function Navbar({ user }: NavbarProps) {
         <div className="hidden lg:flex items-center gap-5 shrink-0">
           {user && navLink('/dashboard', 'Check-in')}
           {user && navLink('/meu-progresso', 'Progresso')}
-          {navLink('/ranking', 'Ranking')}
-          {navLink('/feed', 'Feed')}
+          {/* Ranking and Feed: always for logged-in users; on Home only if admin toggled on */}
+          {(user || showRankingOnHome) && navLink('/ranking', 'Ranking')}
+          {(user || showFeedOnHome) && navLink('/feed', 'Feed')}
           {user?.role === 'ADMIN' && navLink('/admin', 'Admin')}
         </div>
 

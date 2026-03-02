@@ -40,10 +40,10 @@ export default function LoginPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/rat-logo.png" alt="ProductRats" className="h-16 w-auto mx-auto mb-3" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
-          <h1 className="text-2xl font-bold">Entrar</h1>
-          <p className="text-gray-400 text-sm mt-1">ProductRats — Maratona PM3</p>
+          <h1 className="text-4xl font-black mb-1">
+            Product<span className="text-violet-400">Rats</span>
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">Maratona PM3</p>
         </div>
 
         <form onSubmit={handleSubmit} className="card p-6 space-y-4">

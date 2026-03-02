@@ -6,6 +6,7 @@ import Link from 'next/link'
 import confetti from 'canvas-confetti'
 import { getUserLevel, getAdditionalBadges } from '@/lib/points'
 import { extractLinkedinUsername } from '@/lib/linkedin'
+import ChallengeDetailsModal from '@/components/ChallengeDetailsModal'
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
@@ -359,6 +360,7 @@ export default function DashboardClient({
   const [finalChallengeUrl, setFinalChallengeUrl] = useState('')
   const [finalChallengeError, setFinalChallengeError] = useState('')
   const [finalChallengeLoading, setFinalChallengeLoading] = useState(false)
+  const [challengeDetailsOpen, setChallengeDetailsOpen] = useState(false)
   // Edit modal state
   const [editingCheckIn, setEditingCheckIn] = useState<EditCheckIn | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
@@ -537,6 +539,17 @@ export default function DashboardClient({
     setTimeout(() => el.classList.remove('ring-2', 'ring-violet-400', 'ring-offset-2', 'ring-offset-transparent'), 2000)
   }
 
+  function scrollToChallenge() {
+    const el = document.getElementById('final-challenge')
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.add('ring-2', 'ring-violet-400', 'ring-offset-2', 'ring-offset-transparent')
+    setTimeout(
+      () => el.classList.remove('ring-2', 'ring-violet-400', 'ring-offset-2', 'ring-offset-transparent'),
+      1200,
+    )
+  }
+
   async function handleFinalChallengeSubmit(e: React.FormEvent) {
     e.preventDefault()
     setFinalChallengeError('')
@@ -588,6 +601,10 @@ export default function DashboardClient({
 
       {toastMsg && (
         <Toast message={toastMsg} onDismiss={() => setToastMsg(null)} />
+      )}
+
+      {challengeDetailsOpen && (
+        <ChallengeDetailsModal onClose={() => setChallengeDetailsOpen(false)} />
       )}
 
       {/* Desktop: two-column layout — left sidebar + right lives list */}
@@ -687,6 +704,51 @@ export default function DashboardClient({
             Faltam {remaining} {remaining === 1 ? 'aula' : 'aulas'} para cruzar a linha de chegada 🏁
           </p>
         ) : null}
+      </div>
+
+      {/* Challenge Highlight Card */}
+      <div
+        className="rounded-xl border p-5 mb-2 cursor-pointer transition-all duration-200
+          bg-[#1a1228] border-violet-700/50
+          shadow-[0_0_18px_-4px_rgba(139,92,246,0.18)]
+          hover:-translate-y-[2px] hover:border-violet-600/70 hover:shadow-[0_0_24px_-4px_rgba(139,92,246,0.28)]
+          focus-within:ring-2 focus-within:ring-violet-500 focus-within:ring-offset-2 focus-within:ring-offset-transparent"
+      >
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <p className="text-xs text-violet-400 font-medium uppercase tracking-wide mb-0.5">Desafio</p>
+            <h2 className="font-semibold text-white">Desafio da Maratona PM3</h2>
+          </div>
+          <span className="text-xs font-semibold bg-violet-500/20 text-violet-300 px-2.5 py-1 rounded-full shrink-0 whitespace-nowrap">
+            +5 pontos bônus
+          </span>
+        </div>
+
+        {/* Status */}
+        <p className="text-xs mb-3">
+          {!isFinalChallengeUnlocked ? (
+            <span className="text-gray-500">🔒 Bloqueado — disponível a partir de 17/03</span>
+          ) : finalChallenge ? (
+            <span className="text-emerald-400 font-medium">✅ Entregue</span>
+          ) : (
+            <span className="text-amber-400 font-medium">⏳ Pendente</span>
+          )}
+        </p>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={scrollToChallenge}
+            className="btn-primary text-sm py-2"
+          >
+            Ir para entrega do desafio
+          </button>
+          <button
+            onClick={() => setChallengeDetailsOpen(true)}
+            className="text-sm text-violet-400 hover:text-violet-300 transition-colors font-medium focus:outline-none focus:underline"
+          >
+            Detalhes do desafio →
+          </button>
+        </div>
       </div>
 
       {/* Next scheduled class card — when no class is currently active */}
@@ -1085,28 +1147,42 @@ export default function DashboardClient({
         })}
       </div>
 
-      {/* Desafio da Maratona PM3 — shown only if admin set a challenge URL */}
+      {/* External challenge resource link — shown only if admin set a challenge URL */}
       {challengeUrl && (
-        <div className="card p-5 mt-4 border-violet-800/30 bg-violet-500/5">
-          <h3 className="font-semibold mb-2">📋 Desafio da Maratona PM3</h3>
-          <p className="text-sm text-gray-400 leading-relaxed mb-4">
-            Você é PM do HabitNow — o app líder de criação de hábitos — e precisa apresentar uma proposta completa de produto.
-            {' '}O desafio integra tudo o que você aprendeu durante a Maratona: pesquisa de usuário, priorização, roadmap e métricas de sucesso.
-          </p>
+        <div className="card p-4 mt-4 border-violet-800/30 bg-violet-500/5">
+          <p className="text-xs text-gray-500 mb-2">📎 Material de apoio do desafio</p>
           <a
             href={challengeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-primary text-sm"
+            className="btn-secondary text-sm"
           >
-            Acessar desafio completo
+            Acessar material completo
           </a>
         </div>
       )}
 
-      {/* Entrega final da Maratona */}
-      <div className="card p-5 mt-4 border-violet-800/40">
-        <h3 className="font-semibold mb-2">🏁 Entrega final da Maratona</h3>
+      {/* Desafio da Maratona PM3 — submission section */}
+      <div id="final-challenge" className="card p-5 mt-4 border-violet-800/40 transition-all duration-300">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <h3 className="font-semibold">🏁 Desafio da Maratona PM3</h3>
+          <span className="text-xs font-semibold bg-violet-500/20 text-violet-300 px-2.5 py-1 rounded-full shrink-0 whitespace-nowrap">
+            +5 pontos bônus
+          </span>
+        </div>
+
+        <p className="text-sm text-gray-400 leading-relaxed mb-3">
+          Você se tornará o PM de um aplicativo de controle de hábitos e terá o desafio de aumentar
+          a taxa de usuários ativos após 14 dias.
+        </p>
+
+        <button
+          onClick={() => setChallengeDetailsOpen(true)}
+          className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors mb-4 focus:outline-none focus:underline"
+        >
+          Detalhes do desafio →
+        </button>
+
         {!isFinalChallengeUnlocked ? (
           <p className="text-sm text-gray-500">🔒 Disponível a partir de 17/03</p>
         ) : finalChallenge ? (
@@ -1117,7 +1193,7 @@ export default function DashboardClient({
         ) : (
           <form onSubmit={handleFinalChallengeSubmit} className="space-y-3">
             <p className="text-sm text-gray-400">
-              Submeta o link da sua entrega final. Você só pode enviar uma vez.
+              Submeta o link da sua entrega. Você só pode enviar uma vez.
             </p>
             <input
               type="url"

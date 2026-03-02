@@ -3,6 +3,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 import BottomNav from '@/components/BottomNav'
 import { getSession } from '@/lib/auth'
+import { prisma } from '@/lib/db'
 
 export const metadata: Metadata = {
   title: 'ProductRats — Maratona PM3',
@@ -35,13 +36,22 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const session = await getSession()
+  const [session, settings] = await Promise.all([
+    getSession(),
+    prisma.appSettings.findMany({ where: { key: { in: ['showRanking', 'showFeed'] } } }),
+  ])
+
+  const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]))
+  const showRankingOnHome = settingsMap['showRanking'] === 'true'
+  const showFeedOnHome = settingsMap['showFeed'] === 'true'
 
   return (
     <html lang="pt-BR">
       <body className="min-h-screen text-white antialiased">
         <Navbar
           user={session ? { name: session.name, role: session.role } : null}
+          showRankingOnHome={showRankingOnHome}
+          showFeedOnHome={showFeedOnHome}
         />
         <main className={session ? 'pb-16 md:pb-0' : ''}>{children}</main>
         {session && <BottomNav isAdmin={session.role === 'ADMIN'} />}
