@@ -82,7 +82,7 @@ export default async function DashboardPage() {
       totalParticipants={totalParticipants}
       userPoints={userPoints}
       nextLiveId={nextLiveId}
-      hasLinkedinProfile={!!currentUser?.linkedinProfileUrl}
+      linkedinProfileUrl={currentUser?.linkedinProfileUrl ?? null}
     />
   )
 }

@@ -105,12 +105,15 @@ export default function CadastroPage() {
             <input
               type="url"
               className="input"
-              placeholder="https://linkedin.com/in/seu-perfil"
+              placeholder="https://www.linkedin.com/in/seu-perfil/"
               value={linkedinProfileUrl}
               onChange={(e) => setLinkedinProfileUrl(e.target.value)}
               autoComplete="url"
             />
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-gray-500 mt-1">
+              Formato: <span className="text-gray-400 font-mono">https://www.linkedin.com/in/seu-perfil/</span>
+            </p>
+            <p className="text-xs text-gray-600 mt-0.5">
               Necessário para ganhar bônus de +3 pts por publicação LinkedIn.
             </p>
           </div>
