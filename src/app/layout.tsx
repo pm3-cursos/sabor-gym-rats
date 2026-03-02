@@ -39,7 +39,7 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-BR">
-      <body className="min-h-screen bg-gray-950 text-white antialiased">
+      <body className="min-h-screen text-white antialiased">
         <Navbar
           user={session ? { name: session.name, role: session.role } : null}
         />
@@ -47,14 +47,23 @@ export default async function RootLayout({
         {session && <BottomNav isAdmin={session.role === 'ADMIN'} />}
         <footer className={`border-t border-gray-800 py-4 text-center space-y-1 ${session ? 'pb-20 md:pb-4' : 'pb-4'}`}>
           <p className="text-xs text-gray-600">Aplicação oficial PM3</p>
-          <a
-            href="https://pm3com-my.sharepoint.com/:b:/g/personal/admins_pm3_com_br/IQBY8GwpRNwNRI07LSDG7hRvATPm2QpuB6D9P41cRDsIMqo?e=5VmnkS"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-gray-600 hover:text-gray-400 underline transition-colors"
-          >
-            Termos e Condições
-          </a>
+          <div className="flex items-center justify-center gap-4">
+            <a
+              href="https://pm3com-my.sharepoint.com/:b:/g/personal/admins_pm3_com_br/IQBY8GwpRNwNRI07LSDG7hRvATPm2QpuB6D9P41cRDsIMqo?e=5VmnkS"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-gray-600 hover:text-gray-400 underline transition-colors"
+            >
+              Termos e Condições
+            </a>
+            <span className="text-gray-800">·</span>
+            <a
+              href="/regras"
+              className="text-xs text-gray-600 hover:text-gray-400 underline transition-colors"
+            >
+              Regras
+            </a>
+          </div>
         </footer>
       </body>
     </html>

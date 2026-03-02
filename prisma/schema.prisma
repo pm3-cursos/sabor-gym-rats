@@ -16,11 +16,14 @@ model User {
   emailVerified      Boolean   @default(false)
   isBanned           Boolean   @default(false)
   linkedinProfileUrl String?
-  showFirstNameOnly  Boolean   @default(false)
+  showFirstNameOnly  Boolean   @default(true)
   reminderDays2      Boolean   @default(true)
   reminderDays1      Boolean   @default(true)
   reminder12h        Boolean   @default(true)
   reminder1h         Boolean   @default(true)
+  loginCount         Int       @default(0)
+  lastAccessDate     DateTime?
+  welcomeDismissed   Boolean   @default(false)
   deletedAt          DateTime?
   createdAt          DateTime  @default(now())
 
@@ -30,12 +33,14 @@ model User {
   pointAdjustments    PointAdjustment[]
   reactions           Reaction[]
   notifications       Notification[]
+  finalChallenge      FinalChallenge?
 }
 
 model Live {
   id          String    @id @default(cuid())
   title       String
   description String?
+  instructor  String?
   scheduledAt DateTime?
   order        Int       @unique
   isActive     Boolean   @default(false)
@@ -118,12 +123,27 @@ model Notification {
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model FinalChallenge {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  challengeUrl String
+  submittedAt  DateTime @default(now())
+  points       Int      @default(5)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AppSettings {
+  key   String @id
+  value String
+}
+
 enum NotificationType {
   REACTION
   SCORE_ADJUSTMENT
   CHECKIN_REMOVED
   RANK_CHANGE
   CLASS_REMINDER
+  FINAL_CHALLENGE_SUBMITTED
 }
 
 enum Role {

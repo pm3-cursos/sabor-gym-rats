@@ -263,6 +263,7 @@ interface Live {
   id: string
   title: string
   description: string | null
+  instructor: string | null
   scheduledAt: string | null
   order: number
   isActive: boolean
@@ -295,6 +296,10 @@ interface Props {
   nextLiveId: string | null
   linkedinProfileUrl: string | null
   nextScheduledLive: { title: string; scheduledAt: string } | null
+  finalChallenge: { challengeUrl: string; submittedAt: string } | null
+  isFinalChallengeUnlocked: boolean
+  welcomeDismissed: boolean
+  challengeUrl: string | null
 }
 
 function getDaysUntil(scheduledAt: string | null): string {
@@ -333,6 +338,10 @@ export default function DashboardClient({
   nextLiveId,
   linkedinProfileUrl,
   nextScheduledLive,
+  finalChallenge: initialFinalChallenge,
+  isFinalChallengeUnlocked,
+  welcomeDismissed,
+  challengeUrl,
 }: Props) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState<string | null>(null)
@@ -344,8 +353,12 @@ export default function DashboardClient({
   const [aulaSuccess, setAulaSuccess] = useState<Record<string, boolean>>({})
   const [linkedinSuccess, setLinkedinSuccess] = useState<Record<string, boolean>>({})
   const [showCelebration, setShowCelebration] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(!welcomeDismissed && approvedCount === 0)
   const [recordingLiveId, setRecordingLiveId] = useState<string | null>(null)
+  const [finalChallenge, setFinalChallenge] = useState(initialFinalChallenge)
+  const [finalChallengeUrl, setFinalChallengeUrl] = useState('')
+  const [finalChallengeError, setFinalChallengeError] = useState('')
+  const [finalChallengeLoading, setFinalChallengeLoading] = useState(false)
   // Edit modal state
   const [editingCheckIn, setEditingCheckIn] = useState<EditCheckIn | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
@@ -381,11 +394,7 @@ export default function DashboardClient({
     }, 100)
   }, [])
 
-  useEffect(() => {
-    if (approvedCount === 0 && !localStorage.getItem('pm3-onboarding-dismissed')) {
-      setShowOnboarding(true)
-    }
-  }, [approvedCount])
+  // Welcome is controlled by DB-persisted welcomeDismissed (passed as prop)
 
   useEffect(() => {
     if (userRank <= 0) return
@@ -509,6 +518,43 @@ export default function DashboardClient({
   const closeCelebration = useCallback(() => setShowCelebration(false), [])
   const recordingLive = recordingLiveId ? lives.find((l) => l.id === recordingLiveId) : null
 
+  async function handleDismissWelcome() {
+    setShowWelcome(false)
+    await fetch('/api/user/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ welcomeDismissed: true }),
+    })
+  }
+
+  function scrollToFirstLesson() {
+    const firstLiveId = lives[0]?.id
+    if (!firstLiveId) return
+    const el = document.getElementById(`live-${firstLiveId}`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.add('ring-2', 'ring-violet-400', 'ring-offset-2', 'ring-offset-transparent')
+    setTimeout(() => el.classList.remove('ring-2', 'ring-violet-400', 'ring-offset-2', 'ring-offset-transparent'), 2000)
+  }
+
+  async function handleFinalChallengeSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setFinalChallengeError('')
+    setFinalChallengeLoading(true)
+    const res = await fetch('/api/final-challenge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challengeUrl: finalChallengeUrl }),
+    })
+    const data = await res.json()
+    setFinalChallengeLoading(false)
+    if (!res.ok) {
+      setFinalChallengeError(data.error || 'Erro ao enviar entrega.')
+      return
+    }
+    setFinalChallenge({ challengeUrl: finalChallengeUrl, submittedAt: new Date().toISOString() })
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       {showCelebration && (
@@ -549,27 +595,29 @@ export default function DashboardClient({
       {/* Left sidebar — sticky on desktop: greeting, progress, badges */}
       <div className="lg:sticky lg:top-20 space-y-4 mb-6 lg:mb-0">
 
-      {/* Onboarding banner */}
-      {showOnboarding && (
-        <div className="card p-5 mb-6 border-violet-800/50 bg-violet-500/5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-2xl mb-1">👋</div>
-              <h3 className="font-semibold mb-1">Bem-vindo à Maratona PM3!</h3>
-              <p className="text-sm text-gray-400">
-                Assista às aulas ao vivo, registre seu insight e ganhe pontos. Os 3 participantes com mais pontos vencem prêmios incríveis!
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                localStorage.setItem('pm3-onboarding-dismissed', '1')
-                setShowOnboarding(false)
-              }}
-              className="text-gray-600 hover:text-white transition-colors shrink-0 text-lg"
-            >
-              ✕
-            </button>
-          </div>
+      {/* Welcome banner — epic tone, DB-persisted */}
+      {showWelcome && (
+        <div className="card p-5 mb-2 border-violet-700/50 bg-violet-500/5 relative">
+          <button
+            onClick={handleDismissWelcome}
+            className="absolute top-3 right-3 text-gray-600 hover:text-white transition-colors text-xl leading-none"
+            aria-label="Fechar"
+          >
+            ✕
+          </button>
+          <h2 className="text-base font-black mb-2 pr-6">A Maratona começa agora.</h2>
+          <p className="text-sm text-gray-300 leading-relaxed">
+            Você decidiu elevar o seu padrão. Cada aula concluída, cada insight registrado e cada entrega realizada constroem a sua evolução dentro da Maratona PM3.
+            {' '}Ao final da jornada, os 3 participantes com maior pontuação recebem prêmios especiais.
+            {' '}Todos que completarem as 6 aulas garantem um certificado exclusivo de conclusão.
+            {' '}A primeira aula disponível está abaixo. Comece agora.
+          </p>
+          <button
+            onClick={scrollToFirstLesson}
+            className="btn-primary mt-4 text-sm"
+          >
+            Registrar meu primeiro insight
+          </button>
         </div>
       )}
 
@@ -715,12 +763,16 @@ export default function DashboardClient({
                     {live.description && (
                       <p className="text-xs text-gray-500 mt-0.5 leading-snug">{live.description}</p>
                     )}
+                    {live.instructor && (
+                      <p className="text-xs text-gray-600 mt-0.5">👤 {live.instructor}</p>
+                    )}
                     {live.scheduledAt && (
                       <p className="text-xs text-gray-600 mt-0.5">
                         {new Date(live.scheduledAt).toLocaleDateString('pt-BR', {
                           day: '2-digit',
                           month: 'short',
                           weekday: 'short',
+                          timeZone: 'America/Sao_Paulo',
                         })}
                       </p>
                     )}
@@ -730,9 +782,14 @@ export default function DashboardClient({
                   {!aulaCI && !live.isActive && (
                     <span className="text-xs text-gray-600">🔒 {getDaysUntil(live.scheduledAt)}</span>
                   )}
-                  {isNext && !aulaCI && (
+                  {isNext && !aulaCI && live.isActive && (
                     <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full font-medium">
                       Próxima
+                    </span>
+                  )}
+                  {isNext && !aulaCI && !live.isActive && (
+                    <span className="text-xs bg-amber-500/15 text-amber-400/80 px-2 py-0.5 rounded-full font-medium">
+                      Em breve
                     </span>
                   )}
                 </div>
@@ -986,24 +1043,104 @@ export default function DashboardClient({
               )}
 
               {/* Recording — last */}
-              <div className="mt-3">
-                {live.recordingUrl ? (
-                  <button
-                    onClick={() => setRecordingLiveId(live.id)}
-                    className="btn-primary text-sm w-full"
-                  >
-                    ▶ Assistir aula gravada
-                  </button>
-                ) : (
-                  <div className="border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
+              {(() => {
+                const now = new Date()
+                const hasStarted = live.isActive || (live.scheduledAt ? new Date(live.scheduledAt) <= now : false)
+                const hasRecording = !!live.recordingUrl
+                if (!hasStarted) {
+                  return (
+                    <div className="mt-3 border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
+                      <span className="text-sm text-gray-500">🔗 Link disponível em breve</span>
+                    </div>
+                  )
+                }
+                if (live.isActive && hasRecording) {
+                  return (
+                    <button
+                      onClick={() => setRecordingLiveId(live.id)}
+                      className="btn-primary text-sm w-full mt-3"
+                    >
+                      ▶ Acessar link da aula
+                    </button>
+                  )
+                }
+                if (!live.isActive && hasRecording) {
+                  return (
+                    <button
+                      onClick={() => setRecordingLiveId(live.id)}
+                      className="btn-primary text-sm w-full mt-3"
+                    >
+                      🎥 Gravação disponível
+                    </button>
+                  )
+                }
+                return (
+                  <div className="mt-3 border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
                     <span className="text-sm text-gray-500">🎥 Gravação disponível em breve</span>
                   </div>
-                )}
-              </div>
+                )
+              })()}
             </div>
           )
         })}
       </div>
+
+      {/* Desafio da Maratona PM3 — shown only if admin set a challenge URL */}
+      {challengeUrl && (
+        <div className="card p-5 mt-4 border-violet-800/30 bg-violet-500/5">
+          <h3 className="font-semibold mb-2">📋 Desafio da Maratona PM3</h3>
+          <p className="text-sm text-gray-400 leading-relaxed mb-4">
+            Você é PM do HabitNow — o app líder de criação de hábitos — e precisa apresentar uma proposta completa de produto.
+            {' '}O desafio integra tudo o que você aprendeu durante a Maratona: pesquisa de usuário, priorização, roadmap e métricas de sucesso.
+          </p>
+          <a
+            href={challengeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary text-sm"
+          >
+            Acessar desafio completo
+          </a>
+        </div>
+      )}
+
+      {/* Entrega final da Maratona */}
+      <div className="card p-5 mt-4 border-violet-800/40">
+        <h3 className="font-semibold mb-2">🏁 Entrega final da Maratona</h3>
+        {!isFinalChallengeUnlocked ? (
+          <p className="text-sm text-gray-500">🔒 Disponível a partir de 17/03</p>
+        ) : finalChallenge ? (
+          <div>
+            <p className="text-sm text-emerald-400 font-medium">✅ Entrega realizada — +5 pts</p>
+            <p className="text-xs text-gray-500 mt-1 break-all">{finalChallenge.challengeUrl}</p>
+          </div>
+        ) : (
+          <form onSubmit={handleFinalChallengeSubmit} className="space-y-3">
+            <p className="text-sm text-gray-400">
+              Submeta o link da sua entrega final. Você só pode enviar uma vez.
+            </p>
+            <input
+              type="url"
+              className="input text-sm"
+              placeholder="https://..."
+              value={finalChallengeUrl}
+              onChange={(e) => setFinalChallengeUrl(e.target.value)}
+              required
+            />
+            {finalChallengeError && (
+              <p className="text-xs text-red-400">{finalChallengeError}</p>
+            )}
+            <button
+              type="submit"
+              disabled={finalChallengeLoading}
+              className="btn-primary w-full text-sm"
+            >
+              {finalChallengeLoading ? 'Enviando...' : 'Enviar entrega (+5 pts)'}
+            </button>
+          </form>
+        )}
+      </div>
+
       </div>{/* end right column */}
       </div>{/* end two-column grid */}
     </div>

@@ -24,7 +24,7 @@ export default function Navbar({ user }: NavbarProps) {
     return (
       <Link
         href={href}
-        className={`text-sm transition-colors ${
+        className={`text-sm whitespace-nowrap transition-colors ${
           active ? 'text-white font-medium' : 'text-gray-400 hover:text-white'
         }`}
       >
@@ -35,19 +35,18 @@ export default function Navbar({ user }: NavbarProps) {
 
   return (
     <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto px-4 h-14 grid grid-cols-3 items-center gap-2">
-        {/* Left: nav links — hidden on mobile (BottomNav handles it) */}
-        <div className="hidden md:flex items-center gap-4 overflow-x-auto">
+      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+        {/* Left: nav links — hidden on mobile/tablet (BottomNav handles it) */}
+        <div className="hidden lg:flex items-center gap-5 shrink-0">
           {user && navLink('/dashboard', 'Check-in')}
           {user && navLink('/meu-progresso', 'Progresso')}
           {navLink('/ranking', 'Ranking')}
           {navLink('/feed', 'Feed')}
-          {user && navLink('/perfil', 'Perfil')}
           {user?.role === 'ADMIN' && navLink('/admin', 'Admin')}
         </div>
 
-        {/* Center: logo */}
-        <div className="flex justify-center">
+        {/* Center: logo — centered on mobile, left-aligned on lg */}
+        <div className="flex-1 lg:flex-none flex justify-center lg:justify-start">
           <Link href={user ? '/dashboard' : '/'} aria-label="Maratona PM3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-pm3.svg" alt="Maratona PM3" className="h-9 w-auto" />
@@ -55,10 +54,11 @@ export default function Navbar({ user }: NavbarProps) {
         </div>
 
         {/* Right: user actions */}
-        <div className="flex items-center gap-3 justify-end">
+        <div className="flex items-center gap-3 shrink-0 justify-end">
           {user ? (
             <>
               <NotificationBell isLoggedIn={!!user} />
+              <span className="hidden lg:block">{navLink('/perfil', 'Perfil')}</span>
               <button
                 onClick={handleLogout}
                 disabled={loading}

@@ -23,6 +23,7 @@ interface Live {
   id: string
   title: string
   description: string | null
+  instructor: string | null
   scheduledAt: string | null
   order: number
   isActive: boolean
@@ -45,9 +46,10 @@ interface Props {
   checkIns: CheckIn[]
   lives: Live[]
   users: UserRow[]
+  challengeUrl: string | null
 }
 
-type Tab = 'checkins' | 'participants' | 'lives'
+type Tab = 'checkins' | 'participants' | 'lives' | 'settings'
 
 interface ConfirmState {
   message: string
@@ -72,13 +74,16 @@ function AdminConfirmModal({ state, onCancel }: { state: ConfirmState; onCancel:
   )
 }
 
-export default function AdminClient({ checkIns, lives, users }: Props) {
+export default function AdminClient({ checkIns, lives, users, challengeUrl: initialChallengeUrl }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('checkins')
   const [processing, setProcessing] = useState<string | null>(null)
   const [editingLive, setEditingLive] = useState<string | null>(null)
   const [liveForms, setLiveForms] = useState<Record<string, Partial<Live>>>({})
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null)
+  const [challengeUrlInput, setChallengeUrlInput] = useState(initialChallengeUrl ?? '')
+  const [settingsSaved, setSettingsSaved] = useState(false)
+  const [settingsError, setSettingsError] = useState('')
 
   // Admin per-check-in edit state (Participants tab)
   const [adminEditCI, setAdminEditCI] = useState<CheckIn | null>(null)
@@ -313,10 +318,27 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
     return url
   }
 
+  async function saveSettings() {
+    setSettingsError('')
+    setSettingsSaved(false)
+    const res = await fetch('/api/admin/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'challengeUrl', value: challengeUrlInput.trim() }),
+    })
+    if (res.ok) {
+      setSettingsSaved(true)
+      setTimeout(() => setSettingsSaved(false), 3000)
+    } else {
+      setSettingsError('Erro ao salvar configuração.')
+    }
+  }
+
   const tabs: { id: Tab; label: string; count?: number }[] = [
     { id: 'checkins', label: 'Check-ins', count: checkIns.length },
     { id: 'participants', label: 'Participantes', count: users.length },
     { id: 'lives', label: 'Lives' },
+    { id: 'settings', label: 'Config.' },
   ]
 
   return (
@@ -811,6 +833,21 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
                       />
                     </div>
                     <div>
+                      <label className="text-xs text-gray-400 mb-1 block">👤 Instrutor</label>
+                      <input
+                        type="text"
+                        className="input text-sm"
+                        placeholder="Nome do instrutor"
+                        defaultValue={live.instructor || ''}
+                        onChange={(e) =>
+                          setLiveForms((p) => ({
+                            ...p,
+                            [live.id]: { ...p[live.id], instructor: e.target.value },
+                          }))
+                        }
+                      />
+                    </div>
+                    <div>
                       <label className="text-xs text-gray-400 mb-1 block">Data/hora</label>
                       <input
                         type="datetime-local"
@@ -939,6 +976,37 @@ export default function AdminClient({ checkIns, lives, users }: Props) {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Tab: Configurações */}
+      {tab === 'settings' && (
+        <div className="space-y-6">
+          <div className="card p-5">
+            <h2 className="font-semibold mb-4 text-sm">📋 Desafio da Maratona PM3</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">
+                  URL do desafio completo
+                  <span className="text-gray-600 ml-1">(deixe vazio para ocultar o botão no dashboard)</span>
+                </label>
+                <input
+                  type="url"
+                  className="input text-sm"
+                  placeholder="https://..."
+                  value={challengeUrlInput}
+                  onChange={(e) => setChallengeUrlInput(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={saveSettings} className="btn-primary text-sm">
+                  Salvar
+                </button>
+                {settingsSaved && <span className="text-xs text-emerald-400">✓ Salvo!</span>}
+                {settingsError && <span className="text-xs text-red-400">{settingsError}</span>}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import DashboardClient from './DashboardClient'
 import { calcPoints, calcAulaCount, calcLinkedinCount } from '@/lib/points'
+import { isFinalChallengeUnlocked } from '@/lib/date'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +11,7 @@ export default async function DashboardPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [lives, checkIns, allUsers, currentUser] = await Promise.all([
+  const [lives, checkIns, allUsers, currentUser, finalChallenge, challengeSetting] = await Promise.all([
     prisma.live.findMany({ orderBy: { order: 'asc' } }),
     prisma.checkIn.findMany({
       where: { userId: session.userId },
@@ -25,12 +26,18 @@ export default async function DashboardPage() {
           select: { id: true, type: true, status: true, isInvalid: true },
         },
         pointAdjustments: { select: { amount: true } },
+        finalChallenge: { select: { points: true } },
       },
     }),
     prisma.user.findUnique({
       where: { id: session.userId },
-      select: { linkedinProfileUrl: true },
+      select: {
+        linkedinProfileUrl: true,
+        welcomeDismissed: true,
+      },
     }),
+    prisma.finalChallenge.findUnique({ where: { userId: session.userId } }),
+    prisma.appSettings.findUnique({ where: { key: 'challengeUrl' } }),
   ])
 
   const approvedCount = calcAulaCount(checkIns)
@@ -38,7 +45,7 @@ export default async function DashboardPage() {
   const totalLives = lives.length
 
   const sorted = allUsers
-    .map((u) => ({ id: u.id, name: u.name, points: calcPoints(u.checkIns, u.pointAdjustments) }))
+    .map((u) => ({ id: u.id, name: u.name, points: calcPoints(u.checkIns, u.pointAdjustments, u.finalChallenge) }))
     .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'pt-BR'))
   const userRank = sorted.findIndex((u) => u.id === session.userId) + 1
   const totalParticipants = sorted.length
@@ -49,7 +56,10 @@ export default async function DashboardPage() {
       .filter((c) => c.status === 'APPROVED' && c.type === 'AULA')
       .map((c) => c.liveId),
   )
-  const nextLiveId = lives.find((l) => l.isActive && !approvedAulaLiveIds.has(l.id))?.id ?? null
+
+  // nextLiveId: the first uncompleted live — active OR next upcoming
+  const firstUncompleted = lives.find((l) => !approvedAulaLiveIds.has(l.id))
+  const nextLiveId = firstUncompleted?.id ?? null
 
   const hasAnyActiveLive = lives.some((l) => l.isActive)
   const now = new Date()
@@ -64,6 +74,7 @@ export default async function DashboardPage() {
         id: l.id,
         title: l.title,
         description: l.description,
+        instructor: l.instructor ?? null,
         scheduledAt: l.scheduledAt ? l.scheduledAt.toISOString() : null,
         order: l.order,
         isActive: l.isActive,
@@ -93,6 +104,13 @@ export default async function DashboardPage() {
         title: nextScheduledLive.title,
         scheduledAt: nextScheduledLive.scheduledAt!.toISOString(),
       } : null}
+      finalChallenge={finalChallenge ? {
+        challengeUrl: finalChallenge.challengeUrl,
+        submittedAt: finalChallenge.submittedAt.toISOString(),
+      } : null}
+      isFinalChallengeUnlocked={isFinalChallengeUnlocked()}
+      welcomeDismissed={currentUser?.welcomeDismissed ?? false}
+      challengeUrl={challengeSetting?.value || null}
     />
   )
 }

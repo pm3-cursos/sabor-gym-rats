@@ -40,7 +40,8 @@ export default function LoginPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-4xl mb-3">🏋️</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/rat-logo.png" alt="ProductRats" className="h-16 w-auto mx-auto mb-3" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
           <h1 className="text-2xl font-bold">Entrar</h1>
           <p className="text-gray-400 text-sm mt-1">ProductRats — Maratona PM3</p>
         </div>

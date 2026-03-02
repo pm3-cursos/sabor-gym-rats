@@ -11,7 +11,7 @@ export async function PATCH(request: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
 
   const body = await request.json()
-  const { name, linkedinProfileUrl, showFirstNameOnly, reminderDays2, reminderDays1, reminder12h, reminder1h } = body
+  const { name, linkedinProfileUrl, showFirstNameOnly, reminderDays2, reminderDays1, reminder12h, reminder1h, welcomeDismissed } = body
 
   const data: Record<string, unknown> = {}
 
@@ -43,6 +43,7 @@ export async function PATCH(request: NextRequest) {
   if (reminderDays1 !== undefined) data.reminderDays1 = Boolean(reminderDays1)
   if (reminder12h !== undefined) data.reminder12h = Boolean(reminder12h)
   if (reminder1h !== undefined) data.reminder1h = Boolean(reminder1h)
+  if (welcomeDismissed !== undefined) data.welcomeDismissed = Boolean(welcomeDismissed)
 
   const user = await prisma.user.update({
     where: { id: session.userId },

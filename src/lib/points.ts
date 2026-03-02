@@ -7,12 +7,13 @@ export interface CheckInLike {
 export function calcPoints(
   checkIns: CheckInLike[],
   adjustments: { amount: number }[] = [],
+  finalChallenge?: { points: number } | null,
 ): number {
   const base = checkIns
     .filter((c) => c.status === 'APPROVED' && !c.isInvalid)
     .reduce((sum, c) => sum + (c.type === 'LINKEDIN' ? 3 : 1), 0)
   const adj = adjustments.reduce((s, a) => s + a.amount, 0)
-  return base + adj
+  return base + adj + (finalChallenge?.points ?? 0)
 }
 
 export function calcAulaCount(checkIns: CheckInLike[]): number {

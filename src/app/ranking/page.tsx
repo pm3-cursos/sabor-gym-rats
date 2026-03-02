@@ -17,6 +17,7 @@ async function getLeaderboard() {
         select: { type: true, status: true, isInvalid: true },
       },
       pointAdjustments: { select: { amount: true } },
+      finalChallenge: { select: { points: true } },
     },
   })
 
@@ -24,7 +25,7 @@ async function getLeaderboard() {
     .map((u) => ({
       id: u.id,
       name: u.showFirstNameOnly ? u.name.split(' ')[0] : u.name,
-      points: calcPoints(u.checkIns, u.pointAdjustments),
+      points: calcPoints(u.checkIns, u.pointAdjustments, u.finalChallenge),
       aulaCount: calcAulaCount(u.checkIns),
     }))
     .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'pt-BR'))
