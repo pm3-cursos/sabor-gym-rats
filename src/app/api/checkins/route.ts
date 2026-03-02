@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { extractLinkedinUsername } from '@/lib/linkedin'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,12 +45,34 @@ export async function POST(request: NextRequest) {
 
   if (type === 'LINKEDIN') {
     const url = linkedinUrl?.trim() ?? ''
-    if (!url.startsWith('https://www.linkedin.com/') || !url.includes('posts/')) {
+    if (!url.toLowerCase().includes('linkedin.com') || !url.includes('posts/')) {
       return NextResponse.json(
-        {
-          error:
-            'Cole o link oficial de uma publicação do LinkedIn (deve conter linkedin.com/posts/).',
-        },
+        { error: 'Cole o link oficial de uma publicação do LinkedIn (deve conter linkedin.com/posts/).' },
+        { status: 400 },
+      )
+    }
+
+    // Validate that the post URL belongs to the user's LinkedIn profile
+    const userProfile = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { linkedinProfileUrl: true },
+    })
+    if (!userProfile?.linkedinProfileUrl) {
+      return NextResponse.json(
+        { error: 'Adicione seu perfil do LinkedIn nas configurações antes de enviar o bônus.' },
+        { status: 400 },
+      )
+    }
+    const username = extractLinkedinUsername(userProfile.linkedinProfileUrl)
+    if (!username) {
+      return NextResponse.json(
+        { error: 'Seu LinkedIn cadastrado está em formato inválido. Atualize nas configurações: https://www.linkedin.com/in/seu-perfil/' },
+        { status: 400 },
+      )
+    }
+    if (!url.toLowerCase().includes(username)) {
+      return NextResponse.json(
+        { error: 'Este link não parece ser seu. Use um post publicado pelo seu perfil do LinkedIn.' },
         { status: 400 },
       )
     }

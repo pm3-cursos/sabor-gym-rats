@@ -249,8 +249,11 @@ export default function PerfilClient({
             onChange={(e) => setLinkedinUrl(e.target.value)}
             autoComplete="url"
           />
+          <p className="text-xs text-gray-500">
+            Formato: <span className="text-gray-400 font-mono">https://www.linkedin.com/in/seu-perfil/</span>
+          </p>
           <p className="text-xs text-gray-600">
-            Necessário para ganhar o bônus de +3 pts por publicação LinkedIn nas aulas.
+            Necessário para ganhar o bônus de +3 pts por publicação nas aulas.
           </p>
           <Msg msg={linkedinMsg} />
           <button type="submit" disabled={linkedinSaving} className="btn-primary w-full">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { cookies } from 'next/headers'
+import { isValidLinkedinProfileUrl } from '@/lib/linkedin'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,13 +24,18 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (linkedinProfileUrl !== undefined) {
-    if (linkedinProfileUrl && !(linkedinProfileUrl as string).includes('linkedin.com/')) {
-      return NextResponse.json(
-        { error: 'URL inválida. Deve conter "linkedin.com/".' },
-        { status: 400 },
-      )
+    if (linkedinProfileUrl) {
+      const trimmedUrl = (linkedinProfileUrl as string).trim()
+      if (!isValidLinkedinProfileUrl(trimmedUrl)) {
+        return NextResponse.json(
+          { error: 'Use o formato https://www.linkedin.com/in/seu-perfil/' },
+          { status: 400 },
+        )
+      }
+      data.linkedinProfileUrl = trimmedUrl
+    } else {
+      data.linkedinProfileUrl = null
     }
-    data.linkedinProfileUrl = linkedinProfileUrl || null
   }
 
   if (showFirstNameOnly !== undefined) data.showFirstNameOnly = Boolean(showFirstNameOnly)

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
 import { getUserLevel, getAdditionalBadges } from '@/lib/points'
+import { extractLinkedinUsername } from '@/lib/linkedin'
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
@@ -33,11 +34,13 @@ function EditCheckInModal({
   onSave,
   onCancel,
   saving,
+  linkedinUsername,
 }: {
   checkIn: EditCheckIn
   onSave: (data: { insight?: string; linkedinUrl?: string }) => Promise<void>
   onCancel: () => void
   saving: boolean
+  linkedinUsername?: string | null
 }) {
   const [insight, setInsight] = useState(checkIn.insight || '')
   const [url, setUrl] = useState(checkIn.linkedinUrl || '')
@@ -57,8 +60,12 @@ function EditCheckInModal({
       }
     } else {
       const trimmed = url.trim()
-      if (!trimmed.startsWith('https://www.linkedin.com/') || !trimmed.includes('posts/')) {
+      if (!trimmed.toLowerCase().includes('linkedin.com') || !trimmed.includes('posts/')) {
         setError('Cole o link oficial do LinkedIn (linkedin.com/posts/).')
+        return
+      }
+      if (linkedinUsername && !trimmed.toLowerCase().includes(linkedinUsername)) {
+        setError('Este link não parece ser seu. Use um post publicado pelo seu perfil do LinkedIn.')
         return
       }
       try {
@@ -285,7 +292,7 @@ interface Props {
   totalParticipants: number
   userPoints: number
   nextLiveId: string | null
-  hasLinkedinProfile: boolean
+  linkedinProfileUrl: string | null
 }
 
 function getDaysUntil(scheduledAt: string | null): string {
@@ -322,7 +329,7 @@ export default function DashboardClient({
   totalParticipants,
   userPoints,
   nextLiveId,
-  hasLinkedinProfile,
+  linkedinProfileUrl,
 }: Props) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState<string | null>(null)
@@ -348,6 +355,8 @@ export default function DashboardClient({
   const safeTotal = totalLives > 0 ? totalLives : 1
   const pct = Math.min(100, Math.round((approvedCount / safeTotal) * 100))
   const remaining = totalLives - approvedCount
+  const linkedinUsername = extractLinkedinUsername(linkedinProfileUrl)
+  const hasLinkedinProfile = !!linkedinUsername
 
   useEffect(() => {
     if (
@@ -405,10 +414,17 @@ export default function DashboardClient({
       }
       setAulaErrors((prev) => ({ ...prev, [liveId]: '' }))
     } else {
-      if (!url || !url.startsWith('https://www.linkedin.com/') || !url.includes('posts/')) {
+      if (!url || !url.toLowerCase().includes('linkedin.com') || !url.includes('posts/')) {
         setLinkedinErrors((prev) => ({
           ...prev,
           [liveId]: 'Cole o link oficial de uma publicação do LinkedIn (linkedin.com/posts/).',
+        }))
+        return
+      }
+      if (linkedinUsername && !url.toLowerCase().includes(linkedinUsername)) {
+        setLinkedinErrors((prev) => ({
+          ...prev,
+          [liveId]: 'Este link não parece ser seu. Use um post publicado pelo seu perfil do LinkedIn.',
         }))
         return
       }
@@ -508,6 +524,7 @@ export default function DashboardClient({
           onSave={handleSaveEdit}
           onCancel={() => setEditingCheckIn(null)}
           saving={submitting === editingCheckIn.id}
+          linkedinUsername={linkedinUsername}
         />
       )}
 
@@ -821,20 +838,20 @@ export default function DashboardClient({
                   {!linkedinCI && aulaApproved && !hasLinkedinProfile && (
                     <div className="mb-3 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2.5 space-y-2">
                       <p className="text-xs text-amber-400">
-                        Para ganhar o bônus, adicione seu LinkedIn no cadastro.
+                        Para ganhar o bônus, adicione seu LinkedIn no perfil.
                       </p>
                       <a
                         href="/perfil"
-                        className="inline-block text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1 rounded-full transition-colors"
+                        className="inline-block text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-3 py-1.5 rounded-full font-medium transition-colors"
                       >
-                        Atualizar meu perfil com LinkedIn →
+                        Adicionar meu LinkedIn →
                       </a>
                     </div>
                   )}
 
                   {!linkedinCI && !aulaApproved && live.isActive && (
-                    <p className="text-xs text-gray-600 mb-3">
-                      🔒 Faça o check-in da aula primeiro para liberar o bônus LinkedIn.
+                    <p className="text-xs text-gray-500 mb-3">
+                      Faça o check-in da aula primeiro para liberar o bônus LinkedIn.
                     </p>
                   )}
 
@@ -891,8 +908,15 @@ export default function DashboardClient({
                           setUrls((prev) => ({ ...prev, [live.id]: e.target.value }))
                         }
                       />
+                      {linkedinUsername && (
+                        <p className="text-xs text-gray-500">
+                          Seu LinkedIn: <span className="text-gray-400 font-medium">@{linkedinUsername}</span> — o link deve pertencer ao seu perfil.
+                        </p>
+                      )}
                       {linkedinErrors[live.id] && (
-                        <p className="text-xs text-red-400">{linkedinErrors[live.id]}</p>
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                          <p className="text-xs text-red-400">{linkedinErrors[live.id]}</p>
+                        </div>
                       )}
                       <button
                         onClick={() => handleSubmit(live.id, 'LINKEDIN')}

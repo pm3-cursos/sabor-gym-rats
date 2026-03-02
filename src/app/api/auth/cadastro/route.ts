@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { hashPassword, createToken } from '@/lib/auth'
+import { isValidLinkedinProfileUrl } from '@/lib/linkedin'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,8 +11,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 })
     }
 
-    if (linkedinProfileUrl && !linkedinProfileUrl.includes('linkedin.com/')) {
-      return NextResponse.json({ error: 'URL do LinkedIn inválida.' }, { status: 400 })
+    if (linkedinProfileUrl && !isValidLinkedinProfileUrl(linkedinProfileUrl)) {
+      return NextResponse.json(
+        { error: 'Use o formato https://www.linkedin.com/in/seu-perfil/' },
+        { status: 400 },
+      )
     }
 
     if (password.length < 6) {
