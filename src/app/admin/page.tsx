@@ -10,7 +10,7 @@ export default async function AdminPage() {
   const session = await getSession()
   if (!session || session.role !== 'ADMIN') redirect('/dashboard')
 
-  const [checkIns, lives, usersRaw] = await Promise.all([
+  const [checkIns, lives, usersRaw, challengeSetting] = await Promise.all([
     prisma.checkIn.findMany({
       include: {
         user: { select: { id: true, name: true, email: true } },
@@ -36,6 +36,7 @@ export default async function AdminPage() {
       },
       orderBy: { createdAt: 'asc' },
     }),
+    prisma.appSettings.findUnique({ where: { key: 'challengeUrl' } }),
   ])
 
   const users = usersRaw.map((u) => ({
@@ -56,6 +57,7 @@ export default async function AdminPage() {
         id: l.id,
         title: l.title,
         description: l.description,
+        instructor: l.instructor ?? null,
         scheduledAt: l.scheduledAt?.toISOString() ?? null,
         order: l.order,
         isActive: l.isActive,
@@ -63,6 +65,7 @@ export default async function AdminPage() {
         checkInsCount: l._count.checkIns,
       }))}
       users={users}
+      challengeUrl={challengeSetting?.value ?? null}
     />
   )
 }

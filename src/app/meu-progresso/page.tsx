@@ -20,7 +20,7 @@ export default async function MeuProgressoPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [lives, checkIns, allUsers] = await Promise.all([
+  const [lives, checkIns, allUsers, myFinalChallenge] = await Promise.all([
     prisma.live.findMany({ orderBy: { order: 'asc' } }),
     prisma.checkIn.findMany({
       where: { userId: session.userId },
@@ -35,8 +35,10 @@ export default async function MeuProgressoPage() {
           select: { type: true, status: true, isInvalid: true },
         },
         pointAdjustments: { select: { amount: true } },
+        finalChallenge: { select: { points: true } },
       },
     }),
+    prisma.finalChallenge.findUnique({ where: { userId: session.userId } }),
   ])
 
   const totalLives = lives.length
@@ -45,7 +47,7 @@ export default async function MeuProgressoPage() {
   const additionalBadges = getAdditionalBadges(linkedinCount)
 
   const sorted = allUsers
-    .map((u) => ({ id: u.id, name: u.name, points: calcPoints(u.checkIns, u.pointAdjustments) }))
+    .map((u) => ({ id: u.id, name: u.name, points: calcPoints(u.checkIns, u.pointAdjustments, u.finalChallenge) }))
     .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'pt-BR'))
   const userRank = sorted.findIndex((u) => u.id === session.userId) + 1
   const totalParticipants = sorted.length

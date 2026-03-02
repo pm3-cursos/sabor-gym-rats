@@ -35,6 +35,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Track login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { loginCount: { increment: 1 }, lastAccessDate: new Date() },
+    })
+
     const token = await createToken({
       userId: user.id,
       email: user.email,

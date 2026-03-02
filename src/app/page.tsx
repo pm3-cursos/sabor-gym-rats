@@ -14,18 +14,20 @@ async function getLeaderboard() {
     select: {
       id: true,
       name: true,
+      showFirstNameOnly: true,
       checkIns: {
         select: { type: true, status: true, isInvalid: true },
       },
       pointAdjustments: { select: { amount: true } },
+      finalChallenge: { select: { points: true } },
     },
   })
 
   return users
     .map((u) => ({
       id: u.id,
-      name: u.name,
-      points: calcPoints(u.checkIns, u.pointAdjustments),
+      name: u.showFirstNameOnly ? u.name.split(' ')[0] : u.name,
+      points: calcPoints(u.checkIns, u.pointAdjustments, u.finalChallenge),
       aulaCount: calcAulaCount(u.checkIns),
     }))
     .sort((a, b) => b.points - a.points)

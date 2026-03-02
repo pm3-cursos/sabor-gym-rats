@@ -46,7 +46,8 @@ export default function CadastroPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-4xl mb-3">🏋️</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/rat-logo.png" alt="ProductRats" className="h-16 w-auto mx-auto mb-3" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
           <h1 className="text-2xl font-bold">Criar conta</h1>
           <p className="text-gray-400 text-sm mt-1">Participe da Maratona ProductRats</p>
         </div>
@@ -59,7 +60,7 @@ export default function CadastroPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Nome</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Nome completo</label>
             <input
               type="text"
               className="input"
