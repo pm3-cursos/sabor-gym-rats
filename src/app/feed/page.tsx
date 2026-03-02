@@ -16,7 +16,7 @@ async function getFeed(currentUserId: string | null) {
       userId: true,
       liveId: true,
       createdAt: true,
-      user: { select: { name: true } },
+      user: { select: { name: true, showFirstNameOnly: true } },
       live: { select: { title: true, order: true } },
       reactions: {
         select: { emoji: true, userId: true },
@@ -58,7 +58,7 @@ async function getFeed(currentUserId: string | null) {
       insight: item.insight,
       linkedinUrl: linkedinMap.get(`${item.userId}_${item.liveId}`) ?? null,
       createdAt: item.createdAt.toISOString(),
-      userName: item.user.name,
+      userName: item.user.showFirstNameOnly ? item.user.name.split(' ')[0] : item.user.name,
       liveTitle: item.live.title,
       liveOrder: item.live.order,
       reactionCounts: counts,

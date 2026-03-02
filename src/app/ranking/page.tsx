@@ -12,6 +12,7 @@ async function getLeaderboard() {
     select: {
       id: true,
       name: true,
+      showFirstNameOnly: true,
       checkIns: {
         select: { type: true, status: true, isInvalid: true },
       },
@@ -22,7 +23,7 @@ async function getLeaderboard() {
   return users
     .map((u) => ({
       id: u.id,
-      name: u.name,
+      name: u.showFirstNameOnly ? u.name.split(' ')[0] : u.name,
       points: calcPoints(u.checkIns, u.pointAdjustments),
       aulaCount: calcAulaCount(u.checkIns),
     }))

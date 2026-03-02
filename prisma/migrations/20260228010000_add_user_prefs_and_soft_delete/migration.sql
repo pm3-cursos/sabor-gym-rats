@@ -1,0 +1,7 @@
+-- Add privacy and notification preference fields to User (idempotent)
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "showFirstNameOnly" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "reminderDays2"     BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "reminderDays1"     BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "reminder12h"       BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "reminder1h"        BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "deletedAt"         TIMESTAMP(3);

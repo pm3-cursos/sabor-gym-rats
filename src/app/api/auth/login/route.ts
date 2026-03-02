@@ -21,6 +21,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 })
     }
 
+    if (user.deletedAt) {
+      return NextResponse.json(
+        { error: 'Esta conta foi excluída. Entre em contato com o suporte se isso foi um engano.' },
+        { status: 403 },
+      )
+    }
+
     if (user.isBanned) {
       return NextResponse.json(
         { error: 'Sua conta foi banida. Entre em contato com o suporte.' },

@@ -4,20 +4,20 @@ import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-// Thresholds in ms for class reminders
+// Thresholds in ms for class reminders, keyed by user preference field
 const REMINDER_WINDOWS = [
-  { label: 'Começa em 2 dias', ms: 2 * 24 * 60 * 60 * 1000, buffer: 30 * 60 * 1000 },
-  { label: 'Começa amanhã', ms: 24 * 60 * 60 * 1000, buffer: 30 * 60 * 1000 },
-  { label: 'Começa em 12 horas', ms: 12 * 60 * 60 * 1000, buffer: 30 * 60 * 1000 },
-  { label: 'Começa em 1 hora', ms: 60 * 60 * 1000, buffer: 15 * 60 * 1000 },
-  { label: 'Começando agora!', ms: 0, buffer: 15 * 60 * 1000 },
+  { label: 'Começa em 2 dias', ms: 2 * 24 * 60 * 60 * 1000, buffer: 30 * 60 * 1000, prefKey: 'reminderDays2' as const },
+  { label: 'Começa amanhã', ms: 24 * 60 * 60 * 1000, buffer: 30 * 60 * 1000, prefKey: 'reminderDays1' as const },
+  { label: 'Começa em 12 horas', ms: 12 * 60 * 60 * 1000, buffer: 30 * 60 * 1000, prefKey: 'reminder12h' as const },
+  { label: 'Começa em 1 hora', ms: 60 * 60 * 1000, buffer: 15 * 60 * 1000, prefKey: 'reminder1h' as const },
+  { label: 'Começando agora!', ms: 0, buffer: 15 * 60 * 1000, prefKey: 'reminder1h' as const },
 ]
 
 export async function GET() {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
 
-  const [dbNotifications, lives, userCheckIns] = await Promise.all([
+  const [dbNotifications, lives, userCheckIns, userPrefs] = await Promise.all([
     prisma.notification.findMany({
       where: { userId: session.userId },
       orderBy: { createdAt: 'desc' },
@@ -27,6 +27,10 @@ export async function GET() {
     prisma.checkIn.findMany({
       where: { userId: session.userId, type: 'AULA', status: 'APPROVED' },
       select: { liveId: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { reminderDays2: true, reminderDays1: true, reminder12h: true, reminder1h: true },
     }),
   ])
 
@@ -48,6 +52,7 @@ export async function GET() {
     const diffMs = new Date(live.scheduledAt).getTime() - now
 
     for (const window of REMINDER_WINDOWS) {
+      if (userPrefs && !userPrefs[window.prefKey]) continue
       const lowerBound = window.ms - window.buffer
       const upperBound = window.ms + window.buffer
       if (diffMs >= lowerBound && diffMs <= upperBound) {
