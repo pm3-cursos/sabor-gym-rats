@@ -8,6 +8,11 @@ import { prisma } from '@/lib/db'
 export const metadata: Metadata = {
   title: 'ProductRats — Maratona PM3',
   description: 'Participe da Maratona PM3, assista às aulas, publique no LinkedIn e concorra a prêmios!',
+  icons: {
+    icon: '/logo-pm3.svg',
+    shortcut: '/logo-pm3.svg',
+    apple: '/logo-pm3.svg',
+  },
   openGraph: {
     title: 'ProductRats — Maratona PM3',
     description: 'Participe da Maratona PM3, assista às aulas, publique no LinkedIn e concorra a prêmios!',
