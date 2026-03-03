@@ -62,6 +62,8 @@ interface Props {
   challengeUnlockAt: string | null
   showRanking: boolean
   showFeed: boolean
+  emailFrom: string | null
+  adminEmail: string | null
 }
 
 type Tab = 'checkins' | 'participants' | 'lives' | 'settings'
@@ -99,6 +101,8 @@ export default function AdminClient({
   challengeUnlockAt: initialChallengeUnlockAt,
   showRanking: initialShowRanking,
   showFeed: initialShowFeed,
+  emailFrom: initialEmailFrom,
+  adminEmail,
 }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('checkins')
@@ -115,8 +119,14 @@ export default function AdminClient({
   )
   const [showRankingInput, setShowRankingInput] = useState(initialShowRanking)
   const [showFeedInput, setShowFeedInput] = useState(initialShowFeed)
+  const [emailFromInput, setEmailFromInput] = useState(initialEmailFrom ?? '')
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [settingsError, setSettingsError] = useState('')
+
+  // Test email state
+  const [testEmailTo, setTestEmailTo] = useState(adminEmail ?? '')
+  const [testEmailSending, setTestEmailSending] = useState(false)
+  const [testEmailResult, setTestEmailResult] = useState<{ ok: boolean; message: string } | null>(null)
 
   // Admin per-check-in edit state (Participants tab)
   const [adminEditCI, setAdminEditCI] = useState<CheckIn | null>(null)
@@ -351,6 +361,23 @@ export default function AdminClient({
     return url
   }
 
+  async function sendTestEmail() {
+    setTestEmailSending(true)
+    setTestEmailResult(null)
+    const res = await fetch('/api/admin/test-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: testEmailTo }),
+    })
+    const data = await res.json()
+    setTestEmailSending(false)
+    if (res.ok) {
+      setTestEmailResult({ ok: true, message: `✅ E-mail enviado! ID: ${data.id} · Remetente: ${data.from} · URL: ${data.appUrl}` })
+    } else {
+      setTestEmailResult({ ok: false, message: `❌ ${data.error}` })
+    }
+  }
+
   async function saveSettings() {
     setSettingsError('')
     setSettingsSaved(false)
@@ -366,6 +393,7 @@ export default function AdminClient({
       { key: 'challengeUnlockAt', value: unlockAtISO },
       { key: 'showRanking', value: showRankingInput ? 'true' : 'false' },
       { key: 'showFeed', value: showFeedInput ? 'true' : 'false' },
+      { key: 'emailFrom', value: emailFromInput.trim() },
     ]
 
     const results = await Promise.all(
@@ -1153,6 +1181,63 @@ export default function AdminClient({
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Email configuration */}
+          <div className="card p-5">
+            <h2 className="font-semibold mb-1 text-sm">📧 E-mail — configuração do remetente</h2>
+            <p className="text-xs text-gray-500 mb-3">
+              O domínio do remetente precisa estar verificado no{' '}
+              <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300">
+                painel Resend
+              </a>
+              . Sem verificação, e-mails não são entregues.
+            </p>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">
+                E-mail remetente (FROM)
+                <span className="text-gray-600 ml-1">— padrão: noreply@productrats.com.br</span>
+              </label>
+              <input
+                type="email"
+                className="input text-sm"
+                placeholder="noreply@seudominio.com"
+                value={emailFromInput}
+                onChange={(e) => setEmailFromInput(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Test email */}
+          <div className="card p-5">
+            <h2 className="font-semibold mb-1 text-sm">🧪 Testar envio de e-mail</h2>
+            <p className="text-xs text-gray-500 mb-3">
+              Envia um e-mail de teste para verificar se a integração com o Resend está funcionando.
+            </p>
+            <div className="flex gap-2 items-end flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <label className="text-xs text-gray-400 mb-1 block">Destinatário do teste</label>
+                <input
+                  type="email"
+                  className="input text-sm"
+                  placeholder="admin@exemplo.com"
+                  value={testEmailTo}
+                  onChange={(e) => setTestEmailTo(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={sendTestEmail}
+                disabled={testEmailSending || !testEmailTo}
+                className="btn-secondary text-sm shrink-0"
+              >
+                {testEmailSending ? 'Enviando...' : 'Enviar teste'}
+              </button>
+            </div>
+            {testEmailResult && (
+              <div className={`mt-3 text-xs px-3 py-2 rounded-lg ${testEmailResult.ok ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+                {testEmailResult.message}
+              </div>
+            )}
           </div>
 
           {/* Home navbar visibility */}
