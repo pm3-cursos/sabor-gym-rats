@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { Resend } from 'resend'
+import { getFrom, getAppUrl } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,9 +24,8 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const from = process.env.EMAIL_FROM ?? 'noreply@productrats.com.br'
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? process.env.URL ?? 'http://localhost:3000'
+  const from = getFrom()
+  const appUrl = getAppUrl()
 
   const resend = new Resend(apiKey)
 
