@@ -46,7 +46,7 @@ export default function FeedList({
         <div className="flex gap-2 flex-wrap mb-5">
           <button
             onClick={() => handleFilter(null)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+            className={`px-3 py-2 rounded-full text-xs font-medium transition-colors ${
               filterOrder === null
                 ? 'bg-violet-600 text-white'
                 : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
@@ -58,7 +58,7 @@ export default function FeedList({
             <button
               key={order}
               onClick={() => handleFilter(order)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              className={`px-3 py-2 rounded-full text-xs font-medium transition-colors ${
                 filterOrder === order
                   ? 'bg-violet-600 text-white'
                   : 'bg-gray-800 text-gray-400 hover:bg-gray-700'

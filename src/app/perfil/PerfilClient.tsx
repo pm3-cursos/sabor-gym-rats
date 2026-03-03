@@ -289,7 +289,7 @@ export default function PerfilClient({
             { label: '1 hora antes', value: rem1h, key: 'reminder1h', setter: setRem1h },
           ] as const
         ).map((item) => (
-          <div key={item.key} className="flex items-center justify-between gap-4 py-1">
+          <div key={item.key} className="flex items-center justify-between gap-4 py-3">
             <span className="text-sm text-gray-300">{item.label}</span>
             <Toggle
               checked={item.value}

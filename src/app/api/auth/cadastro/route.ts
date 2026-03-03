@@ -11,6 +11,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 })
     }
 
+    if (name.trim().length > 100) {
+      return NextResponse.json({ error: 'O nome deve ter no máximo 100 caracteres.' }, { status: 400 })
+    }
+
     if (linkedinProfileUrl && !isValidLinkedinProfileUrl(linkedinProfileUrl)) {
       return NextResponse.json(
         { error: 'Use o formato https://www.linkedin.com/in/seu-perfil/' },
@@ -20,6 +24,10 @@ export async function POST(request: NextRequest) {
 
     if (password.length < 6) {
       return NextResponse.json({ error: 'A senha deve ter pelo menos 6 caracteres.' }, { status: 400 })
+    }
+
+    if (password.length > 128) {
+      return NextResponse.json({ error: 'A senha deve ter no máximo 128 caracteres.' }, { status: 400 })
     }
 
     const normalizedEmail = email.toLowerCase().trim()
