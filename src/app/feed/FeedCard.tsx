@@ -131,7 +131,7 @@ export default function FeedCard({ item, isLoggedIn, emojis }: Props) {
                   key={emoji}
                   onClick={() => handleReaction(emoji)}
                   disabled={pending}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-colors ${
+                  className={`flex items-center gap-1 px-2.5 py-1.5 min-h-[36px] rounded-full text-xs transition-colors ${
                     isActive
                       ? 'bg-violet-500/30 text-violet-300 border border-violet-500/40'
                       : 'bg-gray-800/60 text-gray-400 border border-gray-700/40 hover:bg-gray-700/60'

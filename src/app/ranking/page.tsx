@@ -34,7 +34,7 @@ async function getLeaderboard() {
 const PRIZES = [
   {
     rank: 1,
-    prize: 'Imersão Presencial em Empresa Product-Led',
+    prize: 'Imersão Presencial em Empresa de Produto',
     color: 'text-yellow-400',
     border: 'border-yellow-500/40',
     bg: 'bg-yellow-500/10',

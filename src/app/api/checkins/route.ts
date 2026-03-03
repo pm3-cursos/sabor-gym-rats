@@ -41,6 +41,13 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    if (insightTrimmed.length > 2000) {
+      return NextResponse.json(
+        { error: 'O insight deve ter no máximo 2000 caracteres.' },
+        { status: 400 },
+      )
+    }
   }
 
   if (type === 'LINKEDIN') {
