@@ -1,23 +1,39 @@
 import { Resend } from 'resend'
 
-const FROM = process.env.EMAIL_FROM ?? 'noreply@productrats.com.br'
+// EMAIL_FROM: pode ser sobrescrito via env var ou via AppSettings (key: 'emailFrom').
+// O admin pode alterar no painel Config sem re-deploy.
+export const DEFAULT_FROM = 'noreply@productrats.com.br'
+
+export function getFrom(overrideFrom?: string | null): string {
+  return overrideFrom?.trim() || process.env.EMAIL_FROM || DEFAULT_FROM
+}
+
 // NEXT_PUBLIC_APP_URL: setado manualmente nas env vars do Netlify/Vercel.
 // process.env.URL: variável built-in do Netlify (URL do deploy atual).
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.URL ??
-  'http://localhost:3000'
+export function getAppUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.URL ??
+    'http://localhost:3000'
+  )
+}
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY)
 }
 
-export async function sendPasswordReset(to: string, name: string, token: string) {
+export async function sendPasswordReset(
+  to: string,
+  name: string,
+  token: string,
+  overrideFrom?: string | null,
+) {
   const resend = getResend()
-  const link = `${APP_URL}/redefinir-senha?token=${token}`
+  const from = getFrom(overrideFrom)
+  const link = `${getAppUrl()}/redefinir-senha?token=${token}`
 
   await resend.emails.send({
-    from: FROM,
+    from,
     to,
     subject: 'Redefinição de senha — ProductRats',
     html: `
@@ -36,12 +52,18 @@ export async function sendPasswordReset(to: string, name: string, token: string)
   })
 }
 
-export async function sendEmailVerification(to: string, name: string, token: string) {
+export async function sendEmailVerification(
+  to: string,
+  name: string,
+  token: string,
+  overrideFrom?: string | null,
+) {
   const resend = getResend()
-  const link = `${APP_URL}/api/auth/verificar-email?token=${token}`
+  const from = getFrom(overrideFrom)
+  const link = `${getAppUrl()}/api/auth/verificar-email?token=${token}`
 
   await resend.emails.send({
-    from: FROM,
+    from,
     to,
     subject: 'Confirme seu e-mail — ProductRats',
     html: `

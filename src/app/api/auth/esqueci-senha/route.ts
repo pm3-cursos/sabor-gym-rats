@@ -17,7 +17,10 @@ export async function POST(request: NextRequest) {
 
     // Always return the same response to avoid leaking registered emails
     if (user) {
-      const token = randomBytes(32).toString('hex')
+      const [token, fromSetting] = await Promise.all([
+        Promise.resolve(randomBytes(32).toString('hex')),
+        prisma.appSettings.findUnique({ where: { key: 'emailFrom' } }),
+      ])
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
       await prisma.passwordResetToken.create({
@@ -25,7 +28,7 @@ export async function POST(request: NextRequest) {
       })
 
       try {
-        await sendPasswordReset(user.email, user.name, token)
+        await sendPasswordReset(user.email, user.name, token, fromSetting?.value)
       } catch (emailErr) {
         console.error('[esqueci-senha] Falha ao enviar e-mail de reset:', emailErr)
         return NextResponse.json(

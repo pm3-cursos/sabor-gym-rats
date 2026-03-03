@@ -42,10 +42,15 @@ export default async function AdminPage() {
     }),
     prisma.appSettings.findMany({
       where: {
-        key: { in: ['challengeUrl', 'challengeShortDesc', 'challengeUnlockAt', 'showRanking', 'showFeed'] },
+        key: { in: ['challengeUrl', 'challengeShortDesc', 'challengeUnlockAt', 'showRanking', 'showFeed', 'emailFrom'] },
       },
     }),
   ])
+
+  const adminUser = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { email: true },
+  })
 
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]))
 
@@ -89,6 +94,8 @@ export default async function AdminPage() {
       challengeUnlockAt={settingsMap['challengeUnlockAt'] ?? null}
       showRanking={settingsMap['showRanking'] === 'true'}
       showFeed={settingsMap['showFeed'] === 'true'}
+      emailFrom={settingsMap['emailFrom'] ?? null}
+      adminEmail={adminUser?.email ?? null}
     />
   )
 }

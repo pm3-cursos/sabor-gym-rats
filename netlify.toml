@@ -4,8 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  # $URL é injetado automaticamente pelo Netlify com a URL do deploy.
-  # Garante que os links de e-mail (reset de senha, verificação) apontem para o domínio correto.
-  # Se você tiver um domínio customizado, defina NEXT_PUBLIC_APP_URL manualmente
-  # nas Environment Variables do painel Netlify (Site Settings → Environment Variables).
-  NEXT_PUBLIC_APP_URL = "$URL"
+  # NEXT_PUBLIC_APP_URL: defina manualmente no painel Netlify (Site Settings → Environment Variables)
+  # com a URL do seu site (ex: https://seusite.netlify.app).
+  # Os links de e-mail já usam process.env.URL (variável built-in do Netlify, disponível em
+  # runtime nos API routes) como fallback — ver src/lib/email.ts.
