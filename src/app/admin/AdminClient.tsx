@@ -1192,16 +1192,18 @@ export default function AdminClient({
           <div className="card p-5">
             <h2 className="font-semibold mb-1 text-sm">📧 E-mail — configuração do remetente</h2>
             <p className="text-xs text-gray-500 mb-3">
-              O domínio do remetente precisa estar verificado no{' '}
+              Para usar sem domínio próprio, deixe o campo vazio — o remetente padrão{' '}
+              <code className="text-violet-400">onboarding@resend.dev</code> já funciona sem nenhuma configuração.
+              Para usar seu próprio domínio, verifique-o no{' '}
               <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300">
                 painel Resend
-              </a>
-              . Sem verificação, e-mails não são entregues.
+              </a>{' '}
+              e informe o endereço abaixo.
             </p>
             <div>
               <label className="text-xs text-gray-400 mb-1 block">
                 E-mail remetente (FROM)
-                <span className="text-gray-600 ml-1">— padrão: noreply@productrats.com.br</span>
+                <span className="text-gray-600 ml-1">— padrão: onboarding@resend.dev (sem verificação de domínio)</span>
               </label>
               <input
                 type="email"

@@ -2,7 +2,7 @@ import { Resend } from 'resend'
 
 // EMAIL_FROM: pode ser sobrescrito via env var ou via AppSettings (key: 'emailFrom').
 // O admin pode alterar no painel Config sem re-deploy.
-export const DEFAULT_FROM = 'noreply@productrats.com.br'
+export const DEFAULT_FROM = 'onboarding@resend.dev'
 
 export function getFrom(overrideFrom?: string | null): string {
   return overrideFrom?.trim() || process.env.EMAIL_FROM || DEFAULT_FROM
