@@ -28,7 +28,10 @@ export async function POST(request: NextRequest) {
         await sendPasswordReset(user.email, user.name, token)
       } catch (emailErr) {
         console.error('[esqueci-senha] Falha ao enviar e-mail de reset:', emailErr)
-        // Token still created — email delivery failure doesn't block the flow
+        return NextResponse.json(
+          { error: 'Erro ao enviar o e-mail. Tente novamente em instantes.' },
+          { status: 500 },
+        )
       }
     }
 

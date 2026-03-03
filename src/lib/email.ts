@@ -1,7 +1,12 @@
 import { Resend } from 'resend'
 
 const FROM = process.env.EMAIL_FROM ?? 'noreply@productrats.com.br'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+// NEXT_PUBLIC_APP_URL: setado manualmente nas env vars do Netlify/Vercel.
+// process.env.URL: variável built-in do Netlify (URL do deploy atual).
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ??
+  process.env.URL ??
+  'http://localhost:3000'
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY)
