@@ -17,10 +17,11 @@ export async function POST(request: NextRequest) {
 
     // Always return the same response to avoid leaking registered emails
     if (user) {
-      const [token, fromSetting] = await Promise.all([
-        Promise.resolve(randomBytes(32).toString('hex')),
-        prisma.appSettings.findUnique({ where: { key: 'emailFrom' } }),
-      ])
+      const token = randomBytes(32).toString('hex')
+      // Non-fatal: if AppSettings table doesn't exist yet, fall back to default FROM
+      const fromSetting = await prisma.appSettings
+        .findUnique({ where: { key: 'emailFrom' } })
+        .catch(() => null)
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
       await prisma.passwordResetToken.create({
