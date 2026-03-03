@@ -281,7 +281,7 @@ export default function MeuProgressoAulas({
                     {!checkIn && !live.isActive && (
                       <span className="inline-flex items-center text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded-full">
                         {live.scheduledAt
-                          ? new Date(live.scheduledAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+                          ? new Date(live.scheduledAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', timeZone: 'America/Sao_Paulo' })
                           : 'Em breve'}
                       </span>
                     )}

@@ -598,6 +598,7 @@ export default function AdminClient({
                           month: 'short',
                           hour: '2-digit',
                           minute: '2-digit',
+                          timeZone: 'America/Sao_Paulo',
                         })}
                       </span>
                     </div>
@@ -701,6 +702,7 @@ export default function AdminClient({
                       month: 'short',
                       hour: '2-digit',
                       minute: '2-digit',
+                      timeZone: 'America/Sao_Paulo',
                     })}
                   </span>
                 </div>
@@ -844,6 +846,7 @@ export default function AdminClient({
                               {new Date(fc.submittedAt).toLocaleDateString('pt-BR', {
                                 day: '2-digit',
                                 month: 'short',
+                                timeZone: 'America/Sao_Paulo',
                               })}
                             </span>
                           </div>
@@ -895,6 +898,7 @@ export default function AdminClient({
                                   {new Date(c.createdAt).toLocaleDateString('pt-BR', {
                                     day: '2-digit',
                                     month: 'short',
+                                    timeZone: 'America/Sao_Paulo',
                                   })}
                                 </span>
                               </div>
@@ -1105,6 +1109,7 @@ export default function AdminClient({
                             month: 'short',
                             hour: '2-digit',
                             minute: '2-digit',
+                            timeZone: 'America/Sao_Paulo',
                           })}
                         </p>
                       )}
