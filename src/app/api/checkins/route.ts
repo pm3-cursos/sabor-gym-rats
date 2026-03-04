@@ -89,7 +89,8 @@ export async function POST(request: NextRequest) {
   if (!live) {
     return NextResponse.json({ error: 'Aula não encontrada.' }, { status: 404 })
   }
-  if (!live.isActive) {
+  const effectivelyActive = live.isActive || (live.scheduledAt !== null && live.scheduledAt <= new Date())
+  if (!effectivelyActive) {
     return NextResponse.json(
       { error: 'Esta aula ainda não está aceitando check-ins.' },
       { status: 400 },

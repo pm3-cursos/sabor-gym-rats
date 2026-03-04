@@ -45,8 +45,9 @@ model Live {
   order        Int       @unique
   isActive     Boolean   @default(false)
   recordingUrl String?
-  liveType     LiveType  @default(ASYNC)
-  createdAt    DateTime  @default(now())
+  liveType         LiveType  @default(ASYNC)
+  linkVisibleEarly Boolean   @default(false)
+  createdAt        DateTime  @default(now())
 
   checkIns CheckIn[]
 }

@@ -58,7 +58,7 @@ async function main() {
   for (const live of lives) {
     await prisma.live.upsert({
       where: { order: live.order },
-      update: live,
+      update: {},
       create: live,
     })
   }

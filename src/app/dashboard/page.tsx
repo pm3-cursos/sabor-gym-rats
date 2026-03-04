@@ -83,9 +83,10 @@ export default async function DashboardPage() {
         instructor: l.instructor ?? null,
         scheduledAt: l.scheduledAt ? l.scheduledAt.toISOString() : null,
         order: l.order,
-        isActive: l.isActive,
+        isActive: l.isActive || (l.scheduledAt !== null && l.scheduledAt <= now),
         recordingUrl: l.recordingUrl ?? null,
         liveType: l.liveType,
+        linkVisibleEarly: l.linkVisibleEarly,
       }))}
       checkIns={checkIns.map((c) => ({
         id: c.id,

@@ -29,6 +29,7 @@ interface Live {
   isActive: boolean
   recordingUrl: string | null
   liveType: string
+  linkVisibleEarly: boolean
   checkInsCount: number
 }
 
@@ -1094,6 +1095,30 @@ export default function AdminClient({
                         }
                       />
                     </div>
+                    {(liveForms[live.id]?.liveType ?? live.liveType) === 'LIVE' && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id={`link-early-${live.id}`}
+                            defaultChecked={live.linkVisibleEarly}
+                            onChange={(e) =>
+                              setLiveForms((p) => ({
+                                ...p,
+                                [live.id]: { ...p[live.id], linkVisibleEarly: e.target.checked },
+                              }))
+                            }
+                            className="w-4 h-4 accent-violet-600"
+                          />
+                          <label htmlFor={`link-early-${live.id}`} className="text-sm text-gray-300">
+                            Liberar link antes do horário (sala de espera)
+                          </label>
+                        </div>
+                        <p className="text-xs text-gray-600 pl-6">
+                          Apenas para a próxima aula · requer URL configurada
+                        </p>
+                      </div>
+                    )}
                     <div className="flex gap-2">
                       <button
                         onClick={() => updateLive(live.id)}
@@ -1145,6 +1170,9 @@ export default function AdminClient({
                       </p>
                       {live.recordingUrl && (
                         <p className="text-xs text-violet-500 pl-7 mt-0.5">🎥 Gravação configurada</p>
+                      )}
+                      {live.linkVisibleEarly && live.liveType === 'LIVE' && (
+                        <p className="text-xs text-amber-500 pl-7 mt-0.5">🕐 Sala de espera habilitada</p>
                       )}
                     </div>
                     <button
