@@ -45,6 +45,7 @@ model Live {
   order        Int       @unique
   isActive     Boolean   @default(false)
   recordingUrl String?
+  liveType     LiveType  @default(ASYNC)
   createdAt    DateTime  @default(now())
 
   checkIns CheckIn[]
@@ -135,6 +136,11 @@ model FinalChallenge {
 model AppSettings {
   key   String @id
   value String
+}
+
+enum LiveType {
+  LIVE
+  ASYNC
 }
 
 enum NotificationType {

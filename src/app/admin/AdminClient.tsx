@@ -28,6 +28,7 @@ interface Live {
   order: number
   isActive: boolean
   recordingUrl: string | null
+  liveType: string
   checkInsCount: number
 }
 
@@ -327,14 +328,26 @@ export default function AdminClient({
     }
   }
 
+  function toDatetimeLocalBRT(isoString: string): string {
+    return new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(new Date(isoString)).replace(' ', 'T')
+  }
+
   async function updateLive(id: string) {
     const form = liveForms[id]
     if (!form) return
     setProcessing(id)
+    const formToSend = { ...form }
+    if (formToSend.scheduledAt) {
+      formToSend.scheduledAt = new Date(formToSend.scheduledAt + ':00-03:00').toISOString()
+    }
     await fetch(`/api/admin/lives/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify(formToSend),
     })
     setProcessing(null)
     setEditingLive(null)
@@ -962,6 +975,22 @@ export default function AdminClient({
                 {isEditing ? (
                   <div className="space-y-3">
                     <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Tipo de aula</label>
+                      <select
+                        className="input text-sm"
+                        defaultValue={live.liveType}
+                        onChange={(e) =>
+                          setLiveForms((p) => ({
+                            ...p,
+                            [live.id]: { ...p[live.id], liveType: e.target.value },
+                          }))
+                        }
+                      >
+                        <option value="ASYNC">📹 Assíncrona (gravação)</option>
+                        <option value="LIVE">🔴 Ao vivo</option>
+                      </select>
+                    </div>
+                    <div>
                       <label className="text-xs text-gray-400 mb-1 block">Título</label>
                       <input
                         type="text"
@@ -1010,9 +1039,7 @@ export default function AdminClient({
                         type="datetime-local"
                         className="input text-sm"
                         defaultValue={
-                          live.scheduledAt
-                            ? new Date(live.scheduledAt).toISOString().slice(0, 16)
-                            : ''
+                          live.scheduledAt ? toDatetimeLocalBRT(live.scheduledAt) : ''
                         }
                         onChange={(e) =>
                           setLiveForms((p) => ({

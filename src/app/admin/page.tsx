@@ -77,6 +77,7 @@ export default async function AdminPage() {
         order: l.order,
         isActive: l.isActive,
         recordingUrl: l.recordingUrl ?? null,
+        liveType: l.liveType,
         checkInsCount: l._count.checkIns,
       }))}
       users={users}
