@@ -35,10 +35,10 @@ export async function sendPasswordReset(
   await resend.emails.send({
     from,
     to,
-    subject: 'Redefinição de senha — ProductRats',
+    subject: 'Redefinição de senha — ProductRats PM3',
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0a0a0f;color:#f8fafc;padding:32px;border-radius:12px;">
-        <h2 style="margin-top:0;">🏋️ ProductRats — Maratona PM3</h2>
+        <h2 style="margin-top:0;">ProductRats — Maratona PM3 🏁</h2>
         <p>Olá, <strong>${name}</strong>!</p>
         <p>Recebemos uma solicitação de redefinição de senha para sua conta.</p>
         <p>Clique no botão abaixo para criar uma nova senha. O link expira em <strong>1 hora</strong>.</p>
