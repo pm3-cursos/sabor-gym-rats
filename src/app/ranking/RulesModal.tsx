@@ -94,7 +94,7 @@ export default function RulesModal() {
                   <span className="text-2xl shrink-0">🥇</span>
                   <div>
                     <p className="font-semibold text-yellow-400 text-sm">1º lugar</p>
-                    <p className="text-sm text-gray-300">Imersão Presencial em Empresa de Produto</p>
+                    <p className="text-sm text-gray-300">Divulgação em breve</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 bg-gray-500/10 border border-gray-500/20 rounded-lg p-3">

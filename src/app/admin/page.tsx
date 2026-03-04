@@ -78,6 +78,7 @@ export default async function AdminPage() {
         isActive: l.isActive,
         recordingUrl: l.recordingUrl ?? null,
         liveType: l.liveType,
+        linkVisibleEarly: l.linkVisibleEarly,
         checkInsCount: l._count.checkIns,
       }))}
       users={users}
