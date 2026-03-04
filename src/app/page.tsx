@@ -86,16 +86,21 @@ export default async function Home() {
               <li className="flex gap-2">
                 <span className="text-violet-400 font-bold">2.</span>
                 Escreva seu insight e faça o check-in{' '}
-                <span className="text-gray-500">(🏁 +1 ponto)</span>
+                <span className="text-gray-500">(+1 ponto)</span>
               </li>
               <li className="flex gap-2">
                 <span className="text-violet-400 font-bold">3.</span>
                 Publique no LinkedIn e envie o link para ganhar bônus{' '}
-                <span className="text-gray-500">(🚀 +3 pontos)</span>
+                <span className="text-gray-500">(+3 pontos)</span>
               </li>
               <li className="flex gap-2">
                 <span className="text-violet-400 font-bold">4.</span>
-                Complete as {totalLives > 0 ? totalLives : 'todas as'} aulas e concorra ao prêmio! 🏆
+                Faça o Desafio da Maratona e ganhe mais pontos bônus{' '}
+                <span className="text-gray-500">(+5 pontos)</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-violet-400 font-bold">5.</span>
+                Complete as 6 aulas, receba um certificado, fique no top 3 e concorra aos prêmios! 🏆
               </li>
             </ol>
           </div>
@@ -152,12 +157,6 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="mt-4 card p-4 border-gray-800/60">
-            <div className="flex gap-3">
-              <a href="/cadastro" className="btn-primary flex-1 text-sm">Criar conta grátis</a>
-              <a href="/ranking" className="btn-secondary flex-1 text-sm">Ver ranking</a>
-            </div>
-          </div>
         </div>
 
       </div>{/* end two-column grid */}

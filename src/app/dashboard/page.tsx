@@ -85,6 +85,7 @@ export default async function DashboardPage() {
         order: l.order,
         isActive: l.isActive,
         recordingUrl: l.recordingUrl ?? null,
+        liveType: l.liveType,
       }))}
       checkIns={checkIns.map((c) => ({
         id: c.id,

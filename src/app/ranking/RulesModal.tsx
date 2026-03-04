@@ -42,7 +42,29 @@ export default function RulesModal() {
                   <span className="text-emerald-400 font-bold shrink-0">3 pts</span>
                   <span>Check-in de publicação no LinkedIn — publique sobre a aula e envie o link da publicação.</span>
                 </li>
+                <li className="flex gap-2">
+                  <span className="text-violet-300 font-bold shrink-0">5 pts</span>
+                  <span>Entrega do Desafio da Maratona.</span>
+                </li>
               </ul>
+            </section>
+
+            {/* Desafio da Maratona */}
+            <section>
+              <h3 className="font-semibold text-violet-400 mb-2">🏁 Desafio da Maratona</h3>
+              <div className="bg-violet-500/10 border border-violet-500/20 rounded-lg p-4">
+                <p className="text-sm text-gray-300 leading-relaxed mb-3">
+                  Ao longo da maratona, será liberado um Desafio especial. Ao completá-lo e enviar
+                  sua entrega, você ganha <strong className="text-violet-300">+5 pontos bônus</strong>{' '}
+                  que contam para o ranking final.
+                </p>
+                <ul className="text-xs text-gray-400 space-y-1">
+                  <li>• O desafio é liberado em data definida pela equipe PM3</li>
+                  <li>• Cada participante pode enviar uma entrega única</li>
+                  <li>• A entrega não é avaliada qualitativamente — só conta a participação</li>
+                  <li>• Pontos são adicionados automaticamente ao seu placar</li>
+                </ul>
+              </div>
             </section>
 
             {/* Quem ganha */}

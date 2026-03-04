@@ -269,6 +269,7 @@ interface Live {
   order: number
   isActive: boolean
   recordingUrl: string | null
+  liveType: string
 }
 
 interface CheckIn {
@@ -842,6 +843,13 @@ export default function DashboardClient({
                   </div>
                 </div>
                 <div className="shrink-0 flex gap-1 flex-wrap justify-end">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    live.liveType === 'LIVE'
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-blue-500/20 text-blue-400'
+                  }`}>
+                    {live.liveType === 'LIVE' ? '🔴 Ao vivo' : '📹 Assíncrona'}
+                  </span>
                   {!aulaCI && !live.isActive && (
                     <span className="text-xs text-gray-600">🔒 {getDaysUntil(live.scheduledAt)}</span>
                   )}
@@ -1108,8 +1116,51 @@ export default function DashboardClient({
               {/* Recording — last */}
               {(() => {
                 const now = new Date()
-                const hasStarted = live.isActive || (live.scheduledAt ? new Date(live.scheduledAt) <= now : false)
                 const hasRecording = !!live.recordingUrl
+
+                if (live.liveType === 'LIVE') {
+                  const scheduled = live.scheduledAt ? new Date(live.scheduledAt) : null
+                  const liveEnd = scheduled ? new Date(scheduled.getTime() + 60 * 60 * 1000) : null
+                  const isLiveNow = scheduled && liveEnd && now >= scheduled && now < liveEnd
+                  const isLivePast = liveEnd && now >= liveEnd
+
+                  if (isLiveNow) {
+                    return hasRecording ? (
+                      <button
+                        onClick={() => setRecordingLiveId(live.id)}
+                        className="btn-primary text-sm w-full mt-3 animate-pulse"
+                      >
+                        🔴 Aula ao vivo agora
+                      </button>
+                    ) : (
+                      <div className="mt-3 border border-red-800/40 rounded-lg px-4 py-2.5 flex items-center gap-2 animate-pulse opacity-70 cursor-not-allowed">
+                        <span className="text-sm text-red-400">🔴 Aula ao vivo — link indisponível</span>
+                      </div>
+                    )
+                  }
+                  if (isLivePast) {
+                    return hasRecording ? (
+                      <button
+                        onClick={() => setRecordingLiveId(live.id)}
+                        className="btn-primary text-sm w-full mt-3"
+                      >
+                        🎥 Gravação disponível
+                      </button>
+                    ) : (
+                      <div className="mt-3 border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
+                        <span className="text-sm text-gray-500">🎥 Gravação disponível em breve</span>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div className="mt-3 border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
+                      <span className="text-sm text-gray-500">🔗 Link disponível em breve</span>
+                    </div>
+                  )
+                }
+
+                // ASYNC — lógica original
+                const hasStarted = live.isActive || (live.scheduledAt ? new Date(live.scheduledAt) <= now : false)
                 if (!hasStarted) {
                   return (
                     <div className="mt-3 border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
