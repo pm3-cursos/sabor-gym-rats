@@ -71,9 +71,9 @@ export default async function Home() {
       </div>
 
       {/* Two-column layout on desktop */}
-      <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8">
+      <div className="lg:grid lg:grid-cols-2 lg:gap-8">
 
-        {/* Left — Como funciona + Challenge + Leaderboard preview */}
+        {/* Left — Como funciona + Challenge */}
         <div className="space-y-6 mb-6 lg:mb-0">
           {/* Como funciona */}
           <div className="card p-5">
@@ -107,23 +107,10 @@ export default async function Home() {
 
           {/* Challenge section */}
           <HomeChallengeSection />
-
-          {/* Compact Leaderboard — top 5, first names only */}
-          <LeaderboardClient
-            leaderboard={leaderboard.map((u, i) => ({
-              ...u,
-              rank: i + 1,
-              level: getUserLevel(u.aulaCount),
-            }))}
-            currentUserId={null}
-            totalLives={totalLives}
-            maxItems={5}
-            firstNameOnly={true}
-          />
         </div>
 
-        {/* Right — Prizes (sticky on desktop) */}
-        <div className="lg:sticky lg:top-20">
+        {/* Right — Prizes + Leaderboard preview */}
+        <div className="space-y-6">
           <div className="card p-5 border-violet-800/40">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">🏆</span>
@@ -157,6 +144,18 @@ export default async function Home() {
             </div>
           </div>
 
+          {/* Compact Leaderboard — top 5, first names only */}
+          <LeaderboardClient
+            leaderboard={leaderboard.map((u, i) => ({
+              ...u,
+              rank: i + 1,
+              level: getUserLevel(u.aulaCount),
+            }))}
+            currentUserId={null}
+            totalLives={totalLives}
+            maxItems={5}
+            firstNameOnly={true}
+          />
         </div>
 
       </div>{/* end two-column grid */}
