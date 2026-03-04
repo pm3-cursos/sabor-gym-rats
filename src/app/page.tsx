@@ -121,7 +121,7 @@ export default async function Home() {
                 <span className="text-lg shrink-0">🥇</span>
                 <div>
                   <p className="text-xs font-bold text-yellow-400">1º lugar</p>
-                  <p className="text-xs text-gray-300">Imersão Presencial em Empresa de Produto</p>
+                  <p className="text-xs text-gray-300">Divulgação em breve</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 bg-gray-500/10 border border-gray-500/20 rounded-lg px-3 py-2.5">

@@ -270,6 +270,7 @@ interface Live {
   isActive: boolean
   recordingUrl: string | null
   liveType: string
+  linkVisibleEarly: boolean
 }
 
 interface CheckIn {
@@ -1152,6 +1153,16 @@ export default function DashboardClient({
                       </div>
                     )
                   }
+                  if (live.linkVisibleEarly && isNext && hasRecording) {
+                    return (
+                      <button
+                        onClick={() => setRecordingLiveId(live.id)}
+                        className="btn-secondary text-sm w-full mt-3"
+                      >
+                        🕐 Aguardar início da aula
+                      </button>
+                    )
+                  }
                   return (
                     <div className="mt-3 border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
                       <span className="text-sm text-gray-500">🔗 Link disponível em breve</span>
@@ -1159,8 +1170,8 @@ export default function DashboardClient({
                   )
                 }
 
-                // ASYNC — lógica original
-                const hasStarted = live.isActive || (live.scheduledAt ? new Date(live.scheduledAt) <= now : false)
+                // ASYNC — effectiveIsActive already computed server-side
+                const hasStarted = live.isActive
                 if (!hasStarted) {
                   return (
                     <div className="mt-3 border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
