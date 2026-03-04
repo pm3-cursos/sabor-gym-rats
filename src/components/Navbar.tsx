@@ -48,8 +48,8 @@ export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome
           {user?.role === 'ADMIN' && navLink('/admin', 'Admin')}
         </div>
 
-        {/* Center: logo — centered on mobile, left-aligned on lg */}
-        <div className="flex-1 lg:flex-none flex justify-center lg:justify-start">
+        {/* Center: logo — always centered */}
+        <div className="flex-1 flex justify-center">
           <Link href={user ? '/dashboard' : '/'} aria-label="Maratona PM3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-pm3.svg" alt="Maratona PM3" className="h-9 w-auto" />
