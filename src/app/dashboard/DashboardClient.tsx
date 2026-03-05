@@ -1227,23 +1227,23 @@ export default function DashboardClient({
           {challengeShortDesc ?? 'Você se tornará o PM de um aplicativo de controle de hábitos e terá o desafio de aumentar a taxa de usuários ativos após 14 dias.'}
         </p>
 
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          {challengeUrl && (
+            <a
+              href={challengeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary text-sm"
+            >
+              Acessar material completo
+            </a>
+          )}
           <button
             onClick={() => setChallengeDetailsOpen(true)}
             className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus:outline-none focus:underline"
           >
             Detalhes do desafio →
           </button>
-          {challengeUrl && (
-            <a
-              href={challengeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus:outline-none focus:underline"
-            >
-              Acessar material completo →
-            </a>
-          )}
         </div>
 
         {!isFinalChallengeUnlocked ? (
