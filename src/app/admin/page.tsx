@@ -77,6 +77,7 @@ export default async function AdminPage() {
         order: l.order,
         isActive: l.isActive,
         recordingUrl: l.recordingUrl ?? null,
+        liveUrl: l.liveUrl ?? null,
         liveType: l.liveType,
         linkVisibleEarly: l.linkVisibleEarly,
         checkInsCount: l._count.checkIns,

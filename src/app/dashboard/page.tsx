@@ -86,6 +86,7 @@ export default async function DashboardPage() {
         order: l.order,
         isActive: l.isActive || (l.scheduledAt !== null && l.scheduledAt <= now),
         recordingUrl: l.recordingUrl ?? null,
+        liveUrl: l.liveUrl ?? null,
         liveType: l.liveType,
         linkVisibleEarly: l.linkVisibleEarly,
       }))}

@@ -269,6 +269,7 @@ interface Live {
   order: number
   isActive: boolean
   recordingUrl: string | null
+  liveUrl: string | null
   liveType: string
   linkVisibleEarly: boolean
 }
@@ -1157,14 +1158,16 @@ export default function DashboardClient({
                       </div>
                     )
                   }
-                  if (isNext && hasRecording) {
+                  if (live.liveUrl) {
                     return (
-                      <button
-                        onClick={() => setRecordingLiveId(live.id)}
-                        className="btn-secondary text-sm w-full mt-3"
+                      <a
+                        href={live.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-secondary text-sm w-full mt-3 text-center block"
                       >
                         🕐 Aguardar início da aula
-                      </button>
+                      </a>
                     )
                   }
                   return (
@@ -1177,14 +1180,16 @@ export default function DashboardClient({
                 // ASYNC — effectiveIsActive already computed server-side
                 const hasStarted = live.isActive
                 if (!hasStarted) {
-                  if (isNext && hasRecording) {
+                  if (live.liveUrl) {
                     return (
-                      <button
-                        onClick={() => setRecordingLiveId(live.id)}
-                        className="btn-secondary text-sm w-full mt-3"
+                      <a
+                        href={live.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-secondary text-sm w-full mt-3 text-center block"
                       >
                         🕐 Aguardar início da aula
-                      </button>
+                      </a>
                     )
                   }
                   return (
