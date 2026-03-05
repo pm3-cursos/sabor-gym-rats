@@ -303,6 +303,8 @@ interface Props {
   isFinalChallengeUnlocked: boolean
   welcomeDismissed: boolean
   challengeUrl: string | null
+  challengeShortDesc: string | null
+  unlockAt: string
 }
 
 function getDaysUntil(scheduledAt: string | null): string {
@@ -346,6 +348,8 @@ export default function DashboardClient({
   isFinalChallengeUnlocked,
   welcomeDismissed,
   challengeUrl,
+  challengeShortDesc,
+  unlockAt,
 }: Props) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState<string | null>(null)
@@ -607,7 +611,7 @@ export default function DashboardClient({
       )}
 
       {challengeDetailsOpen && (
-        <ChallengeDetailsModal onClose={() => setChallengeDetailsOpen(false)} />
+        <ChallengeDetailsModal onClose={() => setChallengeDetailsOpen(false)} unlockAt={unlockAt} />
       )}
 
       {/* Desktop: two-column layout — left sidebar + right lives list */}
@@ -730,7 +734,7 @@ export default function DashboardClient({
         {/* Status */}
         <p className="text-xs mb-3">
           {!isFinalChallengeUnlocked ? (
-            <span className="text-gray-500">🔒 Bloqueado — disponível a partir de 17/03</span>
+            <span className="text-gray-500">🔒 Bloqueado — disponível a partir de {new Date(unlockAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' })}</span>
           ) : finalChallenge ? (
             <span className="text-emerald-400 font-medium">✅ Entregue</span>
           ) : (
@@ -1235,8 +1239,7 @@ export default function DashboardClient({
         </div>
 
         <p className="text-sm text-gray-400 leading-relaxed mb-3">
-          Você se tornará o PM de um aplicativo de controle de hábitos e terá o desafio de aumentar
-          a taxa de usuários ativos após 14 dias.
+          {challengeShortDesc ?? 'Você se tornará o PM de um aplicativo de controle de hábitos e terá o desafio de aumentar a taxa de usuários ativos após 14 dias.'}
         </p>
 
         <button
@@ -1247,7 +1250,7 @@ export default function DashboardClient({
         </button>
 
         {!isFinalChallengeUnlocked ? (
-          <p className="text-sm text-gray-500">🔒 Disponível a partir de 17/03</p>
+          <p className="text-sm text-gray-500">🔒 Disponível a partir de {new Date(unlockAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' })}</p>
         ) : finalChallenge ? (
           <div>
             <p className="text-sm text-emerald-400 font-medium">✅ Entrega realizada — +5 pts</p>
