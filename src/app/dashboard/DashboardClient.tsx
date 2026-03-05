@@ -1214,21 +1214,6 @@ export default function DashboardClient({
         })}
       </div>
 
-      {/* External challenge resource link — shown only if admin set a challenge URL */}
-      {challengeUrl && (
-        <div className="card p-4 mt-4 border-violet-800/30 bg-violet-500/5">
-          <p className="text-xs text-gray-500 mb-2">📎 Material de apoio do desafio</p>
-          <a
-            href={challengeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-secondary text-sm"
-          >
-            Acessar material completo
-          </a>
-        </div>
-      )}
-
       {/* Desafio da Maratona PM3 — submission section */}
       <div id="final-challenge" className="card p-5 mt-4 border-violet-800/40 transition-all duration-300">
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -1242,12 +1227,24 @@ export default function DashboardClient({
           {challengeShortDesc ?? 'Você se tornará o PM de um aplicativo de controle de hábitos e terá o desafio de aumentar a taxa de usuários ativos após 14 dias.'}
         </p>
 
-        <button
-          onClick={() => setChallengeDetailsOpen(true)}
-          className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors mb-4 focus:outline-none focus:underline"
-        >
-          Detalhes do desafio →
-        </button>
+        <div className="flex items-center gap-4 mb-4">
+          <button
+            onClick={() => setChallengeDetailsOpen(true)}
+            className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus:outline-none focus:underline"
+          >
+            Detalhes do desafio →
+          </button>
+          {challengeUrl && (
+            <a
+              href={challengeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus:outline-none focus:underline"
+            >
+              Acessar material completo →
+            </a>
+          )}
+        </div>
 
         {!isFinalChallengeUnlocked ? (
           <p className="text-sm text-gray-500">🔒 Disponível a partir de {new Date(unlockAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' })}</p>
