@@ -28,6 +28,7 @@ interface Live {
   order: number
   isActive: boolean
   recordingUrl: string | null
+  liveUrl: string | null
   liveType: string
   linkVisibleEarly: boolean
   checkInsCount: number
@@ -1069,6 +1070,26 @@ export default function AdminClient({
                     </div>
                     <div>
                       <label className="text-xs text-gray-400 mb-1 block">
+                        🔗 Link de acesso (sala de espera)
+                        <span className="text-gray-600 ml-1">
+                          (Zoom, YouTube Live, Meet — abre em nova aba)
+                        </span>
+                      </label>
+                      <input
+                        type="url"
+                        className="input text-sm"
+                        placeholder="https://zoom.us/j/... ou youtube.com/live/..."
+                        defaultValue={live.liveUrl || ''}
+                        onChange={(e) =>
+                          setLiveForms((p) => ({
+                            ...p,
+                            [live.id]: { ...p[live.id], liveUrl: e.target.value },
+                          }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">
                         🎥 URL da gravação
                         <span className="text-gray-600 ml-1">
                           (cole a URL do YouTube — converte automaticamente para embed)
@@ -1095,30 +1116,6 @@ export default function AdminClient({
                         }
                       />
                     </div>
-                    {(liveForms[live.id]?.liveType ?? live.liveType) === 'LIVE' && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            id={`link-early-${live.id}`}
-                            defaultChecked={live.linkVisibleEarly}
-                            onChange={(e) =>
-                              setLiveForms((p) => ({
-                                ...p,
-                                [live.id]: { ...p[live.id], linkVisibleEarly: e.target.checked },
-                              }))
-                            }
-                            className="w-4 h-4 accent-violet-600"
-                          />
-                          <label htmlFor={`link-early-${live.id}`} className="text-sm text-gray-300">
-                            Liberar link antes do horário (sala de espera)
-                          </label>
-                        </div>
-                        <p className="text-xs text-gray-600 pl-6">
-                          Apenas para a próxima aula · requer URL configurada
-                        </p>
-                      </div>
-                    )}
                     <div className="flex gap-2">
                       <button
                         onClick={() => updateLive(live.id)}
@@ -1168,11 +1165,11 @@ export default function AdminClient({
                       <p className="text-xs text-gray-600 pl-7 mt-0.5">
                         {live.checkInsCount} check-in{live.checkInsCount !== 1 ? 's' : ''}
                       </p>
+                      {live.liveUrl && (
+                        <p className="text-xs text-blue-400 pl-7 mt-0.5">🔗 Link de acesso configurado</p>
+                      )}
                       {live.recordingUrl && (
                         <p className="text-xs text-violet-500 pl-7 mt-0.5">🎥 Gravação configurada</p>
-                      )}
-                      {live.linkVisibleEarly && live.liveType === 'LIVE' && (
-                        <p className="text-xs text-amber-500 pl-7 mt-0.5">🕐 Sala de espera habilitada</p>
                       )}
                     </div>
                     <button
