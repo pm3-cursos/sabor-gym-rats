@@ -4,9 +4,10 @@ import { useEffect } from 'react'
 
 interface Props {
   onClose: () => void
+  unlockAt: string
 }
 
-export default function ChallengeDetailsModal({ onClose }: Props) {
+export default function ChallengeDetailsModal({ onClose, unlockAt }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
@@ -95,7 +96,7 @@ export default function ChallengeDetailsModal({ onClose }: Props) {
           <div className="bg-violet-500/10 border border-violet-500/25 rounded-lg px-4 py-3">
             <p className="text-sm text-violet-300 font-medium">🏅 +5 pontos bônus pela entrega</p>
             <p className="text-xs text-violet-400/70 mt-0.5">
-              Disponível a partir de 17/03/2026 (00h, horário de Brasília)
+              Disponível a partir de {new Date(unlockAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Sao_Paulo' })} ({new Date(unlockAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}h, horário de Brasília)
             </p>
           </div>
 
