@@ -2,12 +2,15 @@
 
 import { useEffect } from 'react'
 
+// 17/03/2026 00:00 BRT fallback (matches FINAL_CHALLENGE_UNLOCK_UTC)
+const DEFAULT_UNLOCK_AT = '2026-03-17T03:00:00.000Z'
+
 interface Props {
   onClose: () => void
-  unlockAt: string
+  unlockAt?: string
 }
 
-export default function ChallengeDetailsModal({ onClose, unlockAt }: Props) {
+export default function ChallengeDetailsModal({ onClose, unlockAt = DEFAULT_UNLOCK_AT }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
