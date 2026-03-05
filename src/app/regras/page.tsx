@@ -59,7 +59,7 @@ export default function RegrasPage() {
 
         <div className="text-center pt-4">
           <a
-            href="https://pm3com-my.sharepoint.com/:b:/g/personal/admins_pm3_com_br/IQBY8GwpRNwNRI07LSDG7hRvATPm2QpuB6D9P41cRDsIMqo?e=5VmnkS"
+            href="https://pm3com-my.sharepoint.com/:b:/g/personal/admins_pm3_com_br/IQBC0a6MomvmR6qnNFxVxzijAdOxfDFzxC6NzCdpt-v0Bk0?e=DVWwev"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-violet-400 hover:text-violet-300 underline transition-colors"
