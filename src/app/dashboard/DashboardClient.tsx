@@ -808,8 +808,8 @@ export default function DashboardClient({
           let cardClass = 'card p-5'
           if (aulaInvalid) cardClass += ' bg-amber-500/5 border-amber-800/30'
           else if (aulaApproved) cardClass += ' bg-emerald-500/5 border-emerald-800/30'
-          else if (!live.isActive && !aulaCI) cardClass += ' opacity-60'
           else if (isNext) cardClass += ' border-violet-800/50'
+          else if (!live.isActive && !aulaCI) cardClass += ' opacity-60'
 
           return (
             <div key={live.id} id={`live-${live.id}`} className={`${cardClass} card-hover`}>
@@ -1157,7 +1157,7 @@ export default function DashboardClient({
                       </div>
                     )
                   }
-                  if (live.linkVisibleEarly && isNext && hasRecording) {
+                  if (isNext && hasRecording) {
                     return (
                       <button
                         onClick={() => setRecordingLiveId(live.id)}
@@ -1177,6 +1177,16 @@ export default function DashboardClient({
                 // ASYNC — effectiveIsActive already computed server-side
                 const hasStarted = live.isActive
                 if (!hasStarted) {
+                  if (isNext && hasRecording) {
+                    return (
+                      <button
+                        onClick={() => setRecordingLiveId(live.id)}
+                        className="btn-secondary text-sm w-full mt-3"
+                      >
+                        🕐 Aguardar início da aula
+                      </button>
+                    )
+                  }
                   return (
                     <div className="mt-3 border border-gray-800/60 rounded-lg px-4 py-2.5 flex items-center gap-2 opacity-40 cursor-not-allowed select-none">
                       <span className="text-sm text-gray-500">🔗 Link disponível em breve</span>
