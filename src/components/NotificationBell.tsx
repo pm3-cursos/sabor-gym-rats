@@ -18,6 +18,11 @@ function typeIcon(type: string) {
     case 'CHECKIN_REMOVED': return '🗑'
     case 'RANK_CHANGE': return '🏆'
     case 'CLASS_REMINDER': return '📅'
+    case 'FINAL_CHALLENGE_SUBMITTED': return '🔔'
+    case 'CHALLENGE_UNLOCK_REMINDER': return '🏆'
+    case 'LINKEDIN_BONUS_AVAILABLE': return '🔗'
+    case 'NEW_LIVE_AVAILABLE': return '📚'
+    case 'MILESTONE': return '🏅'
     default: return '🔔'
   }
 }

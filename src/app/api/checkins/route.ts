@@ -145,5 +145,30 @@ export async function POST(request: NextRequest) {
     include: { live: true },
   })
 
+  // Milestone notification (AULA check-ins only)
+  if (type === 'AULA') {
+    const approvedAulaCount = await prisma.checkIn.count({
+      where: { userId: session.userId, type: 'AULA', status: 'APPROVED', isInvalid: false },
+    })
+
+    const milestones: Record<number, { title: string; message: string }> = {
+      1: { title: '🏅 Novo nível: Iniciante!', message: 'Você completou sua primeira aula da Maratona PM3!' },
+      3: { title: '🥈 Novo nível: Corredor!', message: 'Você completou 3 aulas da Maratona PM3!' },
+      6: { title: '🥇 Maratonista PM3!', message: 'Você completou todas as aulas! Parabéns!' },
+    }
+
+    const milestone = milestones[approvedAulaCount]
+    if (milestone) {
+      const existing = await prisma.notification.findFirst({
+        where: { userId: session.userId, type: 'MILESTONE', title: milestone.title },
+      })
+      if (!existing) {
+        await prisma.notification.create({
+          data: { userId: session.userId, type: 'MILESTONE', title: milestone.title, message: milestone.message },
+        })
+      }
+    }
+  }
+
   return NextResponse.json({ checkIn }, { status: 201 })
 }
