@@ -102,15 +102,15 @@ export default function LeaderboardClient({
     )
   }
 
-  // Default mode: positions 4–10 + current user if outside
-  const listEntries = leaderboard.filter((u) => u.rank >= 4 && u.rank <= 10)
+  // Default mode: positions 4–14 + current user if outside
+  const listEntries = leaderboard.filter((u) => u.rank >= 4 && u.rank <= 14)
 
   const currentUserEntry = currentUserId
     ? leaderboard.find((u) => u.id === currentUserId)
     : null
 
   const userIsInList =
-    currentUserEntry && currentUserEntry.rank >= 4 && currentUserEntry.rank <= 10
+    currentUserEntry && currentUserEntry.rank >= 4 && currentUserEntry.rank <= 14
   const userIsTop3 = currentUserEntry && currentUserEntry.rank <= 3
   const appendUser =
     currentUserEntry && !userIsInList && !userIsTop3
@@ -143,6 +143,11 @@ export default function LeaderboardClient({
             <span className={`text-xs font-medium shrink-0 ${user.level.color}`}>
               {user.level.icon} {user.level.label}
             </span>
+            {user.rank <= 14 && (
+              <span className="text-xs bg-red-500/15 text-red-400 px-2 py-0.5 rounded-full font-medium shrink-0">
+                🏢 Imersão iFood
+              </span>
+            )}
             {isComplete && (
               <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium shrink-0">
                 🏆 Completo
@@ -176,7 +181,7 @@ export default function LeaderboardClient({
       <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between gap-3 flex-wrap">
         <h2 className="font-semibold">
           Placar{' '}
-          <span className="text-xs text-gray-600 font-normal">posições 4–10</span>
+          <span className="text-xs text-gray-600 font-normal">posições 4–14</span>
         </h2>
         <span className="text-xs text-gray-600">
           🏁 Aula: +1 pt&nbsp;&nbsp;·&nbsp;&nbsp;🚀 LinkedIn: +3 pts bônus

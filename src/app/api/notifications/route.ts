@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { FINAL_CHALLENGE_UNLOCK_UTC } from '@/lib/date'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export async function GET() {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
 
-  const [dbNotifications, lives, userCheckIns, userPrefs] = await Promise.all([
+  const [dbNotifications, lives, userCheckIns, userPrefs, userLinkedinCheckIns, finalChallenge, challengeSetting] = await Promise.all([
     prisma.notification.findMany({
       where: { userId: session.userId },
       orderBy: { createdAt: 'desc' },
@@ -32,9 +33,20 @@ export async function GET() {
       where: { id: session.userId },
       select: { reminderDays2: true, reminderDays1: true, reminder12h: true, reminder1h: true },
     }),
+    prisma.checkIn.findMany({
+      where: { userId: session.userId, type: 'LINKEDIN', status: 'APPROVED', isInvalid: false },
+      select: { liveId: true },
+    }),
+    prisma.finalChallenge.findUnique({ where: { userId: session.userId }, select: { id: true } }),
+    prisma.appSettings.findUnique({ where: { key: 'challengeUnlockAt' } }),
   ])
 
   const approvedLiveIds = new Set(userCheckIns.map((c) => c.liveId))
+  const linkedinLiveIds = new Set(userLinkedinCheckIns.map((c) => c.liveId))
+  const challengeAlreadySubmitted = !!finalChallenge
+  const challengeUnlockAt = challengeSetting?.value
+    ? new Date(challengeSetting.value)
+    : FINAL_CHALLENGE_UNLOCK_UTC
   const now = Date.now()
 
   // Generate class reminder notifications dynamically
@@ -69,10 +81,75 @@ export async function GET() {
     }
   }
 
-  // Merge and sort: db first, then reminders
+  // Challenge unlock reminder notifications (2d, 1d, 6h before unlock)
+  const challengeReminders: typeof classReminders = []
+
+  if (!challengeAlreadySubmitted) {
+    const CHALLENGE_REMINDER_WINDOWS = [
+      { label: 'em 2 dias', ms: 2 * 24 * 60 * 60 * 1000 },
+      { label: 'amanhã', ms: 24 * 60 * 60 * 1000 },
+      { label: 'em 6 horas', ms: 6 * 60 * 60 * 1000 },
+    ]
+    const BUFFER = 30 * 60 * 1000
+    const diffToChallengeMs = challengeUnlockAt.getTime() - now
+
+    for (const window of CHALLENGE_REMINDER_WINDOWS) {
+      if (diffToChallengeMs >= window.ms - BUFFER && diffToChallengeMs <= window.ms + BUFFER) {
+        challengeReminders.push({
+          id: `challenge-reminder-${window.ms}`,
+          type: 'CHALLENGE_UNLOCK_REMINDER',
+          title: `🏆 Desafio da Maratona PM3 começa ${window.label}!`,
+          message: 'Prepare-se para o desafio bônus de +5 pontos. Acesse Meu Progresso para entregar.',
+          read: false,
+          createdAt: new Date(),
+        })
+        break
+      }
+    }
+  }
+
+  // LinkedIn bonus available (approved AULA without LinkedIn post)
+  const linkedinBonusNotifs: typeof classReminders = []
+
+  for (const live of lives) {
+    if (!live.isActive) continue
+    if (!approvedLiveIds.has(live.id)) continue
+    if (linkedinLiveIds.has(live.id)) continue
+
+    linkedinBonusNotifs.push({
+      id: `linkedin-bonus-${live.id}`,
+      type: 'LINKEDIN_BONUS_AVAILABLE',
+      title: `🔗 Ganhe +3 pts! Publique sua reflexão de "${live.title}" no LinkedIn`,
+      message: 'Compartilhe seu aprendizado e ganhe pontos bônus.',
+      read: false,
+      createdAt: new Date(),
+    })
+  }
+
+  // Active live available without check-in
+  const newLiveNotifs: typeof classReminders = []
+
+  for (const live of lives) {
+    if (!live.isActive) continue
+    if (approvedLiveIds.has(live.id)) continue
+
+    newLiveNotifs.push({
+      id: `live-available-${live.id}`,
+      type: 'NEW_LIVE_AVAILABLE',
+      title: `📚 ${live.title} está disponível para check-in!`,
+      message: 'Assista à aula e registre seu check-in para ganhar pontos.',
+      read: false,
+      createdAt: new Date(),
+    })
+  }
+
+  // Merge and sort: db first, then dynamic notifications
   const all = [
     ...dbNotifications.map((n) => ({ ...n, type: n.type as string })),
     ...classReminders,
+    ...challengeReminders,
+    ...linkedinBonusNotifs,
+    ...newLiveNotifs,
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   const unreadCount = all.filter((n) => !n.read).length

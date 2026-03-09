@@ -4,6 +4,8 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { calcPoints, calcAulaCount, calcLinkedinCount, getUserLevel, getAdditionalBadges } from '@/lib/points'
 import MeuProgressoAulas from './MeuProgressoAulas'
+import ProgressoChallengeCard from './ProgressoChallengeCard'
+import { FINAL_CHALLENGE_UNLOCK_UTC } from '@/lib/date'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +22,7 @@ export default async function MeuProgressoPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [lives, checkIns, allUsers, myFinalChallenge] = await Promise.all([
+  const [lives, checkIns, allUsers, myFinalChallenge, challengeSetting] = await Promise.all([
     prisma.live.findMany({ orderBy: { order: 'asc' } }),
     prisma.checkIn.findMany({
       where: { userId: session.userId },
@@ -39,6 +41,7 @@ export default async function MeuProgressoPage() {
       },
     }),
     prisma.finalChallenge.findUnique({ where: { userId: session.userId } }),
+    prisma.appSettings.findUnique({ where: { key: 'challengeUnlockAt' } }),
   ])
 
   const totalLives = lives.length
@@ -56,6 +59,19 @@ export default async function MeuProgressoPage() {
   const level = getLevelWithNext(approvedCount)
   const safeTotal = totalLives > 0 ? totalLives : 1
   const pct = Math.min(100, Math.round((approvedCount / safeTotal) * 100))
+
+  const unlockAtDate = challengeSetting?.value
+    ? new Date(challengeSetting.value)
+    : FINAL_CHALLENGE_UNLOCK_UTC
+  const unlockAt = unlockAtDate.toISOString()
+  const isUnlocked = new Date() >= unlockAtDate
+  const myFinalChallengeSerial = myFinalChallenge
+    ? {
+        challengeUrl: myFinalChallenge.challengeUrl,
+        submittedAt: myFinalChallenge.submittedAt.toISOString(),
+        points: myFinalChallenge.points,
+      }
+    : null
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -127,6 +143,13 @@ export default async function MeuProgressoPage() {
           />
         </div>
       </div>
+
+      {/* Desafio da Maratona PM3 */}
+      <ProgressoChallengeCard
+        myFinalChallenge={myFinalChallengeSerial}
+        unlockAt={unlockAt}
+        isUnlocked={isUnlocked}
+      />
 
       {/* Aulas list — interactive (edit/delete) */}
       <MeuProgressoAulas
