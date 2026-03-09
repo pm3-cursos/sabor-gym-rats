@@ -94,21 +94,35 @@ export default function RulesModal() {
                   <span className="text-2xl shrink-0">🥇</span>
                   <div>
                     <p className="font-semibold text-yellow-400 text-sm">1º lugar</p>
-                    <p className="text-sm text-gray-300">Divulgação em breve</p>
+                    <p className="text-sm text-gray-300">12 meses de acesso a 1 Formação PM3</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 bg-gray-500/10 border border-gray-500/20 rounded-lg p-3">
                   <span className="text-2xl shrink-0">🥈</span>
                   <div>
                     <p className="font-semibold text-gray-300 text-sm">2º lugar</p>
-                    <p className="text-sm text-gray-400">12 meses de acesso a 1 Formação PM3</p>
+                    <p className="text-sm text-gray-400">Ingresso Presencial PM3 Summit &apos;Lead with AI&apos; 2026</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 bg-amber-800/10 border border-amber-800/20 rounded-lg p-3">
                   <span className="text-2xl shrink-0">🥉</span>
                   <div>
                     <p className="font-semibold text-amber-600 text-sm">3º lugar</p>
-                    <p className="text-sm text-gray-400">Ingresso Presencial do PM3 Summit 2026</p>
+                    <p className="text-sm text-gray-400">12 meses de acesso a 1 Sprint PM3</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
+                  <span className="text-2xl shrink-0">🏢</span>
+                  <div>
+                    <p className="font-semibold text-emerald-400 text-sm">Top 14 colocados</p>
+                    <p className="text-sm text-gray-300 mb-2">Imersão Presencial no iFood</p>
+                    <ul className="text-xs text-gray-400 space-y-1">
+                      <li>• Acontecerá em abril (data a confirmar), na sede do iFood, com o time de Produto</li>
+                      <li>• Transporte, alimentação e demais custos são de responsabilidade do participante</li>
+                      <li>• A PM3 irá validar os check-ins dos 14 primeiros colocados ao fim da Maratona</li>
+                      <li>• Se validados, o convite para confirmação de participação será enviado</li>
+                      <li>• Participantes têm <strong className="text-gray-300">7 dias</strong> para confirmar — caso contrário, o convite poderá ser transferido</li>
+                    </ul>
                   </div>
                 </div>
               </div>

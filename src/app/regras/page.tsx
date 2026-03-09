@@ -41,11 +41,23 @@ export default function RegrasPage() {
 
         <div className="card p-6">
           <h2 className="font-semibold text-lg mb-3">Premiação</h2>
-          <ul className="space-y-2 text-sm text-gray-400">
-            <li>• Os 3 participantes com maior pontuação ao final da Maratona recebem prêmios especiais</li>
+          <ul className="space-y-2 text-sm text-gray-400 mb-4">
+            <li>• <strong className="text-yellow-400">1º lugar:</strong> 12 meses de acesso a 1 Formação PM3</li>
+            <li>• <strong className="text-gray-300">2º lugar:</strong> Ingresso Presencial PM3 Summit &apos;Lead with AI&apos; 2026</li>
+            <li>• <strong className="text-amber-500">3º lugar:</strong> 12 meses de acesso a 1 Sprint PM3</li>
             <li>• Todos que completarem as 6 aulas recebem um certificado exclusivo de conclusão</li>
             <li>• Em caso de empate de pontos, o critério de desempate é a data do último check-in</li>
           </ul>
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
+            <p className="text-sm text-emerald-400 font-medium mb-2">🏢 Imersão Presencial no iFood — Top 14</p>
+            <ul className="text-xs text-gray-400 space-y-1">
+              <li>• Acontecerá em abril (data a confirmar), na sede do iFood, com o time de Produto</li>
+              <li>• Transporte, alimentação e demais custos são de responsabilidade do participante</li>
+              <li>• A PM3 irá validar os check-ins dos 14 primeiros colocados ao fim da Maratona</li>
+              <li>• Se validados, o convite para confirmação de participação será enviado</li>
+              <li>• Participantes têm <strong className="text-gray-300">7 dias</strong> para confirmar a participação — caso contrário, o convite poderá ser transferido para outros participantes</li>
+            </ul>
+          </div>
         </div>
 
         <div className="card p-6">

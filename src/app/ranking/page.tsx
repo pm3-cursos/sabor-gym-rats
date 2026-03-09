@@ -34,7 +34,7 @@ async function getLeaderboard() {
 const PRIZES = [
   {
     rank: 1,
-    prize: 'Divulgação em breve',
+    prize: '12 meses de acesso a 1 Formação PM3',
     color: 'text-yellow-400',
     border: 'border-yellow-500/40',
     bg: 'bg-yellow-500/10',
@@ -44,7 +44,7 @@ const PRIZES = [
   },
   {
     rank: 2,
-    prize: '12 meses de acesso a 1 Formação PM3',
+    prize: "Ingresso Presencial PM3 Summit 'Lead with AI' 2026",
     color: 'text-gray-300',
     border: 'border-gray-500/30',
     bg: 'bg-gray-500/10',
@@ -54,7 +54,7 @@ const PRIZES = [
   },
   {
     rank: 3,
-    prize: 'Ingresso Presencial PM3 Summit 2026',
+    prize: '12 meses de acesso a 1 Sprint PM3',
     color: 'text-amber-600',
     border: 'border-amber-800/30',
     bg: 'bg-amber-800/10',
@@ -137,6 +137,13 @@ function PodiumSection({
             )}
           </div>
         ))}
+        <div className="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2.5">
+          <span className="text-xl shrink-0 mt-0.5">🏢</span>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-emerald-400">Top 14</p>
+            <p className="text-xs text-gray-300 leading-snug">Imersão Presencial no iFood</p>
+          </div>
+        </div>
       </div>
     </div>
   )
