@@ -96,12 +96,22 @@ export default function ProgressoChallengeCard({ myFinalChallenge, unlockAt, isU
           >
             {submittedState.challengeUrl}
           </a>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus:outline-none focus:underline"
-          >
-            Detalhes do desafio →
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href="https://go.pm3.com.br/DesafioMaratonaPM3"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary text-sm"
+            >
+              Acessar material completo
+            </a>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus:outline-none focus:underline"
+            >
+              Detalhes do desafio →
+            </button>
+          </div>
         </div>
       ) : isUnlocked ? (
         /* Unlocked, not submitted */
@@ -118,6 +128,22 @@ export default function ProgressoChallengeCard({ myFinalChallenge, unlockAt, isU
           <p className="text-sm text-gray-400 leading-relaxed mb-4">
             O desafio está disponível! Submeta o link da sua entrega para ganhar +5 pontos.
           </p>
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <a
+              href="https://go.pm3.com.br/DesafioMaratonaPM3"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary text-sm"
+            >
+              Acessar material completo
+            </a>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus:outline-none focus:underline"
+            >
+              Detalhes do desafio →
+            </button>
+          </div>
           <div className="space-y-2 mb-3">
             <input
               type="url"
@@ -136,12 +162,6 @@ export default function ProgressoChallengeCard({ myFinalChallenge, unlockAt, isU
               {submitting ? 'Enviando...' : 'Enviar entrega (+5 pts) →'}
             </button>
           </div>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus:outline-none focus:underline"
-          >
-            Detalhes do desafio →
-          </button>
         </div>
       ) : (
         /* Locked state */
@@ -170,12 +190,22 @@ export default function ProgressoChallengeCard({ myFinalChallenge, unlockAt, isU
             >
               🔒 Disponível em {unlockDate}
             </button>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus:outline-none focus:underline block"
-            >
-              Detalhes do desafio →
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <a
+                href="https://go.pm3.com.br/DesafioMaratonaPM3"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary text-sm"
+              >
+                Acessar material completo
+              </a>
+              <button
+                onClick={() => setModalOpen(true)}
+                className="text-sm text-violet-400 hover:text-violet-300 font-medium transition-colors focus:outline-none focus:underline"
+              >
+                Detalhes do desafio →
+              </button>
+            </div>
           </div>
         </div>
       )}

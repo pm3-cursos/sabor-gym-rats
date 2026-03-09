@@ -143,11 +143,6 @@ export default function LeaderboardClient({
             <span className={`text-xs font-medium shrink-0 ${user.level.color}`}>
               {user.level.icon} {user.level.label}
             </span>
-            {user.rank <= 14 && (
-              <span className="text-xs bg-red-500/15 text-red-400 px-2 py-0.5 rounded-full font-medium shrink-0">
-                🏢 Imersão iFood
-              </span>
-            )}
             {isComplete && (
               <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium shrink-0">
                 🏆 Completo
@@ -186,6 +181,14 @@ export default function LeaderboardClient({
         <span className="text-xs text-gray-600">
           🏁 Aula: +1 pt&nbsp;&nbsp;·&nbsp;&nbsp;🚀 LinkedIn: +3 pts bônus
         </span>
+      </div>
+
+      <div className="px-5 py-3 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2">
+        <span className="text-base">🏢</span>
+        <p className="text-xs text-red-300 leading-snug">
+          Todos os participantes nesta lista estão elegíveis para a{' '}
+          <span className="font-semibold">Imersão no iFood</span>.
+        </p>
       </div>
 
       {listEntries.length === 0 && !appendUser ? (
