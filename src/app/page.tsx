@@ -121,21 +121,28 @@ export default async function Home() {
                 <span className="text-lg shrink-0">🥇</span>
                 <div>
                   <p className="text-xs font-bold text-yellow-400">1º lugar</p>
-                  <p className="text-xs text-gray-300">Divulgação em breve</p>
+                  <p className="text-xs text-gray-300">12 meses de acesso a 1 Formação PM3</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 bg-gray-500/10 border border-gray-500/20 rounded-lg px-3 py-2.5">
                 <span className="text-lg shrink-0">🥈</span>
                 <div>
                   <p className="text-xs font-bold text-gray-300">2º lugar</p>
-                  <p className="text-xs text-gray-300">12 meses de acesso a 1 Formação PM3</p>
+                  <p className="text-xs text-gray-300">Ingresso Presencial PM3 Summit &apos;Lead with AI&apos; 2026</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 bg-amber-800/10 border border-amber-700/30 rounded-lg px-3 py-2.5">
                 <span className="text-lg shrink-0">🥉</span>
                 <div>
                   <p className="text-xs font-bold text-amber-500">3º lugar</p>
-                  <p className="text-xs text-gray-300">Ingresso Presencial PM3 Summit 2026</p>
+                  <p className="text-xs text-gray-300">12 meses de acesso a 1 Sprint PM3</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2.5">
+                <span className="text-lg shrink-0">🏢</span>
+                <div>
+                  <p className="text-xs font-bold text-emerald-400">Top 14</p>
+                  <p className="text-xs text-gray-300">Imersão Presencial no iFood</p>
                 </div>
               </div>
               <p className="text-xs text-gray-600 pt-1">
