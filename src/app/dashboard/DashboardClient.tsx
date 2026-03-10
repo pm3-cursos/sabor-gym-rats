@@ -1164,13 +1164,15 @@ export default function DashboardClient({
                   const isLivePast = liveEnd && now >= liveEnd
 
                   if (isLiveNow) {
-                    return hasRecording ? (
-                      <button
-                        onClick={() => setRecordingLiveId(live.id)}
+                    return live.liveUrl ? (
+                      <a
+                        href={live.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="btn-primary text-sm w-full mt-3 animate-pulse"
                       >
                         🔴 Aula ao vivo agora
-                      </button>
+                      </a>
                     ) : (
                       <div className="mt-3 border border-red-800/40 rounded-lg px-4 py-2.5 flex items-center gap-2 animate-pulse opacity-70 cursor-not-allowed">
                         <span className="text-sm text-red-400">🔴 Aula ao vivo — link indisponível</span>
