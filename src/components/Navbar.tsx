@@ -26,8 +26,8 @@ export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome
     return (
       <Link
         href={href}
-        className={`text-sm whitespace-nowrap transition-colors ${
-          active ? 'text-white font-medium' : 'text-gray-400 hover:text-white'
+        className={`text-sm whitespace-nowrap transition-colors px-3 py-1 rounded-lg ${
+          active ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white'
         }`}
       >
         {label}
@@ -39,7 +39,7 @@ export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome
     <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
         {/* Left: nav links — hidden on mobile/tablet (BottomNav handles it) */}
-        <div className="hidden lg:flex items-center gap-5 shrink-0">
+        <div className="hidden lg:flex items-center gap-1 bg-gray-900/60 border border-gray-700/40 rounded-xl px-2 py-1 shrink-0">
           {user && navLink('/dashboard', 'Check-in')}
           {user && navLink('/meu-progresso', 'Progresso')}
           {/* Ranking and Feed: always for logged-in users; on Home only if admin toggled on */}
@@ -60,13 +60,13 @@ export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome
         <div className="flex items-center gap-3 shrink-0 justify-end">
           {user ? (
             <>
-              <span className="hidden lg:block">{navLink('/indicacao', 'Indicar amigos')}</span>
               <NotificationBell isLoggedIn={!!user} />
+              <span className="hidden lg:block">{navLink('/indicacao', 'Indicar amigos')}</span>
               <span className="hidden lg:block">{navLink('/perfil', 'Perfil')}</span>
               <button
                 onClick={handleLogout}
                 disabled={loading}
-                className="text-sm text-gray-500 hover:text-red-400 transition-colors"
+                className="hidden lg:inline text-sm text-gray-500 hover:text-red-400 transition-colors"
               >
                 Sair
               </button>
