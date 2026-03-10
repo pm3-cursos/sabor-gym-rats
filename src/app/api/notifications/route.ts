@@ -108,6 +108,32 @@ export async function GET() {
     }
   }
 
+  // "Aula hoje" notification for classes scheduled today in BRT (outside reminder windows)
+  const todayNotifs: typeof classReminders = []
+
+  const brtFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' })
+  const todayBRT = brtFormatter.format(new Date(now))
+
+  for (const live of lives) {
+    if (!live.scheduledAt || approvedLiveIds.has(live.id)) continue
+    const scheduledBRT = brtFormatter.format(live.scheduledAt)
+    if (scheduledBRT !== todayBRT) continue
+
+    const diffMs = live.scheduledAt.getTime() - now
+    // Skip if within any existing reminder window
+    const inWindow = REMINDER_WINDOWS.some((w) => diffMs >= w.ms - w.buffer && diffMs <= w.ms + w.buffer)
+    if (inWindow) continue
+
+    todayNotifs.push({
+      id: `today-${live.id}`,
+      type: 'CLASS_TODAY',
+      title: `📅 ${live.title}: Aula hoje!`,
+      message: 'Não esqueça de assistir e fazer seu check-in.',
+      read: false,
+      createdAt: new Date(),
+    })
+  }
+
   // LinkedIn bonus available (approved AULA without LinkedIn post)
   const linkedinBonusNotifs: typeof classReminders = []
 
@@ -147,6 +173,7 @@ export async function GET() {
   const all = [
     ...dbNotifications.map((n) => ({ ...n, type: n.type as string })),
     ...classReminders,
+    ...todayNotifs,
     ...challengeReminders,
     ...linkedinBonusNotifs,
     ...newLiveNotifs,

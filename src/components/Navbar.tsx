@@ -60,6 +60,7 @@ export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome
         <div className="flex items-center gap-3 shrink-0 justify-end">
           {user ? (
             <>
+              <span className="hidden lg:block">{navLink('/indicacao', 'Indicar amigos')}</span>
               <NotificationBell isLoggedIn={!!user} />
               <span className="hidden lg:block">{navLink('/perfil', 'Perfil')}</span>
               <button

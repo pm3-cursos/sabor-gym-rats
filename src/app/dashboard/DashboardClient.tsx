@@ -307,6 +307,7 @@ interface Props {
   challengeShortDesc: string | null
   unlockAt: string
   upviralUrl: string | null
+  todayLiveId: string | null
 }
 
 function getDaysUntil(scheduledAt: string | null): string {
@@ -353,6 +354,7 @@ export default function DashboardClient({
   challengeShortDesc,
   unlockAt,
   upviralUrl,
+  todayLiveId,
 }: Props) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState<string | null>(null)
@@ -767,45 +769,19 @@ export default function DashboardClient({
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
               <p className="text-xs text-amber-400 font-medium uppercase tracking-wide mb-0.5">Campanha de Indicação</p>
-              <h2 className="font-semibold text-white leading-snug">Maratona PM3 — Aniversário 2026</h2>
+              <h2 className="font-semibold text-white leading-snug">Indique um amigo e ganhe prêmios!</h2>
             </div>
             <span className="text-xl shrink-0">🎁</span>
           </div>
           <p className="text-xs text-gray-400 leading-relaxed mb-3">
-            Indique amigos e ganhe prêmios! Com <strong className="text-gray-200">3 indicações válidas</strong>, você desbloqueia acesso gratuito à aula <em>Roadmap Estratégico com IA</em> (R$ 270).
-            Os <strong className="text-gray-200">3 mais indicadores</strong> concorrem a prêmios exclusivos.
+            A cada indicação, você soma pontos e concorre a prêmios exclusivos, como 1 ano do Membership PM3 (todas as 9 formações).
           </p>
-          <div className="grid grid-cols-3 gap-1.5 mb-3 text-center">
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-2 py-2">
-              <p className="text-[10px] text-yellow-400 font-bold">🥇 1º</p>
-              <p className="text-[10px] text-gray-400 leading-tight">Membership PM3 12 meses</p>
-            </div>
-            <div className="bg-gray-500/10 border border-gray-500/20 rounded-lg px-2 py-2">
-              <p className="text-[10px] text-gray-300 font-bold">🥈 2º</p>
-              <p className="text-[10px] text-gray-400 leading-tight">Combo AI Product 12 meses</p>
-            </div>
-            <div className="bg-amber-800/10 border border-amber-800/20 rounded-lg px-2 py-2">
-              <p className="text-[10px] text-amber-600 font-bold">🥉 3º</p>
-              <p className="text-[10px] text-gray-400 leading-tight">Sprints PM3 12 meses</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <a
-              href={upviralUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary text-sm py-2"
-            >
-              Acessar meu link de indicação
-            </a>
-            <a
-              href="/indicacao"
-              className="text-sm text-amber-400 hover:text-amber-300 transition-colors font-medium"
-            >
-              Ver regras →
-            </a>
-          </div>
-          <p className="text-[10px] text-gray-600 mt-2">Válido até 24/03/2026 · Rastreamento via UpViral</p>
+          <a
+            href="/indicacao"
+            className="text-sm border border-violet-500 text-violet-400 hover:bg-violet-500/10 transition-colors font-medium px-4 py-2 rounded-lg inline-block"
+          >
+            Indicar amigos
+          </a>
         </div>
       )}
 
@@ -855,10 +831,12 @@ export default function DashboardClient({
           const insightLen = insightValue.trim().length
           const insightValid = insightLen >= 10
           const urlValue = urls[live.id] || ''
+          const isToday = live.id === todayLiveId
 
           let cardClass = 'card p-5'
           if (aulaInvalid) cardClass += ' bg-amber-500/5 border-amber-800/30'
           else if (aulaApproved) cardClass += ' bg-emerald-500/5 border-emerald-800/30'
+          else if (isToday) cardClass += ' border-amber-500/50'
           else if (isNext) cardClass += ' border-violet-800/50'
           else if (!live.isActive && !aulaCI) cardClass += ' opacity-60'
 
@@ -908,6 +886,11 @@ export default function DashboardClient({
                   </span>
                   {!aulaCI && !live.isActive && (
                     <span className="text-xs text-gray-600">🔒 {getDaysUntil(live.scheduledAt)}</span>
+                  )}
+                  {isToday && !aulaApproved && (
+                    <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-medium">
+                      Aula de hoje!
+                    </span>
                   )}
                   {isNext && !aulaCI && live.isActive && (
                     <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full font-medium">
