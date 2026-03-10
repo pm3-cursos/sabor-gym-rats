@@ -22,7 +22,7 @@ export default async function IndicacaoPage() {
 
       <div className="mb-8">
         <p className="text-xs text-amber-400 font-medium uppercase tracking-wide mb-1">Campanha de Indicação</p>
-        <h1 className="text-2xl font-bold mb-2">Maratona PM3 — Aniversário 2026</h1>
+        <h1 className="text-2xl font-bold mb-2">Indique um amigo e ganhe prêmios!</h1>
         <p className="text-sm text-gray-400">Válido de <strong className="text-gray-200">04/03/2026</strong> a <strong className="text-gray-200">24/03/2026</strong></p>
       </div>
 
@@ -30,7 +30,7 @@ export default async function IndicacaoPage() {
         <div className="card p-6 mb-6 border-amber-600/40 bg-amber-500/5">
           <h2 className="font-semibold text-lg mb-2">🔗 Seu link de indicação</h2>
           <p className="text-sm text-gray-400 mb-4">
-            Acesse a plataforma UpViral para obter seu link exclusivo e acompanhar suas indicações em tempo real.
+            Acesse a plataforma de indicação para obter seu link exclusivo e acompanhar suas indicações em tempo real.
           </p>
           <a
             href={upviralUrl}
@@ -51,7 +51,7 @@ export default async function IndicacaoPage() {
           <ol className="space-y-3 text-sm text-gray-400">
             <li className="flex gap-3">
               <span className="font-bold text-amber-400 shrink-0">1.</span>
-              <span>Acesse a plataforma UpViral pelo botão acima e obtenha seu link exclusivo de indicação.</span>
+              <span>Acesse a campanha de indicação pelo botão acima e obtenha seu link exclusivo de indicação.</span>
             </li>
             <li className="flex gap-3">
               <span className="font-bold text-amber-400 shrink-0">2.</span>
@@ -116,7 +116,7 @@ export default async function IndicacaoPage() {
         <div className="card p-6">
           <h2 className="font-semibold text-lg mb-3">📋 Regras Importantes</h2>
           <ul className="space-y-2 text-sm text-gray-400">
-            <li>• Apenas cadastros realizados pelo seu link exclusivo UpViral são contabilizados.</li>
+            <li>• Apenas cadastros realizados pelo seu link exclusivo da campanha de indicação são contabilizados.</li>
             <li>• As indicações são verificadas automaticamente pelo sistema EmailList Verify.</li>
             <li>• E-mails inválidos não são contabilizados. Se mais de <strong className="text-gray-200">10%</strong> das suas indicações forem inválidas, você é desclassificado.</li>
             <li>• É proibido inscrever terceiros sem consentimento, usar listas compradas ou práticas automatizadas.</li>
@@ -136,16 +136,6 @@ export default async function IndicacaoPage() {
           </ul>
         </div>
 
-        <div className="text-center pt-4">
-          <a
-            href="https://pm3com-my.sharepoint.com/:b:/g/personal/admins_pm3_com_br/IQBC0a6MomvmR6qnNFxVxzijAdOxfDFzxC6NzCdpt-v0Bk0?e=DVWwev"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-violet-400 hover:text-violet-300 underline transition-colors"
-          >
-            Ver Termos e Condições completos
-          </a>
-        </div>
 
       </div>
     </div>

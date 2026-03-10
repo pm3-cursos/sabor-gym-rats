@@ -75,6 +75,11 @@ export default async function DashboardPage() {
     ? lives.find((l) => !l.isActive && l.scheduledAt && new Date(l.scheduledAt) > now) ?? null
     : null
 
+  const brtFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' })
+  const todayBRT = brtFormatter.format(now)
+  const todayLive = lives.find((l) => l.scheduledAt && brtFormatter.format(l.scheduledAt) === todayBRT) ?? null
+  const todayLiveId = todayLive?.id ?? null
+
   return (
     <DashboardClient
       userName={session.name}
@@ -125,6 +130,7 @@ export default async function DashboardPage() {
       challengeShortDesc={challengeShortDescSetting?.value || null}
       unlockAt={unlockDate.toISOString()}
       upviralUrl={upviralUrlSetting?.value || null}
+      todayLiveId={todayLiveId}
     />
   )
 }

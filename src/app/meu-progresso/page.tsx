@@ -22,7 +22,7 @@ export default async function MeuProgressoPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [lives, checkIns, allUsers, myFinalChallenge, challengeSetting] = await Promise.all([
+  const [lives, checkIns, allUsers, myFinalChallenge, challengeSetting, upviralUrlSetting] = await Promise.all([
     prisma.live.findMany({ orderBy: { order: 'asc' } }),
     prisma.checkIn.findMany({
       where: { userId: session.userId },
@@ -42,7 +42,10 @@ export default async function MeuProgressoPage() {
     }),
     prisma.finalChallenge.findUnique({ where: { userId: session.userId } }),
     prisma.appSettings.findUnique({ where: { key: 'challengeUnlockAt' } }),
+    prisma.appSettings.findUnique({ where: { key: 'upviralUrl' } }),
   ])
+
+  const upviralUrl = upviralUrlSetting?.value || null
 
   const totalLives = lives.length
   const approvedCount = calcAulaCount(checkIns)
@@ -172,6 +175,27 @@ export default async function MeuProgressoPage() {
           updatedAt: c.updatedAt.toISOString(),
         }))}
       />
+
+      {upviralUrl && (
+        <div className="rounded-xl border border-amber-600/40 bg-amber-500/5 p-5 mb-4">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div>
+              <p className="text-xs text-amber-400 font-medium uppercase tracking-wide mb-0.5">Campanha de Indicação</p>
+              <h2 className="font-semibold text-white leading-snug">Indique um amigo e ganhe prêmios!</h2>
+            </div>
+            <span className="text-xl shrink-0">🎁</span>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed mb-3">
+            A cada indicação, você soma pontos e concorre a prêmios exclusivos, como 1 ano do Membership PM3 (todas as 9 formações).
+          </p>
+          <a
+            href="/indicacao"
+            className="text-sm border border-violet-500 text-violet-400 hover:bg-violet-500/10 transition-colors font-medium px-4 py-2 rounded-lg inline-block"
+          >
+            Indicar amigos
+          </a>
+        </div>
+      )}
 
       <Link href="/ranking" className="btn-secondary w-full">
         Ver meu ranking →
