@@ -42,7 +42,7 @@ export default async function AdminPage() {
     }),
     prisma.appSettings.findMany({
       where: {
-        key: { in: ['challengeUrl', 'challengeShortDesc', 'challengeUnlockAt', 'showRanking', 'showFeed', 'emailFrom'] },
+        key: { in: ['challengeUrl', 'challengeShortDesc', 'challengeUnlockAt', 'showRanking', 'showFeed', 'emailFrom', 'upviralUrl'] },
       },
     }),
   ])
@@ -99,6 +99,7 @@ export default async function AdminPage() {
       showFeed={settingsMap['showFeed'] === 'true'}
       emailFrom={settingsMap['emailFrom'] ?? null}
       adminEmail={adminUser?.email ?? null}
+      upviralUrl={settingsMap['upviralUrl'] ?? null}
     />
   )
 }
