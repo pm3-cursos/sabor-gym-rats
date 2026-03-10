@@ -132,6 +132,11 @@ export default function PerfilClient({
   // Delete modal
   const [showDelete, setShowDelete] = useState(false)
 
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    window.location.href = '/login'
+  }
+
   async function patchProfile(body: Record<string, unknown>) {
     const res = await fetch('/api/user/profile', {
       method: 'PATCH',
@@ -314,6 +319,15 @@ export default function PerfilClient({
           Excluir minha conta
         </button>
       </Section>
+
+      {/* Mobile logout */}
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="lg:hidden w-full border border-amber-700/40 text-amber-500/80 hover:bg-amber-900/10 text-sm font-medium py-2.5 rounded-xl transition-colors"
+      >
+        Sair da conta
+      </button>
 
       {showDelete && (
         <DeleteModal

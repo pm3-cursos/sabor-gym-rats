@@ -8,6 +8,7 @@ const BASE_LINKS = [
   { href: '/meu-progresso', label: 'Progresso', icon: '📈' },
   { href: '/ranking', label: 'Ranking', icon: '🏆' },
   { href: '/feed', label: 'Feed', icon: '📰' },
+  { href: '/perfil', label: 'Perfil', icon: '👤' },
 ]
 
 export default function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
