@@ -40,6 +40,14 @@ export default async function IndicacaoPage() {
           >
             Acessar meu link de indicação →
           </a>
+          <a
+            href="https://upvir.al/167800/maratonapm3"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-center text-sm text-gray-400 hover:text-gray-200 transition-colors mt-3"
+          >
+            Não conseguiu acessar? Tente por aqui
+          </a>
         </div>
       )}
 
