@@ -67,6 +67,7 @@ interface Props {
   showFeed: boolean
   emailFrom: string | null
   adminEmail: string | null
+  upviralUrl: string | null
 }
 
 type Tab = 'checkins' | 'participants' | 'lives' | 'settings'
@@ -106,6 +107,7 @@ export default function AdminClient({
   showFeed: initialShowFeed,
   emailFrom: initialEmailFrom,
   adminEmail,
+  upviralUrl: initialUpviralUrl,
 }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('checkins')
@@ -123,6 +125,7 @@ export default function AdminClient({
   const [showRankingInput, setShowRankingInput] = useState(initialShowRanking)
   const [showFeedInput, setShowFeedInput] = useState(initialShowFeed)
   const [emailFromInput, setEmailFromInput] = useState(initialEmailFrom ?? '')
+  const [upviralUrlInput, setUpviralUrlInput] = useState(initialUpviralUrl ?? '')
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [settingsError, setSettingsError] = useState('')
 
@@ -409,6 +412,7 @@ export default function AdminClient({
       { key: 'showRanking', value: showRankingInput ? 'true' : 'false' },
       { key: 'showFeed', value: showFeedInput ? 'true' : 'false' },
       { key: 'emailFrom', value: emailFromInput.trim() },
+      { key: 'upviralUrl', value: upviralUrlInput.trim() },
     ]
 
     const results = await Promise.all(
@@ -1237,6 +1241,28 @@ export default function AdminClient({
                   Padrão: 17/03/2026 00:00 BRT
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Referral campaign */}
+          <div className="card p-5">
+            <h2 className="font-semibold mb-1 text-sm">🎁 Campanha de Indicação — UpViral</h2>
+            <p className="text-xs text-gray-500 mb-3">
+              URL da campanha no UpViral. Quando preenchida, exibe o card de indicação no dashboard dos participantes e habilita a página <code className="text-violet-400">/indicacao</code>.
+              Deixe vazio para ocultar.
+            </p>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">
+                URL da campanha UpViral
+                <span className="text-gray-600 ml-1">(deixe vazio para ocultar)</span>
+              </label>
+              <input
+                type="url"
+                className="input text-sm"
+                placeholder="https://app.upviral.com/..."
+                value={upviralUrlInput}
+                onChange={(e) => setUpviralUrlInput(e.target.value)}
+              />
             </div>
           </div>
 
