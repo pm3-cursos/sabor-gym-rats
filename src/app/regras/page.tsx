@@ -20,7 +20,7 @@ export default function RegrasPage() {
             <li>• <strong className="text-gray-200">+5 pontos</strong> pela entrega final da Maratona</li>
             <li>• Check-ins podem ser rejeitados ou invalidados pelo time PM3</li>
             <li>• O insight deve ser genuíno e relacionado ao conteúdo da aula</li>
-            <li>• A publicação no LinkedIn deve ter sido feita por você e pertencer ao seu perfil cadastrado</li>
+            <li>• A publicação no LinkedIn deve ter sido feita por você, pertencer ao seu perfil cadastrado e marcar @PM3 no LinkedIn</li>
           </ul>
         </div>
 

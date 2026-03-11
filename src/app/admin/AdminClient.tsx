@@ -366,15 +366,16 @@ function deleteCheckIn(id: string) {
   function convertYoutubeUrl(url: string): string {
     try {
       const u = new URL(url)
-      if (
-        (u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') &&
-        u.pathname === '/watch'
-      ) {
-        const v = u.searchParams.get('v')
-        if (v) return `https://www.youtube.com/embed/${v}`
+      if (u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') {
+        if (u.pathname === '/watch') {
+          const v = u.searchParams.get('v')
+          if (v) return `https://www.youtube.com/embed/${v}`
+        }
+        const shortsMatch = u.pathname.match(/^\/shorts\/([^/?]+)/)
+        if (shortsMatch) return `https://www.youtube.com/embed/${shortsMatch[1]}`
       }
       if (u.hostname === 'youtu.be') {
-        const v = u.pathname.slice(1)
+        const v = u.pathname.slice(1).split('?')[0]
         if (v) return `https://www.youtube.com/embed/${v}`
       }
     } catch {

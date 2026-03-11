@@ -40,7 +40,7 @@ export default function RulesModal() {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-emerald-400 font-bold shrink-0">3 pts</span>
-                  <span>Check-in de publicação no LinkedIn — publique sobre a aula e envie o link da publicação.</span>
+                  <span>Check-in de publicação no LinkedIn — publique sobre a aula, marque @PM3 e envie o link da publicação.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-violet-300 font-bold shrink-0">5 pts</span>

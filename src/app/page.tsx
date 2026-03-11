@@ -90,7 +90,7 @@ export default async function Home() {
               </li>
               <li className="flex gap-2">
                 <span className="text-violet-400 font-bold">3.</span>
-                Publique no LinkedIn e envie o link para ganhar bônus{' '}
+                Publique no LinkedIn marcando @PM3 e envie o link para ganhar bônus{' '}
                 <span className="text-gray-500">(+3 pontos)</span>
               </li>
               <li className="flex gap-2">
