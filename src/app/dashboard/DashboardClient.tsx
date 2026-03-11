@@ -109,6 +109,9 @@ function EditCheckInModal({
         ) : (
           <div className="space-y-1">
             <label className="text-xs text-gray-400 block">URL da publicação LinkedIn</label>
+            <p className="text-xs text-amber-400/80">
+              O post deve ser sobre esta aula específica — não use um post feito com outro propósito para ganhar pontos.
+            </p>
             <input
               type="url"
               className="input text-sm w-full"
@@ -1036,7 +1039,7 @@ export default function DashboardClient({
 
                   {!linkedinCI && aulaApproved && hasLinkedinProfile && (
                     <p className="text-xs text-gray-500 mb-3">
-                      Compartilhe seu insight no LinkedIn e ganhe 3 pontos extras no ranking.
+                      Compartilhe seu aprendizado desta aula no LinkedIn e ganhe 3 pontos extras. O post deve ser específico sobre esta aula.
                     </p>
                   )}
 
@@ -1104,6 +1107,9 @@ export default function DashboardClient({
                       {linkedinCI?.status === 'REJECTED' && (
                         <p className="text-xs text-amber-400">Seu check-in foi rejeitado. Envie novamente:</p>
                       )}
+                      <p className="text-xs text-amber-400/70">
+                        Cole o link de um post sobre <strong>esta aula</strong> — não use posts com outro propósito.
+                      </p>
                       <input
                         type="url"
                         className="input text-sm w-full"
