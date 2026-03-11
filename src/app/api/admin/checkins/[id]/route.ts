@@ -15,6 +15,7 @@ export async function PATCH(
 
   // Toggle invalidate
   if (body.action === 'invalidate') {
+    const { reason } = body
     const current = await prisma.checkIn.findUnique({
       where: { id: params.id },
       include: { live: { select: { title: true, order: true } } },
@@ -24,6 +25,9 @@ export async function PATCH(
       where: { id: params.id },
       data: { isInvalid: !current.isInvalid },
     })
+    const notificationMessage = updated.isInvalid && reason
+      ? `${current.live.title}\nMotivo: ${reason}`
+      : current.live.title
     await prisma.notification.create({
       data: {
         userId: current.userId,
@@ -31,7 +35,7 @@ export async function PATCH(
         title: updated.isInvalid
           ? `⚠️ Check-in da Aula ${current.live.order} foi invalidado`
           : `✅ Check-in da Aula ${current.live.order} foi revalidado`,
-        message: current.live.title,
+        message: notificationMessage,
       },
     })
     return NextResponse.json({ checkIn: updated })

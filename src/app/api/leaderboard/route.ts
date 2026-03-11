@@ -15,6 +15,7 @@ export async function GET() {
           select: { type: true, status: true, isInvalid: true },
         },
         pointAdjustments: { select: { amount: true } },
+        finalChallenge: { select: { points: true } },
       },
     }),
     prisma.live.count(),
@@ -24,10 +25,10 @@ export async function GET() {
     .map((user) => ({
       id: user.id,
       name: user.name,
-      points: calcPoints(user.checkIns, user.pointAdjustments),
+      points: calcPoints(user.checkIns, user.pointAdjustments, user.finalChallenge),
       completed: calcAulaCount(user.checkIns) >= totalLives,
     }))
-    .sort((a, b) => b.points - a.points)
+    .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'pt-BR'))
 
   return NextResponse.json({ leaderboard })
 }

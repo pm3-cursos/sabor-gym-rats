@@ -74,16 +74,30 @@ type Tab = 'checkins' | 'participants' | 'lives' | 'settings'
 
 interface ConfirmState {
   message: string
-  onConfirm: () => Promise<void>
+  onConfirm: (inputValue?: string) => Promise<void>
+  inputLabel?: string
 }
 
 function AdminConfirmModal({ state, onCancel }: { state: ConfirmState; onCancel: () => void }) {
+  const [inputValue, setInputValue] = useState('')
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
       <div className="card p-6 max-w-sm w-full space-y-4">
         <p className="text-sm text-gray-300">{state.message}</p>
+        {state.inputLabel && (
+          <div className="space-y-1">
+            <label className="text-xs text-gray-400 block">{state.inputLabel}</label>
+            <textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Opcional..."
+              rows={3}
+              className="w-full bg-gray-800 text-sm text-gray-200 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-violet-500 resize-none"
+            />
+          </div>
+        )}
         <div className="flex gap-3">
-          <button onClick={() => state.onConfirm()} className="btn-danger flex-1">
+          <button onClick={() => state.onConfirm(inputValue || undefined)} className="btn-danger flex-1">
             Confirmar
           </button>
           <button onClick={onCancel} className="btn-secondary flex-1">
@@ -173,18 +187,7 @@ export default function AdminClient({
   const validCount = checkIns.filter((c) => c.status === 'APPROVED' && !c.isInvalid).length
   const invalidCount = checkIns.filter((c) => c.isInvalid).length
 
-  async function toggleInvalidate(id: string) {
-    setProcessing(id)
-    await fetch(`/api/admin/checkins/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'invalidate' }),
-    })
-    setProcessing(null)
-    router.refresh()
-  }
-
-  function deleteCheckIn(id: string) {
+function deleteCheckIn(id: string) {
     setConfirmState({
       message: 'Excluir este check-in permanentemente?',
       onConfirm: async () => {
@@ -240,13 +243,14 @@ export default function AdminClient({
   function adminInvalidateCheckIn(id: string, isInvalid: boolean) {
     setConfirmState({
       message: isInvalid ? 'Revalidar este check-in?' : 'Invalidar este check-in? Os pontos serão removidos.',
-      onConfirm: async () => {
+      inputLabel: isInvalid ? undefined : 'Motivo da invalidação (opcional — será enviado ao usuário):',
+      onConfirm: async (reason?: string) => {
         setConfirmState(null)
         setProcessing(id)
         await fetch(`/api/admin/checkins/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'invalidate' }),
+          body: JSON.stringify({ action: 'invalidate', reason: reason || undefined }),
         })
         setProcessing(null)
         router.refresh()
@@ -362,15 +366,16 @@ export default function AdminClient({
   function convertYoutubeUrl(url: string): string {
     try {
       const u = new URL(url)
-      if (
-        (u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') &&
-        u.pathname === '/watch'
-      ) {
-        const v = u.searchParams.get('v')
-        if (v) return `https://www.youtube.com/embed/${v}`
+      if (u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') {
+        if (u.pathname === '/watch') {
+          const v = u.searchParams.get('v')
+          if (v) return `https://www.youtube.com/embed/${v}`
+        }
+        const shortsMatch = u.pathname.match(/^\/shorts\/([^/?]+)/)
+        if (shortsMatch) return `https://www.youtube.com/embed/${shortsMatch[1]}`
       }
       if (u.hostname === 'youtu.be') {
-        const v = u.pathname.slice(1)
+        const v = u.pathname.slice(1).split('?')[0]
         if (v) return `https://www.youtube.com/embed/${v}`
       }
     } catch {
@@ -747,7 +752,7 @@ export default function AdminClient({
                   </div>
                   <div className="flex flex-col gap-2 shrink-0">
                     <button
-                      onClick={() => toggleInvalidate(c.id)}
+                      onClick={() => adminInvalidateCheckIn(c.id, c.isInvalid)}
                       disabled={processing === c.id}
                       className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
                         c.isInvalid

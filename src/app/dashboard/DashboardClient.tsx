@@ -109,6 +109,9 @@ function EditCheckInModal({
         ) : (
           <div className="space-y-1">
             <label className="text-xs text-gray-400 block">URL da publicação LinkedIn</label>
+            <p className="text-xs text-amber-400/80">
+              O post deve ser sobre esta aula específica — não use um post feito com outro propósito para ganhar pontos.
+            </p>
             <input
               type="url"
               className="input text-sm w-full"
@@ -158,7 +161,33 @@ function ConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel
 
 // ─── Recording modal ──────────────────────────────────────────────────────────
 
+function convertToEmbedUrl(url: string): string | null {
+  try {
+    const u = new URL(url)
+    if (u.hostname === 'www.youtube.com' || u.hostname === 'youtube.com') {
+      if (u.pathname === '/watch') {
+        const v = u.searchParams.get('v')
+        if (v) return `https://www.youtube.com/embed/${v}`
+      }
+      const shortsMatch = u.pathname.match(/^\/shorts\/([^/?]+)/)
+      if (shortsMatch) return `https://www.youtube.com/embed/${shortsMatch[1]}`
+    }
+    if (u.hostname === 'youtu.be') {
+      const v = u.pathname.slice(1).split('?')[0]
+      if (v) return `https://www.youtube.com/embed/${v}`
+    }
+    if (u.hostname === 'www.youtube.com' && u.pathname.startsWith('/embed/')) {
+      return url
+    }
+  } catch {
+    // not a valid URL
+  }
+  return null
+}
+
 function RecordingModal({ url, title, onClose }: { url: string; title: string; onClose: () => void }) {
+  const embedUrl = convertToEmbedUrl(url)
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
@@ -186,13 +215,37 @@ function RecordingModal({ url, title, onClose }: { url: string; title: string; o
           </button>
         </div>
         <div className="p-1">
-          <div className="aspect-video w-full bg-gray-950 rounded-lg overflow-hidden">
-            <iframe
-              src={url}
-              className="w-full h-full"
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            />
+          {embedUrl ? (
+            <div className="aspect-video w-full bg-gray-950 rounded-lg overflow-hidden">
+              <iframe
+                src={embedUrl}
+                className="w-full h-full"
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              />
+            </div>
+          ) : (
+            <div className="aspect-video w-full bg-gray-950 rounded-lg flex flex-col items-center justify-center gap-3">
+              <p className="text-sm text-gray-400">Este vídeo não pode ser exibido aqui.</p>
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary text-sm px-4 py-2"
+              >
+                Abrir em nova aba
+              </a>
+            </div>
+          )}
+          <div className="px-3 py-2 text-center">
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-gray-500 hover:text-violet-400 transition-colors"
+            >
+              Abrir vídeo em nova aba ↗
+            </a>
           </div>
         </div>
       </div>
@@ -1036,7 +1089,7 @@ export default function DashboardClient({
 
                   {!linkedinCI && aulaApproved && hasLinkedinProfile && (
                     <p className="text-xs text-gray-500 mb-3">
-                      Compartilhe seu insight no LinkedIn e ganhe 3 pontos extras no ranking.
+                      Compartilhe seu aprendizado desta aula no LinkedIn e ganhe 3 pontos extras. O post deve ser específico sobre esta aula e marcar @PM3 no LinkedIn.
                     </p>
                   )}
 
@@ -1104,6 +1157,9 @@ export default function DashboardClient({
                       {linkedinCI?.status === 'REJECTED' && (
                         <p className="text-xs text-amber-400">Seu check-in foi rejeitado. Envie novamente:</p>
                       )}
+                      <p className="text-xs text-amber-400/70">
+                        Cole o link de um post sobre <strong>esta aula</strong> — não use posts com outro propósito.
+                      </p>
                       <input
                         type="url"
                         className="input text-sm w-full"
