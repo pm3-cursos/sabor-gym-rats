@@ -1089,7 +1089,7 @@ export default function DashboardClient({
 
                   {!linkedinCI && aulaApproved && hasLinkedinProfile && (
                     <p className="text-xs text-gray-500 mb-3">
-                      Compartilhe seu aprendizado desta aula no LinkedIn e ganhe 3 pontos extras. O post deve ser específico sobre esta aula e marcar @PM3 no LinkedIn.
+                      Compartilhe seu aprendizado específico sobre <strong>esta aula</strong> no LinkedIn e ganhe 3 pontos extras. O seu post deverá conter a marcação da <strong>@PM3</strong>.
                     </p>
                   )}
 
@@ -1157,13 +1157,10 @@ export default function DashboardClient({
                       {linkedinCI?.status === 'REJECTED' && (
                         <p className="text-xs text-amber-400">Seu check-in foi rejeitado. Envie novamente:</p>
                       )}
-                      <p className="text-xs text-amber-400/70">
-                        Cole o link de um post sobre <strong>esta aula</strong> — não use posts com outro propósito.
-                      </p>
                       <input
                         type="url"
                         className="input text-sm w-full"
-                        placeholder="https://www.linkedin.com/posts/..."
+                        placeholder="Cole o link do seu post aqui..."
                         value={urlValue}
                         onChange={(e) =>
                           setUrls((prev) => ({ ...prev, [live.id]: e.target.value }))
