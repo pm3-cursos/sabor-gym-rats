@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { getUserLevel } from '@/lib/points'
 
 interface CheckIn {
   id: string
@@ -70,7 +71,7 @@ interface Props {
   upviralUrl: string | null
 }
 
-type Tab = 'checkins' | 'participants' | 'lives' | 'settings'
+type Tab = 'checkins' | 'participants' | 'lives' | 'settings' | 'ranking'
 
 interface ConfirmState {
   message: string
@@ -160,6 +161,16 @@ export default function AdminClient({
   const [ciFilterLiveId, setCiFilterLiveId] = useState('')
   const [ciFilterType, setCiFilterType] = useState<'' | 'AULA' | 'LINKEDIN'>('')
   const [ciFilterValid, setCiFilterValid] = useState<'' | 'valid' | 'invalid'>('')
+
+  // Ranking pagination state
+  const RANKING_PAGE_SIZE = 20
+  const [rankingPage, setRankingPage] = useState(0)
+
+  // Derived ranking data
+  const rankedUsers = [...users]
+    .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'pt-BR'))
+    .map((u, i) => ({ ...u, rank: i + 1 }))
+  const rankMap = new Map(rankedUsers.map((u) => [u.id, u.rank]))
 
   // Derived filtered data
   const filteredUsers = userSearch
@@ -442,6 +453,7 @@ function deleteCheckIn(id: string) {
   const tabs: { id: Tab; label: string; count?: number }[] = [
     { id: 'checkins', label: 'Check-ins', count: checkIns.length + finalChallenges.length },
     { id: 'participants', label: 'Participantes', count: users.length },
+    { id: 'ranking', label: 'Ranking', count: users.length },
     { id: 'lives', label: 'Aulas' },
     { id: 'settings', label: 'Config.' },
   ]
@@ -582,7 +594,7 @@ function deleteCheckIn(id: string) {
         {tabs.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => { setTab(t.id); setRankingPage(0) }}
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
               tab === t.id ? 'bg-violet-600 text-white' : 'text-gray-400 hover:text-white'
             }`}
@@ -811,6 +823,9 @@ function deleteCheckIn(id: string) {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-xs text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded">
+                        #{rankMap.get(u.id)}
+                      </span>
                       <span className="font-medium text-sm">{u.name}</span>
                       {u.isBanned && (
                         <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium">
@@ -974,6 +989,77 @@ function deleteCheckIn(id: string) {
           )}
         </div>
       )}
+
+      {/* Tab: Ranking */}
+      {tab === 'ranking' && (() => {
+        const totalPages = Math.ceil(rankedUsers.length / RANKING_PAGE_SIZE)
+        const pageUsers = rankedUsers.slice(
+          rankingPage * RANKING_PAGE_SIZE,
+          (rankingPage + 1) * RANKING_PAGE_SIZE,
+        )
+        return (
+          <div className="space-y-3">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-gray-500 border-b border-gray-800">
+                    <th className="text-left py-2 pr-4 w-10">#</th>
+                    <th className="text-left py-2 pr-4">Nome</th>
+                    <th className="text-left py-2 pr-4">Nível</th>
+                    <th className="text-right py-2 pr-4">Pts</th>
+                    <th className="text-right py-2">Aulas</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800/60">
+                  {pageUsers.map((u) => {
+                    const level = getUserLevel(u.aulaCount)
+                    return (
+                      <tr key={u.id} className="hover:bg-gray-800/30 transition-colors">
+                        <td className="py-2.5 pr-4 font-mono text-gray-500 text-xs">{u.rank}</td>
+                        <td className="py-2.5 pr-4">
+                          <div className="font-medium">{u.name}</div>
+                          <div className="text-xs text-gray-600">{u.email}</div>
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <span className={`text-xs ${level.color}`}>
+                            {level.icon} {level.label}
+                          </span>
+                        </td>
+                        <td className="py-2.5 pr-4 text-right font-medium text-violet-400">
+                          {u.points}
+                        </td>
+                        <td className="py-2.5 text-right text-gray-400">{u.aulaCount}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={() => setRankingPage((p) => Math.max(0, p - 1))}
+                  disabled={rankingPage === 0}
+                  className="btn-secondary text-xs disabled:opacity-40"
+                >
+                  ← Anterior
+                </button>
+                <span className="text-xs text-gray-500">
+                  Página {rankingPage + 1} de {totalPages}
+                </span>
+                <button
+                  onClick={() => setRankingPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={rankingPage === totalPages - 1}
+                  className="btn-secondary text-xs disabled:opacity-40"
+                >
+                  Próxima →
+                </button>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Tab: Lives */}
       {tab === 'lives' && (
