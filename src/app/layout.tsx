@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import BottomNav from '@/components/BottomNav'
+import MembershipPlusBanner from '@/components/MembershipPlusBanner'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
@@ -61,21 +62,7 @@ export default async function RootLayout({
           showRankingOnHome={showRankingOnHome}
           showFeedOnHome={showFeedOnHome}
         />
-        {showMembershipCta && (
-          <div className="bg-violet-950/60 border-b border-violet-700/30">
-            <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-center gap-3 flex-wrap">
-              <span className="text-xs text-violet-300">Quer continuar aprendendo além da Maratona?</span>
-              <a
-                href={membershipPlusUrl!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 px-3 py-1 rounded-full transition-colors whitespace-nowrap"
-              >
-                Conheça o Membership Plus →
-              </a>
-            </div>
-          </div>
-        )}
+        {showMembershipCta && <MembershipPlusBanner url={membershipPlusUrl!} />}
         <main className={session ? 'pb-16 md:pb-0' : ''}>{children}</main>
         {session && <BottomNav isAdmin={session.role === 'ADMIN'} />}
         <footer className={`border-t border-gray-800 py-4 text-center space-y-1 ${session ? 'pb-20 md:pb-4' : 'pb-4'}`}>
