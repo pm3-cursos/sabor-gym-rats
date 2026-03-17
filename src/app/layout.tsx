@@ -45,7 +45,7 @@ export default async function RootLayout({
 }) {
   const [session, settings] = await Promise.all([
     getSession(),
-    prisma.appSettings.findMany({ where: { key: { in: ['showRanking', 'showFeed', 'membershipPlusUrl', 'membershipPlusNavbar', 'membershipPlusBanner', 'referralBanner'] } } }),
+    prisma.appSettings.findMany({ where: { key: { in: ['showRanking', 'showFeed', 'membershipPlusUrl', 'membershipPlusNavbar', 'membershipPlusBanner', 'referralBanner', 'referralNavbar'] } } }),
   ])
 
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]))
@@ -55,6 +55,7 @@ export default async function RootLayout({
   const membershipPlusNavbar = settingsMap['membershipPlusNavbar'] === 'true'
   const membershipPlusBanner = settingsMap['membershipPlusBanner'] === 'true'
   const referralBanner = settingsMap['referralBanner'] === 'true'
+  const referralNavbar = settingsMap['referralNavbar'] === 'true'
 
   return (
     <html lang="pt-BR">
@@ -65,6 +66,7 @@ export default async function RootLayout({
           showFeedOnHome={showFeedOnHome}
           membershipPlusUrl={membershipPlusUrl}
           membershipPlusNavbar={membershipPlusNavbar}
+          referralNavbar={referralNavbar}
         />
         {membershipPlusBanner && membershipPlusUrl && <MembershipPlusBanner url={membershipPlusUrl} />}
         {referralBanner && <ReferralCampaignBanner />}

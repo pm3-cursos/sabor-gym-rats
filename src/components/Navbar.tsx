@@ -11,9 +11,10 @@ interface NavbarProps {
   showFeedOnHome?: boolean
   membershipPlusUrl?: string | null
   membershipPlusNavbar?: boolean
+  referralNavbar?: boolean
 }
 
-export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome = false, membershipPlusUrl, membershipPlusNavbar = false }: NavbarProps) {
+export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome = false, membershipPlusUrl, membershipPlusNavbar = false, referralNavbar = false }: NavbarProps) {
   const pathname = usePathname()
   const [loading, setLoading] = useState(false)
 
@@ -73,7 +74,7 @@ export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome
                   ✦ Membership Plus
                 </a>
               )}
-              <span className="hidden lg:block">{navLink('/indicacao', 'Indicar amigos')}</span>
+              {referralNavbar && <span className="hidden lg:block">{navLink('/indicacao', 'Indicar amigos')}</span>}
               <span className="hidden lg:block">{navLink('/perfil', 'Perfil')}</span>
               <button
                 onClick={handleLogout}

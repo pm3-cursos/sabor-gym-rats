@@ -360,6 +360,7 @@ interface Props {
   challengeShortDesc: string | null
   unlockAt: string
   upviralUrl: string | null
+  referralDashboard: boolean
   membershipPlusUrl: string | null
   membershipPlusCard: boolean
   todayLiveId: string | null
@@ -409,6 +410,7 @@ export default function DashboardClient({
   challengeShortDesc,
   unlockAt,
   upviralUrl,
+  referralDashboard,
   membershipPlusUrl,
   membershipPlusCard,
   todayLiveId,
@@ -821,7 +823,7 @@ export default function DashboardClient({
       </div>
 
       {/* Referral Campaign Card */}
-      {upviralUrl && (
+      {upviralUrl && referralDashboard && (
         <div className="rounded-xl border border-amber-600/40 bg-amber-500/5 p-5 mt-2">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>

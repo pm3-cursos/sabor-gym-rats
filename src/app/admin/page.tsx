@@ -42,7 +42,7 @@ export default async function AdminPage() {
     }),
     prisma.appSettings.findMany({
       where: {
-        key: { in: ['challengeUrl', 'challengeShortDesc', 'challengeUnlockAt', 'showRanking', 'showFeed', 'emailFrom', 'upviralUrl', 'referralBanner', 'membershipPlusUrl', 'membershipPlusNavbar', 'membershipPlusCard', 'membershipPlusBanner'] },
+        key: { in: ['challengeUrl', 'challengeShortDesc', 'challengeUnlockAt', 'showRanking', 'showFeed', 'emailFrom', 'upviralUrl', 'referralBanner', 'referralDashboard', 'referralNavbar', 'referralRanking', 'membershipPlusUrl', 'membershipPlusNavbar', 'membershipPlusCard', 'membershipPlusBanner'] },
       },
     }),
   ])
@@ -101,6 +101,9 @@ export default async function AdminPage() {
       adminEmail={adminUser?.email ?? null}
       upviralUrl={settingsMap['upviralUrl'] ?? null}
       referralBanner={settingsMap['referralBanner'] === 'true'}
+      referralDashboard={settingsMap['referralDashboard'] === 'true'}
+      referralNavbar={settingsMap['referralNavbar'] === 'true'}
+      referralRanking={settingsMap['referralRanking'] === 'true'}
       membershipPlusUrl={settingsMap['membershipPlusUrl'] ?? null}
       membershipPlusNavbar={settingsMap['membershipPlusNavbar'] === 'true'}
       membershipPlusCard={settingsMap['membershipPlusCard'] === 'true'}
