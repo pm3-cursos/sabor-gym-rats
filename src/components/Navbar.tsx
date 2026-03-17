@@ -9,9 +9,11 @@ interface NavbarProps {
   user: { name: string; role: string } | null
   showRankingOnHome?: boolean
   showFeedOnHome?: boolean
+  membershipPlusUrl?: string | null
+  membershipPlusNavbar?: boolean
 }
 
-export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome = false }: NavbarProps) {
+export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome = false, membershipPlusUrl, membershipPlusNavbar = false }: NavbarProps) {
   const pathname = usePathname()
   const [loading, setLoading] = useState(false)
 
@@ -61,6 +63,16 @@ export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome
           {user ? (
             <>
               <NotificationBell isLoggedIn={!!user} />
+              {membershipPlusNavbar && membershipPlusUrl && (
+                <a
+                  href={membershipPlusUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden lg:inline-flex items-center gap-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 rounded-full transition-colors ring-1 ring-violet-400/30 shadow-[0_0_10px_rgba(124,58,237,0.35)] whitespace-nowrap"
+                >
+                  ✦ Membership Plus
+                </a>
+              )}
               <span className="hidden lg:block">{navLink('/indicacao', 'Indicar amigos')}</span>
               <span className="hidden lg:block">{navLink('/perfil', 'Perfil')}</span>
               <button

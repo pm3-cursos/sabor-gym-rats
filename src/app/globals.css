@@ -33,6 +33,9 @@ body {
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 active:scale-95 text-white font-semibold min-h-[44px] px-5 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 cursor-pointer;
   }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 bg-transparent border border-violet-600 hover:bg-violet-600/10 active:scale-95 text-violet-400 font-semibold min-h-[44px] px-5 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 cursor-pointer;
+  }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 active:scale-95 text-white font-semibold min-h-[44px] px-5 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
   }

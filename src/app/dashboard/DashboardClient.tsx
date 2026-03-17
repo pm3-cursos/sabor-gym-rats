@@ -360,6 +360,8 @@ interface Props {
   challengeShortDesc: string | null
   unlockAt: string
   upviralUrl: string | null
+  membershipPlusUrl: string | null
+  membershipPlusCard: boolean
   todayLiveId: string | null
 }
 
@@ -407,6 +409,8 @@ export default function DashboardClient({
   challengeShortDesc,
   unlockAt,
   upviralUrl,
+  membershipPlusUrl,
+  membershipPlusCard,
   todayLiveId,
 }: Props) {
   const router = useRouter()
@@ -838,6 +842,30 @@ export default function DashboardClient({
         </div>
       )}
 
+      {/* Membership Plus Card */}
+      {membershipPlusCard && membershipPlusUrl && (
+        <div className="rounded-xl border border-indigo-600/40 bg-indigo-500/5 p-5 mt-2">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div>
+              <p className="text-xs text-indigo-400 font-medium uppercase tracking-wide mb-0.5">Membership Plus</p>
+              <h2 className="font-semibold text-white leading-snug">Continue aprendendo além da Maratona</h2>
+            </div>
+            <span className="text-xl shrink-0">🚀</span>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed mb-3">
+            Acesse as 9 formações da PM3 e evolua sua carreira em produto com conteúdo exclusivo e comunidade ativa.
+          </p>
+          <a
+            href={membershipPlusUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm border border-indigo-500 text-indigo-400 hover:bg-indigo-500/10 transition-colors font-medium px-4 py-2 rounded-lg inline-block"
+          >
+            Conhecer o Membership Plus →
+          </a>
+        </div>
+      )}
+
       {/* Next scheduled class card — when no class is currently active */}
       {nextScheduledLive && (
         <div className="card p-4 border-violet-800/30 bg-violet-500/5">
@@ -1252,7 +1280,7 @@ export default function DashboardClient({
                         href={live.liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn-primary text-sm w-full mt-3"
+                        className="btn-ghost text-sm w-full mt-3"
                       >
                         🕐 Aguardar início da aula
                       </a>
@@ -1274,7 +1302,7 @@ export default function DashboardClient({
                         href={live.liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn-primary text-sm w-full mt-3"
+                        className="btn-ghost text-sm w-full mt-3"
                       >
                         🕐 Aguardar início da aula
                       </a>

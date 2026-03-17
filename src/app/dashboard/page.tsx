@@ -11,7 +11,7 @@ export default async function DashboardPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [lives, checkIns, allUsers, currentUser, finalChallenge, challengeUrlSetting, challengeUnlockSetting, challengeShortDescSetting, upviralUrlSetting] =
+  const [lives, checkIns, allUsers, currentUser, finalChallenge, challengeUrlSetting, challengeUnlockSetting, challengeShortDescSetting, upviralUrlSetting, membershipSettings] =
     await Promise.all([
       prisma.live.findMany({ orderBy: { order: 'asc' } }),
       prisma.checkIn.findMany({
@@ -42,7 +42,12 @@ export default async function DashboardPage() {
       prisma.appSettings.findUnique({ where: { key: 'challengeUnlockAt' } }),
       prisma.appSettings.findUnique({ where: { key: 'challengeShortDesc' } }),
       prisma.appSettings.findUnique({ where: { key: 'upviralUrl' } }),
+      prisma.appSettings.findMany({ where: { key: { in: ['membershipPlusUrl', 'membershipPlusCard'] } } }),
     ])
+
+  const membershipSettingsMap = Object.fromEntries(membershipSettings.map((s) => [s.key, s.value]))
+  const membershipPlusUrl = membershipSettingsMap['membershipPlusUrl'] || null
+  const membershipPlusCard = membershipSettingsMap['membershipPlusCard'] === 'true'
 
   const unlockDate = challengeUnlockSetting?.value
     ? new Date(challengeUnlockSetting.value)
@@ -130,6 +135,8 @@ export default async function DashboardPage() {
       challengeShortDesc={challengeShortDescSetting?.value || null}
       unlockAt={unlockDate.toISOString()}
       upviralUrl={upviralUrlSetting?.value || null}
+      membershipPlusUrl={membershipPlusUrl}
+      membershipPlusCard={membershipPlusCard}
       todayLiveId={todayLiveId}
     />
   )

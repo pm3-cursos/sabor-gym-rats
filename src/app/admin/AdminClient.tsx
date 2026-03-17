@@ -70,7 +70,9 @@ interface Props {
   adminEmail: string | null
   upviralUrl: string | null
   membershipPlusUrl: string | null
-  membershipPlusVisible: boolean
+  membershipPlusNavbar: boolean
+  membershipPlusCard: boolean
+  membershipPlusBanner: boolean
 }
 
 type Tab = 'checkins' | 'participants' | 'lives' | 'settings' | 'ranking'
@@ -126,7 +128,9 @@ export default function AdminClient({
   adminEmail,
   upviralUrl: initialUpviralUrl,
   membershipPlusUrl: initialMembershipPlusUrl,
-  membershipPlusVisible: initialMembershipPlusVisible,
+  membershipPlusNavbar: initialMembershipPlusNavbar,
+  membershipPlusCard: initialMembershipPlusCard,
+  membershipPlusBanner: initialMembershipPlusBanner,
 }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('checkins')
@@ -146,7 +150,9 @@ export default function AdminClient({
   const [emailFromInput, setEmailFromInput] = useState(initialEmailFrom ?? '')
   const [upviralUrlInput, setUpviralUrlInput] = useState(initialUpviralUrl ?? '')
   const [membershipPlusUrlInput, setMembershipPlusUrlInput] = useState(initialMembershipPlusUrl ?? '')
-  const [membershipPlusVisibleInput, setMembershipPlusVisibleInput] = useState(initialMembershipPlusVisible)
+  const [membershipPlusNavbarInput, setMembershipPlusNavbarInput] = useState(initialMembershipPlusNavbar)
+  const [membershipPlusCardInput, setMembershipPlusCardInput] = useState(initialMembershipPlusCard)
+  const [membershipPlusBannerInput, setMembershipPlusBannerInput] = useState(initialMembershipPlusBanner)
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [settingsError, setSettingsError] = useState('')
 
@@ -436,7 +442,9 @@ function deleteCheckIn(id: string) {
       { key: 'emailFrom', value: emailFromInput.trim() },
       { key: 'upviralUrl', value: upviralUrlInput.trim() },
       { key: 'membershipPlusUrl', value: membershipPlusUrlInput.trim() },
-      { key: 'membershipPlusVisible', value: membershipPlusVisibleInput ? 'true' : 'false' },
+      { key: 'membershipPlusNavbar', value: membershipPlusNavbarInput ? 'true' : 'false' },
+      { key: 'membershipPlusCard', value: membershipPlusCardInput ? 'true' : 'false' },
+      { key: 'membershipPlusBanner', value: membershipPlusBannerInput ? 'true' : 'false' },
     ]
 
     const results = await Promise.all(
@@ -1428,14 +1436,14 @@ function deleteCheckIn(id: string) {
           <div className="card p-5">
             <h2 className="font-semibold mb-1 text-sm">🏆 Membership Plus — CTA</h2>
             <p className="text-xs text-gray-500 mb-3">
-              Exibe um botão de CTA no navbar e um card no dashboard apontando para uma página externa do Membership Plus.
-              O botão e o card só aparecem quando o campo de URL estiver preenchido <strong>e</strong> a visibilidade estiver activada.
+              Exibe CTAs apontando para uma página externa do Membership Plus. Cada local pode ser ativado separadamente.
+              Os CTAs só aparecem quando o campo de URL estiver preenchido <strong>e</strong> o local estiver ativado.
             </p>
             <div className="space-y-4">
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">
                   URL do Membership Plus
-                  <span className="text-gray-600 ml-1">(deixe vazio para ocultar)</span>
+                  <span className="text-gray-600 ml-1">(deixe vazio para ocultar tudo)</span>
                 </label>
                 <input
                   type="url"
@@ -1445,15 +1453,42 @@ function deleteCheckIn(id: string) {
                   onChange={(e) => setMembershipPlusUrlInput(e.target.value)}
                 />
               </div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 accent-violet-600"
-                  checked={membershipPlusVisibleInput}
-                  onChange={(e) => setMembershipPlusVisibleInput(e.target.checked)}
-                />
-                <span className="text-sm text-gray-300">Mostrar CTA do Membership Plus (navbar + card + banner)</span>
-              </label>
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 font-medium">Onde exibir:</p>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-violet-600"
+                    checked={membershipPlusNavbarInput}
+                    onChange={(e) => setMembershipPlusNavbarInput(e.target.checked)}
+                  />
+                  <span className="text-sm text-gray-300">
+                    Navbar — botão destacado à direita (apenas desktop)
+                  </span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-violet-600"
+                    checked={membershipPlusCardInput}
+                    onChange={(e) => setMembershipPlusCardInput(e.target.checked)}
+                  />
+                  <span className="text-sm text-gray-300">
+                    Card no dashboard — card sutil com borda violeta
+                  </span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-violet-600"
+                    checked={membershipPlusBannerInput}
+                    onChange={(e) => setMembershipPlusBannerInput(e.target.checked)}
+                  />
+                  <span className="text-sm text-gray-300">
+                    Banner fixo abaixo da navbar (fechável por sessão)
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
 
