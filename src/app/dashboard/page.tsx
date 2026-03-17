@@ -42,12 +42,13 @@ export default async function DashboardPage() {
       prisma.appSettings.findUnique({ where: { key: 'challengeUnlockAt' } }),
       prisma.appSettings.findUnique({ where: { key: 'challengeShortDesc' } }),
       prisma.appSettings.findUnique({ where: { key: 'upviralUrl' } }),
-      prisma.appSettings.findMany({ where: { key: { in: ['membershipPlusUrl', 'membershipPlusCard'] } } }),
+      prisma.appSettings.findMany({ where: { key: { in: ['membershipPlusUrl', 'membershipPlusCard', 'referralDashboard'] } } }),
     ])
 
   const membershipSettingsMap = Object.fromEntries(membershipSettings.map((s) => [s.key, s.value]))
   const membershipPlusUrl = membershipSettingsMap['membershipPlusUrl'] || null
   const membershipPlusCard = membershipSettingsMap['membershipPlusCard'] === 'true'
+  const referralDashboard = membershipSettingsMap['referralDashboard'] === 'true'
 
   const unlockDate = challengeUnlockSetting?.value
     ? new Date(challengeUnlockSetting.value)
@@ -135,6 +136,7 @@ export default async function DashboardPage() {
       challengeShortDesc={challengeShortDescSetting?.value || null}
       unlockAt={unlockDate.toISOString()}
       upviralUrl={upviralUrlSetting?.value || null}
+      referralDashboard={referralDashboard}
       membershipPlusUrl={membershipPlusUrl}
       membershipPlusCard={membershipPlusCard}
       todayLiveId={todayLiveId}

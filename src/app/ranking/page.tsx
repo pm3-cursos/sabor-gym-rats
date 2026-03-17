@@ -150,11 +150,16 @@ function PodiumSection({
 }
 
 export default async function RankingPage() {
-  const [leaderboard, session, totalLives] = await Promise.all([
+  const [leaderboard, session, totalLives, rankingSettings] = await Promise.all([
     getLeaderboard(),
     getSession(),
     prisma.live.count(),
+    prisma.appSettings.findMany({ where: { key: { in: ['referralRanking', 'upviralUrl'] } } }),
   ])
+
+  const rankingSettingsMap = Object.fromEntries(rankingSettings.map((s) => [s.key, s.value]))
+  const referralRanking = rankingSettingsMap['referralRanking'] === 'true'
+  const upviralUrl = rankingSettingsMap['upviralUrl'] || null
 
   const total = leaderboard.length
   const champions = leaderboard.filter((u) => u.aulaCount >= totalLives && totalLives > 0)
@@ -196,6 +201,27 @@ export default async function RankingPage() {
             <div className="text-xs text-gray-500 mt-1">aulas no total</div>
           </div>
         </div>
+
+        {referralRanking && upviralUrl && (
+          <div className="card p-5 mb-6 border-amber-600/40 bg-amber-500/5">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p className="text-xs text-amber-400 font-medium uppercase tracking-wide mb-0.5">Campanha de Indicação</p>
+                <h3 className="font-semibold text-white leading-snug">Indique um amigo e ganhe prêmios!</h3>
+              </div>
+              <span className="text-xl shrink-0">🎁</span>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed mb-3">
+              A cada indicação válida, você concorre a prêmios exclusivos. Compartilhe seu link e suba no ranking!
+            </p>
+            <a
+              href="/indicacao"
+              className="text-sm border border-violet-500 text-violet-400 hover:bg-violet-500/10 transition-colors font-medium px-4 py-2 rounded-lg inline-block"
+            >
+              Indicar amigos
+            </a>
+          </div>
+        )}
 
         {!session && (
           <div className="card p-6 text-center border-violet-800/50 bg-violet-500/5">
