@@ -1252,7 +1252,7 @@ export default function DashboardClient({
                         href={live.liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn-primary text-sm w-full mt-3"
+                        className="btn-ghost text-sm w-full mt-3"
                       >
                         🕐 Aguardar início da aula
                       </a>
@@ -1274,7 +1274,7 @@ export default function DashboardClient({
                         href={live.liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn-primary text-sm w-full mt-3"
+                        className="btn-ghost text-sm w-full mt-3"
                       >
                         🕐 Aguardar início da aula
                       </a>
