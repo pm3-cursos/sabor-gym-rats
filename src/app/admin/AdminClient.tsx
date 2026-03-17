@@ -69,6 +69,8 @@ interface Props {
   emailFrom: string | null
   adminEmail: string | null
   upviralUrl: string | null
+  membershipPlusUrl: string | null
+  membershipPlusVisible: boolean
 }
 
 type Tab = 'checkins' | 'participants' | 'lives' | 'settings' | 'ranking'
@@ -123,6 +125,8 @@ export default function AdminClient({
   emailFrom: initialEmailFrom,
   adminEmail,
   upviralUrl: initialUpviralUrl,
+  membershipPlusUrl: initialMembershipPlusUrl,
+  membershipPlusVisible: initialMembershipPlusVisible,
 }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('checkins')
@@ -141,6 +145,8 @@ export default function AdminClient({
   const [showFeedInput, setShowFeedInput] = useState(initialShowFeed)
   const [emailFromInput, setEmailFromInput] = useState(initialEmailFrom ?? '')
   const [upviralUrlInput, setUpviralUrlInput] = useState(initialUpviralUrl ?? '')
+  const [membershipPlusUrlInput, setMembershipPlusUrlInput] = useState(initialMembershipPlusUrl ?? '')
+  const [membershipPlusVisibleInput, setMembershipPlusVisibleInput] = useState(initialMembershipPlusVisible)
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [settingsError, setSettingsError] = useState('')
 
@@ -429,6 +435,8 @@ function deleteCheckIn(id: string) {
       { key: 'showFeed', value: showFeedInput ? 'true' : 'false' },
       { key: 'emailFrom', value: emailFromInput.trim() },
       { key: 'upviralUrl', value: upviralUrlInput.trim() },
+      { key: 'membershipPlusUrl', value: membershipPlusUrlInput.trim() },
+      { key: 'membershipPlusVisible', value: membershipPlusVisibleInput ? 'true' : 'false' },
     ]
 
     const results = await Promise.all(
@@ -1414,6 +1422,39 @@ function deleteCheckIn(id: string) {
                 {testEmailResult.message}
               </div>
             )}
+          </div>
+
+          {/* Membership Plus CTA */}
+          <div className="card p-5">
+            <h2 className="font-semibold mb-1 text-sm">🏆 Membership Plus — CTA</h2>
+            <p className="text-xs text-gray-500 mb-3">
+              Exibe um botão de CTA no navbar e um card no dashboard apontando para uma página externa do Membership Plus.
+              O botão e o card só aparecem quando o campo de URL estiver preenchido <strong>e</strong> a visibilidade estiver activada.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">
+                  URL do Membership Plus
+                  <span className="text-gray-600 ml-1">(deixe vazio para ocultar)</span>
+                </label>
+                <input
+                  type="url"
+                  className="input text-sm"
+                  placeholder="https://pm3.com.br/membership-plus"
+                  value={membershipPlusUrlInput}
+                  onChange={(e) => setMembershipPlusUrlInput(e.target.value)}
+                />
+              </div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-violet-600"
+                  checked={membershipPlusVisibleInput}
+                  onChange={(e) => setMembershipPlusVisibleInput(e.target.checked)}
+                />
+                <span className="text-sm text-gray-300">Mostrar CTA do Membership Plus (navbar + card + banner)</span>
+              </label>
+            </div>
           </div>
 
           {/* Home navbar visibility */}

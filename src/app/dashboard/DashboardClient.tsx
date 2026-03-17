@@ -360,6 +360,8 @@ interface Props {
   challengeShortDesc: string | null
   unlockAt: string
   upviralUrl: string | null
+  membershipPlusUrl: string | null
+  membershipPlusVisible: boolean
   todayLiveId: string | null
 }
 
@@ -407,6 +409,8 @@ export default function DashboardClient({
   challengeShortDesc,
   unlockAt,
   upviralUrl,
+  membershipPlusUrl,
+  membershipPlusVisible,
   todayLiveId,
 }: Props) {
   const router = useRouter()
@@ -834,6 +838,30 @@ export default function DashboardClient({
             className="text-sm border border-violet-500 text-violet-400 hover:bg-violet-500/10 transition-colors font-medium px-4 py-2 rounded-lg inline-block"
           >
             Indicar amigos
+          </a>
+        </div>
+      )}
+
+      {/* Membership Plus Card */}
+      {membershipPlusVisible && membershipPlusUrl && (
+        <div className="rounded-xl border border-violet-600/30 bg-violet-500/5 p-5 mt-2">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div>
+              <p className="text-xs text-violet-400 font-medium uppercase tracking-wide mb-0.5">Membership PM3</p>
+              <h2 className="font-semibold text-white leading-snug">Quer continuar aprendendo além da Maratona?</h2>
+            </div>
+            <span className="text-xl shrink-0">🏆</span>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed mb-3">
+            Acesso completo a todas as formações PM3, comunidade exclusiva e muito mais.
+          </p>
+          <a
+            href={membershipPlusUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm border border-violet-500 text-violet-400 hover:bg-violet-500/10 transition-colors font-medium px-4 py-2 rounded-lg inline-block"
+          >
+            Conheça o Membership Plus →
           </a>
         </div>
       )}

@@ -9,9 +9,11 @@ interface NavbarProps {
   user: { name: string; role: string } | null
   showRankingOnHome?: boolean
   showFeedOnHome?: boolean
+  membershipPlusUrl?: string | null
+  membershipPlusVisible?: boolean
 }
 
-export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome = false }: NavbarProps) {
+export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome = false, membershipPlusUrl, membershipPlusVisible = false }: NavbarProps) {
   const pathname = usePathname()
   const [loading, setLoading] = useState(false)
 
@@ -58,6 +60,16 @@ export default function Navbar({ user, showRankingOnHome = false, showFeedOnHome
 
         {/* Right: user actions */}
         <div className="flex items-center gap-3 shrink-0 justify-end">
+          {membershipPlusVisible && membershipPlusUrl && (
+            <a
+              href={membershipPlusUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden lg:inline-flex items-center gap-1.5 text-xs font-semibold text-violet-300 hover:text-white border border-violet-600/50 hover:border-violet-400 hover:bg-violet-600/20 px-3 py-1.5 rounded-lg transition-all whitespace-nowrap"
+            >
+              Membership Plus ✦
+            </a>
+          )}
           {user ? (
             <>
               <NotificationBell isLoggedIn={!!user} />
