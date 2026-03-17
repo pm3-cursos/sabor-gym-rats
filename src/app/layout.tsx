@@ -60,8 +60,6 @@ export default async function RootLayout({
           user={session ? { name: session.name, role: session.role } : null}
           showRankingOnHome={showRankingOnHome}
           showFeedOnHome={showFeedOnHome}
-          membershipPlusUrl={membershipPlusUrl}
-          membershipPlusVisible={membershipPlusVisible}
         />
         {showMembershipCta && (
           <div className="bg-violet-950/60 border-b border-violet-700/30">
