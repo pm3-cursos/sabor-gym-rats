@@ -3,6 +3,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 import BottomNav from '@/components/BottomNav'
 import MembershipPlusBanner from '@/components/MembershipPlusBanner'
+import ReferralCampaignBanner from '@/components/ReferralCampaignBanner'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
@@ -44,7 +45,7 @@ export default async function RootLayout({
 }) {
   const [session, settings] = await Promise.all([
     getSession(),
-    prisma.appSettings.findMany({ where: { key: { in: ['showRanking', 'showFeed', 'membershipPlusUrl', 'membershipPlusNavbar', 'membershipPlusBanner'] } } }),
+    prisma.appSettings.findMany({ where: { key: { in: ['showRanking', 'showFeed', 'membershipPlusUrl', 'membershipPlusNavbar', 'membershipPlusBanner', 'referralBanner'] } } }),
   ])
 
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]))
@@ -53,6 +54,7 @@ export default async function RootLayout({
   const membershipPlusUrl = settingsMap['membershipPlusUrl'] || null
   const membershipPlusNavbar = settingsMap['membershipPlusNavbar'] === 'true'
   const membershipPlusBanner = settingsMap['membershipPlusBanner'] === 'true'
+  const referralBanner = settingsMap['referralBanner'] === 'true'
 
   return (
     <html lang="pt-BR">
@@ -65,6 +67,7 @@ export default async function RootLayout({
           membershipPlusNavbar={membershipPlusNavbar}
         />
         {membershipPlusBanner && membershipPlusUrl && <MembershipPlusBanner url={membershipPlusUrl} />}
+        {referralBanner && <ReferralCampaignBanner />}
         <main className={session ? 'pb-16 md:pb-0' : ''}>{children}</main>
         {session && <BottomNav isAdmin={session.role === 'ADMIN'} />}
         <footer className={`border-t border-gray-800 py-4 text-center space-y-1 ${session ? 'pb-20 md:pb-4' : 'pb-4'}`}>
