@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import DashboardClient from './DashboardClient'
 import { calcPoints, calcAulaCount, calcLinkedinCount } from '@/lib/points'
 import { FINAL_CHALLENGE_UNLOCK_UTC } from '@/lib/date'
+import { getCouponStatus } from '@/lib/coupon'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,6 +59,13 @@ export default async function DashboardPage() {
   const linkedinCount = calcLinkedinCount(checkIns)
   const totalLives = lives.length
 
+  // Coupon eligibility for Aula 6
+  const live6 = lives.find((l) => l.order === 6)
+  const isAdmin = session.role === 'ADMIN'
+  const replitCouponInitial = live6
+    ? await getCouponStatus(session.userId, isAdmin, live6.id)
+    : null
+
   const sorted = allUsers
     .map((u) => ({ id: u.id, name: u.name, points: calcPoints(u.checkIns, u.pointAdjustments, u.finalChallenge) }))
     .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'pt-BR'))
@@ -89,6 +97,11 @@ export default async function DashboardPage() {
   return (
     <DashboardClient
       userName={session.name}
+      userId={session.userId}
+      userRole={session.role}
+      replitCouponInitial={replitCouponInitial?.couponEligible && replitCouponInitial.couponCode
+        ? { couponCode: replitCouponInitial.couponCode }
+        : null}
       lives={lives.map((l) => ({
         id: l.id,
         title: l.title,
@@ -96,7 +109,7 @@ export default async function DashboardPage() {
         instructor: l.instructor ?? null,
         scheduledAt: l.scheduledAt ? l.scheduledAt.toISOString() : null,
         order: l.order,
-        isActive: l.isActive || (l.scheduledAt !== null && l.scheduledAt <= now),
+        isActive: (l.isActive || (l.checkInOpenAt !== null && l.checkInOpenAt <= now)) && !l.checkInDisabled,
         recordingUrl: l.recordingUrl ?? null,
         liveUrl: l.liveUrl ?? null,
         liveType: l.liveType,

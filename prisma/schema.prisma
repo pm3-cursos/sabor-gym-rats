@@ -37,15 +37,17 @@ model User {
 }
 
 model Live {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  instructor  String?
-  scheduledAt DateTime?
-  order        Int       @unique
-  isActive     Boolean   @default(false)
-  recordingUrl String?
-  liveUrl      String?
+  id               String    @id @default(cuid())
+  title            String
+  description      String?
+  instructor       String?
+  scheduledAt      DateTime?
+  order            Int       @unique
+  isActive         Boolean   @default(false)
+  checkInOpenAt    DateTime?
+  checkInDisabled  Boolean   @default(false)
+  recordingUrl     String?
+  liveUrl          String?
   liveType         LiveType  @default(ASYNC)
   linkVisibleEarly Boolean   @default(false)
   createdAt        DateTime  @default(now())

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUserLevel } from '@/lib/points'
 
@@ -28,6 +28,8 @@ interface Live {
   scheduledAt: string | null
   order: number
   isActive: boolean
+  checkInOpenAt: string | null
+  checkInDisabled: boolean
   recordingUrl: string | null
   liveUrl: string | null
   liveType: string
@@ -44,6 +46,7 @@ interface UserRow {
   checkInsCount: number
   points: number
   aulaCount: number
+  couponRank: number | null
 }
 
 interface FinalChallengeRow {
@@ -181,6 +184,7 @@ export default function AdminClient({
 
   // Search / filter state
   const [userSearch, setUserSearch] = useState('')
+  const [filterCoupon, setFilterCoupon] = useState<'' | 'eligible' | 'not-eligible'>('')
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
   const [ciFilterLiveId, setCiFilterLiveId] = useState('')
   const [ciFilterType, setCiFilterType] = useState<'' | 'AULA' | 'LINKEDIN'>('')
@@ -190,6 +194,13 @@ export default function AdminClient({
   const RANKING_PAGE_SIZE = 20
   const [rankingPage, setRankingPage] = useState(0)
 
+  // Auto-refresh Lives tab every 30s to reflect checkInOpenAt changes
+  useEffect(() => {
+    if (tab !== 'lives') return
+    const interval = setInterval(() => router.refresh(), 30000)
+    return () => clearInterval(interval)
+  }, [tab, router])
+
   // Derived ranking data
   const rankedUsers = [...users]
     .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, 'pt-BR'))
@@ -197,13 +208,15 @@ export default function AdminClient({
   const rankMap = new Map(rankedUsers.map((u) => [u.id, u.rank]))
 
   // Derived filtered data
-  const filteredUsers = userSearch
-    ? users.filter(
-        (u) =>
-          u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-          u.email.toLowerCase().includes(userSearch.toLowerCase()),
-      )
-    : users
+  const filteredUsers = users.filter((u) => {
+    if (userSearch && !(
+      u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email.toLowerCase().includes(userSearch.toLowerCase())
+    )) return false
+    if (filterCoupon === 'eligible' && u.couponRank === null) return false
+    if (filterCoupon === 'not-eligible' && u.couponRank !== null) return false
+    return true
+  })
 
   const filteredCheckIns = checkIns.filter((c) => {
     if (ciFilterLiveId && c.live.id !== ciFilterLiveId) return false
@@ -388,6 +401,9 @@ function deleteCheckIn(id: string) {
     if (formToSend.scheduledAt) {
       formToSend.scheduledAt = new Date(formToSend.scheduledAt + ':00-03:00').toISOString()
     }
+    if (formToSend.checkInOpenAt) {
+      formToSend.checkInOpenAt = new Date(formToSend.checkInOpenAt + ':00-03:00').toISOString()
+    }
     await fetch(`/api/admin/lives/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -396,6 +412,11 @@ function deleteCheckIn(id: string) {
     setProcessing(null)
     setEditingLive(null)
     router.refresh()
+  }
+
+  function isLiveEffectivelyActive(live: Live): boolean {
+    const now = new Date()
+    return (live.isActive || (live.checkInOpenAt !== null && new Date(live.checkInOpenAt) <= now)) && !live.checkInDisabled
   }
 
   function convertYoutubeUrl(url: string): string {
@@ -824,15 +845,34 @@ function deleteCheckIn(id: string) {
       {/* Tab: Participantes */}
       {tab === 'participants' && (
         <div className="space-y-3">
-          {/* Search */}
-          <input
-            type="text"
-            className="input text-sm w-full"
-            placeholder="🔍 Buscar por nome ou e-mail..."
-            value={userSearch}
-            onChange={(e) => setUserSearch(e.target.value)}
-          />
-          {userSearch && (
+          {/* Search + filters */}
+          <div className="flex gap-2 flex-wrap">
+            <input
+              type="text"
+              className="input text-sm flex-1 min-w-[200px]"
+              placeholder="🔍 Buscar por nome ou e-mail..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+            />
+            <select
+              className="input text-sm w-52"
+              value={filterCoupon}
+              onChange={(e) => setFilterCoupon(e.target.value as '' | 'eligible' | 'not-eligible')}
+            >
+              <option value="">Todos — Cupom Replit</option>
+              <option value="eligible">✅ Apenas elegíveis</option>
+              <option value="not-eligible">— Não elegíveis</option>
+            </select>
+            {(userSearch || filterCoupon) && (
+              <button
+                onClick={() => { setUserSearch(''); setFilterCoupon('') }}
+                className="text-xs text-gray-500 hover:text-white px-2"
+              >
+                ✕ Limpar
+              </button>
+            )}
+          </div>
+          {(userSearch || filterCoupon) && (
             <p className="text-xs text-gray-600">
               {filteredUsers.length} de {users.length} participante{users.length !== 1 ? 's' : ''}
             </p>
@@ -869,10 +909,15 @@ function deleteCheckIn(id: string) {
                       </span>
                     </div>
                     <span className="text-gray-600 text-xs">{u.email}</span>
-                    <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                    <div className="flex gap-3 mt-1 text-xs text-gray-500 flex-wrap">
                       <span className="font-medium text-violet-400">{u.points} pts</span>
                       <span>{u.aulaCount} aulas</span>
                       <span>{u.checkInsCount} check-ins</span>
+                      {u.couponRank !== null ? (
+                        <span className="text-emerald-400 font-medium">🎁 Cupom #{u.couponRank}/500</span>
+                      ) : (
+                        <span className="text-gray-700">🎁 —</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -1178,21 +1223,54 @@ function deleteCheckIn(id: string) {
                         }
                       />
                     </div>
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">
+                        🕐 Liberar check-in automaticamente em:
+                        <span className="text-gray-600 ml-1">(Horário de Brasília — BRT)</span>
+                      </label>
+                      <input
+                        type="datetime-local"
+                        className="input text-sm"
+                        defaultValue={live.checkInOpenAt ? toDatetimeLocalBRT(live.checkInOpenAt) : ''}
+                        onChange={(e) =>
+                          setLiveForms((p) => ({
+                            ...p,
+                            [live.id]: { ...p[live.id], checkInOpenAt: e.target.value || null },
+                          }))
+                        }
+                      />
+                      <p className="text-xs text-gray-600 mt-1">
+                        Deixe vazio para não agendar automaticamente.
+                      </p>
+                    </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         id={`active-${live.id}`}
-                        defaultChecked={live.isActive}
-                        onChange={(e) =>
-                          setLiveForms((p) => ({
-                            ...p,
-                            [live.id]: { ...p[live.id], isActive: e.target.checked },
-                          }))
-                        }
+                        defaultChecked={isLiveEffectivelyActive(live)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setLiveForms((p) => ({
+                              ...p,
+                              [live.id]: { ...p[live.id], isActive: true, checkInDisabled: false },
+                            }))
+                          } else {
+                            setLiveForms((p) => ({
+                              ...p,
+                              [live.id]: { ...p[live.id], isActive: false, checkInDisabled: true },
+                            }))
+                          }
+                        }}
                         className="w-4 h-4 accent-violet-600"
                       />
                       <label htmlFor={`active-${live.id}`} className="text-sm text-gray-300">
                         Aceitar check-ins
+                        {isLiveEffectivelyActive(live) && !live.isActive && (
+                          <span className="ml-1.5 text-xs text-emerald-500">(automático via agendamento)</span>
+                        )}
+                        {live.checkInDisabled && (
+                          <span className="ml-1.5 text-xs text-amber-500">(desabilitado manualmente)</span>
+                        )}
                       </label>
                     </div>
                     <div>
@@ -1267,9 +1345,13 @@ function deleteCheckIn(id: string) {
                           {live.order}
                         </span>
                         <span className="font-medium">{live.title}</span>
-                        {live.isActive ? (
+                        {isLiveEffectivelyActive(live) ? (
                           <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
-                            Aberta
+                            {live.isActive ? 'Aberta' : 'Aberta (auto)'}
+                          </span>
+                        ) : live.checkInDisabled ? (
+                          <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">
+                            Desabilitada
                           </span>
                         ) : (
                           <span className="text-xs bg-gray-800 text-gray-600 px-2 py-0.5 rounded-full">
@@ -1280,6 +1362,19 @@ function deleteCheckIn(id: string) {
                       {live.scheduledAt && (
                         <p className="text-xs text-gray-600 pl-7">
                           {new Date(live.scheduledAt).toLocaleDateString('pt-BR', {
+                            weekday: 'short',
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            timeZone: 'America/Sao_Paulo',
+                          })}
+                        </p>
+                      )}
+                      {live.checkInOpenAt && !isLiveEffectivelyActive(live) && !live.checkInDisabled && (
+                        <p className="text-xs text-violet-500/80 pl-7">
+                          🕐 Check-in abre em:{' '}
+                          {new Date(live.checkInOpenAt).toLocaleString('pt-BR', {
                             weekday: 'short',
                             day: '2-digit',
                             month: 'short',

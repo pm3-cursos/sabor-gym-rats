@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import AdminClient from './AdminClient'
 import { calcPoints, calcAulaCount } from '@/lib/points'
+import { computeAllCouponRanks } from '@/lib/coupon'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,6 +53,10 @@ export default async function AdminPage() {
     select: { email: true },
   })
 
+  // Coupon ranks for participants tab
+  const live6 = lives.find((l) => l.order === 6)
+  const couponRankMap = live6 ? await computeAllCouponRanks(live6.id) : new Map<string, number>()
+
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]))
 
   const users = usersRaw.map((u) => ({
@@ -63,6 +68,7 @@ export default async function AdminPage() {
     checkInsCount: u._count.checkIns,
     points: calcPoints(u.checkIns, u.pointAdjustments),
     aulaCount: calcAulaCount(u.checkIns),
+    couponRank: couponRankMap.get(u.id) ?? null,
   }))
 
   return (
@@ -76,6 +82,8 @@ export default async function AdminPage() {
         scheduledAt: l.scheduledAt?.toISOString() ?? null,
         order: l.order,
         isActive: l.isActive,
+        checkInOpenAt: l.checkInOpenAt?.toISOString() ?? null,
+        checkInDisabled: l.checkInDisabled,
         recordingUrl: l.recordingUrl ?? null,
         liveUrl: l.liveUrl ?? null,
         liveType: l.liveType,

@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { calcPoints, calcAulaCount } from '@/lib/points'
 import { TZ } from '@/lib/date'
+import { computeAllCouponRanks } from '@/lib/coupon'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,6 +53,10 @@ export async function GET() {
     }),
   ])
 
+  // Coupon ranks for all users
+  const live6 = lives.find((l) => l.order === 6)
+  const couponRankMap = live6 ? await computeAllCouponRanks(live6.id) : new Map<string, number>()
+
   // Header row
   const header: string[] = [
     'Nome',
@@ -78,6 +83,7 @@ export async function GET() {
   }
 
   header.push('Desafio Enviado', 'Link do Desafio', 'Data Envio Desafio', 'Pontos Desafio')
+  header.push('Elegível Cupom Replit', 'Posição Cupom Replit')
 
   // Data rows — one row per user
   const rows = users.map((user) => {
@@ -116,6 +122,12 @@ export async function GET() {
       user.finalChallenge?.challengeUrl ?? '',
       user.finalChallenge ? fmtDate(user.finalChallenge.submittedAt) : '',
       user.finalChallenge ? String(user.finalChallenge.points) : '0',
+    )
+
+    const couponRank = couponRankMap.get(user.id) ?? null
+    row.push(
+      couponRank !== null ? 'Sim' : 'Não',
+      couponRank !== null ? String(couponRank) : '',
     )
 
     return row
