@@ -3,8 +3,6 @@ import { prisma } from './db'
 export const COUPON_CODE = 'MARATONAPM3'
 export const ADMIN_COUPON_CODE = 'REPLIT-ADMIN-TEST'
 export const COUPON_POOL_SIZE = 500
-// 23:59:59 BRT on March 24, 2026 = 2026-03-25T02:59:59Z (BRT = UTC-3)
-export const COUPON_DEADLINE = new Date('2026-03-25T02:59:59Z')
 
 export interface CouponResult {
   couponEligible: boolean
