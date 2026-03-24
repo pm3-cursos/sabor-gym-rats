@@ -185,6 +185,9 @@ export default function AdminClient({
   // Search / filter state
   const [userSearch, setUserSearch] = useState('')
   const [filterCoupon, setFilterCoupon] = useState<'' | 'eligible' | 'not-eligible'>('')
+  const [filterBan, setFilterBan] = useState<'' | 'active' | 'banned'>('')
+  const [filterLevel, setFilterLevel] = useState<'' | '0' | '1-2' | '3-5' | '6+'>('')
+  const [filterSort, setFilterSort] = useState<'ranking' | 'points' | 'aulas' | 'name'>('ranking')
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
   const [ciFilterLiveId, setCiFilterLiveId] = useState('')
   const [ciFilterType, setCiFilterType] = useState<'' | 'AULA' | 'LINKEDIN'>('')
@@ -208,15 +211,29 @@ export default function AdminClient({
   const rankMap = new Map(rankedUsers.map((u) => [u.id, u.rank]))
 
   // Derived filtered data
-  const filteredUsers = users.filter((u) => {
-    if (userSearch && !(
-      u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(userSearch.toLowerCase())
-    )) return false
-    if (filterCoupon === 'eligible' && u.couponRank === null) return false
-    if (filterCoupon === 'not-eligible' && u.couponRank !== null) return false
-    return true
-  })
+  const filteredUsers = [...users]
+    .filter((u) => {
+      if (userSearch && !(
+        u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(userSearch.toLowerCase())
+      )) return false
+      if (filterCoupon === 'eligible' && u.couponRank === null) return false
+      if (filterCoupon === 'not-eligible' && u.couponRank !== null) return false
+      if (filterBan === 'active' && u.isBanned) return false
+      if (filterBan === 'banned' && !u.isBanned) return false
+      if (filterLevel === '0' && u.aulaCount !== 0) return false
+      if (filterLevel === '1-2' && (u.aulaCount < 1 || u.aulaCount > 2)) return false
+      if (filterLevel === '3-5' && (u.aulaCount < 3 || u.aulaCount > 5)) return false
+      if (filterLevel === '6+' && u.aulaCount < 6) return false
+      return true
+    })
+    .sort((a, b) => {
+      if (filterSort === 'points') return b.points - a.points || a.name.localeCompare(b.name, 'pt-BR')
+      if (filterSort === 'aulas') return b.aulaCount - a.aulaCount || b.points - a.points
+      if (filterSort === 'name') return a.name.localeCompare(b.name, 'pt-BR')
+      // 'ranking' — maintain original rank order (by points desc, then name)
+      return b.points - a.points || a.name.localeCompare(b.name, 'pt-BR')
+    })
 
   const filteredCheckIns = checkIns.filter((c) => {
     if (ciFilterLiveId && c.live.id !== ciFilterLiveId) return false
@@ -863,16 +880,46 @@ function deleteCheckIn(id: string) {
               <option value="eligible">✅ Apenas elegíveis</option>
               <option value="not-eligible">— Não elegíveis</option>
             </select>
-            {(userSearch || filterCoupon) && (
+            <select
+              className="input text-sm w-44"
+              value={filterBan}
+              onChange={(e) => setFilterBan(e.target.value as '' | 'active' | 'banned')}
+            >
+              <option value="">Todos — Status</option>
+              <option value="active">✅ Ativos</option>
+              <option value="banned">🚫 Banidos</option>
+            </select>
+            <select
+              className="input text-sm w-52"
+              value={filterLevel}
+              onChange={(e) => setFilterLevel(e.target.value as '' | '0' | '1-2' | '3-5' | '6+')}
+            >
+              <option value="">Todos — Nível</option>
+              <option value="6+">🥇 Maratonista (6+ aulas)</option>
+              <option value="3-5">🥈 Corredor (3–5 aulas)</option>
+              <option value="1-2">🥉 Iniciante (1–2 aulas)</option>
+              <option value="0">🏁 Na largada (0 aulas)</option>
+            </select>
+            <select
+              className="input text-sm w-44"
+              value={filterSort}
+              onChange={(e) => setFilterSort(e.target.value as 'ranking' | 'points' | 'aulas' | 'name')}
+            >
+              <option value="ranking">↕ Ranking</option>
+              <option value="points">↓ Pontos</option>
+              <option value="aulas">↓ Aulas</option>
+              <option value="name">↓ Nome (A–Z)</option>
+            </select>
+            {(userSearch || filterCoupon || filterBan || filterLevel) && (
               <button
-                onClick={() => { setUserSearch(''); setFilterCoupon('') }}
+                onClick={() => { setUserSearch(''); setFilterCoupon(''); setFilterBan(''); setFilterLevel('') }}
                 className="text-xs text-gray-500 hover:text-white px-2"
               >
                 ✕ Limpar
               </button>
             )}
           </div>
-          {(userSearch || filterCoupon) && (
+          {(userSearch || filterCoupon || filterBan || filterLevel) && (
             <p className="text-xs text-gray-600">
               {filteredUsers.length} de {users.length} participante{users.length !== 1 ? 's' : ''}
             </p>
