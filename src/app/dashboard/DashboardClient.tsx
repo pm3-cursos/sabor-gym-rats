@@ -7,6 +7,7 @@ import confetti from 'canvas-confetti'
 import { getUserLevel, getAdditionalBadges } from '@/lib/points'
 import { extractLinkedinUsername } from '@/lib/linkedin'
 import ChallengeDetailsModal from '@/components/ChallengeDetailsModal'
+import ReplitCouponModal from '@/components/ReplitCouponModal'
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
@@ -341,6 +342,8 @@ interface CheckIn {
 }
 
 interface Props {
+  userId: string
+  userRole: string
   userName: string
   lives: Live[]
   checkIns: CheckIn[]
@@ -364,6 +367,7 @@ interface Props {
   membershipPlusUrl: string | null
   membershipPlusCard: boolean
   todayLiveId: string | null
+  replitCouponInitial: { couponCode: string } | null
 }
 
 function getDaysUntil(scheduledAt: string | null): string {
@@ -391,6 +395,8 @@ function formatDate(isoStr: string) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function DashboardClient({
+  userId,
+  userRole,
   userName,
   lives,
   checkIns,
@@ -414,6 +420,7 @@ export default function DashboardClient({
   membershipPlusUrl,
   membershipPlusCard,
   todayLiveId,
+  replitCouponInitial,
 }: Props) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState<string | null>(null)
@@ -439,6 +446,10 @@ export default function DashboardClient({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   // Rank delta banner
   const [rankDelta, setRankDelta] = useState<number | null>(null)
+  // Replit coupon state
+  const [showReplitCouponModal, setShowReplitCouponModal] = useState(false)
+  const [replitCouponCode, setReplitCouponCode] = useState<string | null>(replitCouponInitial?.couponCode ?? null)
+  const [replitEligible, setReplitEligible] = useState(!!replitCouponInitial)
 
   const level = getUserLevel(approvedCount)
   const additionalBadges = getAdditionalBadges(linkedinCount)
@@ -468,6 +479,16 @@ export default function DashboardClient({
   }, [])
 
   // Welcome is controlled by DB-persisted welcomeDismissed (passed as prop)
+
+  // Show replit coupon modal on first visit if eligible
+  useEffect(() => {
+    if (!replitCouponInitial) return
+    const dismissKey = `replitCouponDismissed_${userId}`
+    if (!localStorage.getItem(dismissKey)) {
+      setShowReplitCouponModal(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (userRank <= 0) return
@@ -550,11 +571,25 @@ export default function DashboardClient({
     if (type === 'AULA') {
       setAulaSuccess((prev) => ({ ...prev, [liveId]: true }))
       setInsights((prev) => ({ ...prev, [liveId]: '' }))
+      // Show coupon modal if eligible (Aula 6)
+      if (data.couponEligible && data.couponCode) {
+        setReplitEligible(true)
+        setReplitCouponCode(data.couponCode)
+        const dismissKey = `replitCouponDismissed_${userId}`
+        if (!localStorage.getItem(dismissKey)) {
+          setShowReplitCouponModal(true)
+        }
+      }
     } else {
       setLinkedinSuccess((prev) => ({ ...prev, [liveId]: true }))
       setUrls((prev) => ({ ...prev, [liveId]: '' }))
     }
     router.refresh()
+  }
+
+  function handleCloseCouponModal() {
+    setShowReplitCouponModal(false)
+    localStorage.setItem(`replitCouponDismissed_${userId}`, '1')
   }
 
   async function handleSaveEdit(data: { insight?: string; linkedinUrl?: string }) {
@@ -643,6 +678,10 @@ export default function DashboardClient({
     <div className="max-w-5xl mx-auto px-4 py-10">
       {showCelebration && (
         <CelebrationOverlay userName={userName} userRank={userRank} onClose={closeCelebration} />
+      )}
+
+      {showReplitCouponModal && replitCouponCode && (
+        <ReplitCouponModal couponCode={replitCouponCode} onClose={handleCloseCouponModal} />
       )}
 
       {recordingLive?.recordingUrl && (
@@ -1095,6 +1134,16 @@ export default function DashboardClient({
                   <p className="text-sm text-emerald-400">
                     ✅ Check-in registrado! Você avançou mais um km na Maratona PM3! 🏃
                   </p>
+                )}
+
+                {/* Coupon button — Aula 6 only, when eligible and modal already dismissed */}
+                {live.order === 6 && replitEligible && aulaApproved && !showReplitCouponModal && replitCouponCode && (
+                  <button
+                    onClick={() => setShowReplitCouponModal(true)}
+                    className="mt-2 text-xs px-3 py-1.5 rounded-lg bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 font-medium transition-colors"
+                  >
+                    🎁 Ver Cupom Replit
+                  </button>
                 )}
               </div>
 

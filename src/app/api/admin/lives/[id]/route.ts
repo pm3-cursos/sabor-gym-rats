@@ -11,7 +11,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
   }
 
-  const { title, description, scheduledAt, isActive, recordingUrl, liveUrl, instructor, liveType, linkVisibleEarly } = await request.json()
+  const { title, description, scheduledAt, isActive, checkInOpenAt, checkInDisabled, recordingUrl, liveUrl, instructor, liveType, linkVisibleEarly } = await request.json()
 
   const live = await prisma.live.update({
     where: { id: params.id },
@@ -20,6 +20,8 @@ export async function PATCH(
       ...(description !== undefined && { description }),
       ...(scheduledAt !== undefined && { scheduledAt: scheduledAt ? new Date(scheduledAt) : null }),
       ...(isActive !== undefined && { isActive }),
+      ...(checkInOpenAt !== undefined && { checkInOpenAt: checkInOpenAt ? new Date(checkInOpenAt) : null }),
+      ...(checkInDisabled !== undefined && { checkInDisabled }),
       ...(recordingUrl !== undefined && { recordingUrl: recordingUrl || null }),
       ...(liveUrl !== undefined && { liveUrl: liveUrl || null }),
       ...(instructor !== undefined && { instructor: instructor || null }),

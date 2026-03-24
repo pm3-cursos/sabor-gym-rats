@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { extractLinkedinUsername } from '@/lib/linkedin'
+import { computeCouponEligibility } from '@/lib/coupon'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,7 +73,11 @@ export async function POST(request: NextRequest) {
     if (!live) {
       return NextResponse.json({ error: 'Aula não encontrada.' }, { status: 404 })
     }
-    const effectivelyActive = live.isActive || (live.scheduledAt !== null && live.scheduledAt <= new Date())
+
+    const now = new Date()
+    const effectivelyActive =
+      (live.isActive || (live.checkInOpenAt !== null && live.checkInOpenAt <= now)) &&
+      !live.checkInDisabled
     if (!effectivelyActive) {
       return NextResponse.json(
         { error: 'Esta aula ainda não está aceitando check-ins.' },
@@ -131,6 +136,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Coupon eligibility for Aula 6
+    if (live.order === 6) {
+      const isAdmin = session.role === 'ADMIN'
+      const coupon = await computeCouponEligibility(session.userId, isAdmin, live.id)
+      return NextResponse.json({ checkIn, ...coupon }, { status: 201 })
+    }
+
     return NextResponse.json({ checkIn }, { status: 201 })
   }
 
@@ -167,7 +179,11 @@ export async function POST(request: NextRequest) {
   if (!live) {
     return NextResponse.json({ error: 'Aula não encontrada.' }, { status: 404 })
   }
-  const effectivelyActive = live.isActive || (live.scheduledAt !== null && live.scheduledAt <= new Date())
+
+  const now = new Date()
+  const effectivelyActive =
+    (live.isActive || (live.checkInOpenAt !== null && live.checkInOpenAt <= now)) &&
+    !live.checkInDisabled
   if (!effectivelyActive) {
     return NextResponse.json(
       { error: 'Esta aula ainda não está aceitando check-ins.' },
