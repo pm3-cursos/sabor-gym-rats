@@ -67,6 +67,50 @@ export async function POST(request: NextRequest) {
       challengeUrl: challenge.challengeUrl,
       submittedAt: challenge.submittedAt.toISOString(),
       points: challenge.points,
+      isInvalid: challenge.isInvalid,
     },
   }, { status: 201 })
+}
+
+export async function PUT(request: NextRequest) {
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
+
+  const existing = await prisma.finalChallenge.findUnique({ where: { userId: session.userId } })
+  if (!existing) {
+    return NextResponse.json({ error: 'Nenhuma entrega encontrada.' }, { status: 404 })
+  }
+
+  const { challengeUrl } = await request.json()
+  if (!challengeUrl || typeof challengeUrl !== 'string' || !challengeUrl.startsWith('http')) {
+    return NextResponse.json({ error: 'URL inválida.' }, { status: 400 })
+  }
+
+  const updated = await prisma.finalChallenge.update({
+    where: { userId: session.userId },
+    data: { challengeUrl: challengeUrl.trim() },
+  })
+
+  return NextResponse.json({
+    finalChallenge: {
+      challengeUrl: updated.challengeUrl,
+      submittedAt: updated.submittedAt.toISOString(),
+      points: updated.points,
+      isInvalid: updated.isInvalid,
+    },
+  })
+}
+
+export async function DELETE() {
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
+
+  const existing = await prisma.finalChallenge.findUnique({ where: { userId: session.userId } })
+  if (!existing) {
+    return NextResponse.json({ error: 'Nenhuma entrega encontrada.' }, { status: 404 })
+  }
+
+  await prisma.finalChallenge.delete({ where: { userId: session.userId } })
+
+  return NextResponse.json({ ok: true })
 }

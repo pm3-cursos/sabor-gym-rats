@@ -57,6 +57,7 @@ interface FinalChallengeRow {
   challengeUrl: string
   submittedAt: string
   points: number
+  isInvalid: boolean
 }
 
 interface Props {
@@ -185,10 +186,19 @@ export default function AdminClient({
   // Search / filter state
   const [userSearch, setUserSearch] = useState('')
   const [filterCoupon, setFilterCoupon] = useState<'' | 'eligible' | 'not-eligible'>('')
+  const [filterBan, setFilterBan] = useState<'' | 'active' | 'banned'>('')
+  const [filterLevel, setFilterLevel] = useState<'' | '0' | '1-2' | '3-5' | '6+'>('')
+  const [filterSort, setFilterSort] = useState<'ranking' | 'points' | 'aulas' | 'name'>('ranking')
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
   const [ciFilterLiveId, setCiFilterLiveId] = useState('')
   const [ciFilterType, setCiFilterType] = useState<'' | 'AULA' | 'LINKEDIN'>('')
   const [ciFilterValid, setCiFilterValid] = useState<'' | 'valid' | 'invalid'>('')
+
+  // Final challenge management state (Check-ins tab)
+  const [challengeRows, setChallengeRows] = useState<FinalChallengeRow[]>(finalChallenges)
+  const [editingChallengeUserId, setEditingChallengeUserId] = useState<string | null>(null)
+  const [editChallengeUrlInput, setEditChallengeUrlInput] = useState('')
+  const [challengeActionLoading, setChallengeActionLoading] = useState<string | null>(null)
 
   // Ranking pagination state
   const RANKING_PAGE_SIZE = 20
@@ -208,15 +218,29 @@ export default function AdminClient({
   const rankMap = new Map(rankedUsers.map((u) => [u.id, u.rank]))
 
   // Derived filtered data
-  const filteredUsers = users.filter((u) => {
-    if (userSearch && !(
-      u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(userSearch.toLowerCase())
-    )) return false
-    if (filterCoupon === 'eligible' && u.couponRank === null) return false
-    if (filterCoupon === 'not-eligible' && u.couponRank !== null) return false
-    return true
-  })
+  const filteredUsers = [...users]
+    .filter((u) => {
+      if (userSearch && !(
+        u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(userSearch.toLowerCase())
+      )) return false
+      if (filterCoupon === 'eligible' && u.couponRank === null) return false
+      if (filterCoupon === 'not-eligible' && u.couponRank !== null) return false
+      if (filterBan === 'active' && u.isBanned) return false
+      if (filterBan === 'banned' && !u.isBanned) return false
+      if (filterLevel === '0' && u.aulaCount !== 0) return false
+      if (filterLevel === '1-2' && (u.aulaCount < 1 || u.aulaCount > 2)) return false
+      if (filterLevel === '3-5' && (u.aulaCount < 3 || u.aulaCount > 5)) return false
+      if (filterLevel === '6+' && u.aulaCount < 6) return false
+      return true
+    })
+    .sort((a, b) => {
+      if (filterSort === 'points') return b.points - a.points || a.name.localeCompare(b.name, 'pt-BR')
+      if (filterSort === 'aulas') return b.aulaCount - a.aulaCount || b.points - a.points
+      if (filterSort === 'name') return a.name.localeCompare(b.name, 'pt-BR')
+      // 'ranking' — maintain original rank order (by points desc, then name)
+      return b.points - a.points || a.name.localeCompare(b.name, 'pt-BR')
+    })
 
   const filteredCheckIns = checkIns.filter((c) => {
     if (ciFilterLiveId && c.live.id !== ciFilterLiveId) return false
@@ -503,6 +527,41 @@ function deleteCheckIn(id: string) {
     }
   }
 
+  async function handleAdminEditChallenge(userId: string) {
+    if (!editChallengeUrlInput.startsWith('http')) return
+    setChallengeActionLoading(userId)
+    const res = await fetch(`/api/admin/final-challenge/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challengeUrl: editChallengeUrlInput }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setChallengeRows((prev) => prev.map((fc) => fc.userId === userId ? { ...fc, challengeUrl: data.finalChallenge.challengeUrl } : fc))
+      setEditingChallengeUserId(null)
+    }
+    setChallengeActionLoading(null)
+  }
+
+  async function handleAdminToggleInvalidChallenge(userId: string) {
+    setChallengeActionLoading(userId)
+    const res = await fetch(`/api/admin/final-challenge/${userId}`, { method: 'PATCH' })
+    if (res.ok) {
+      const data = await res.json()
+      setChallengeRows((prev) => prev.map((fc) => fc.userId === userId ? { ...fc, isInvalid: data.finalChallenge.isInvalid } : fc))
+    }
+    setChallengeActionLoading(null)
+  }
+
+  async function handleAdminDeleteChallenge(userId: string) {
+    setChallengeActionLoading(userId)
+    const res = await fetch(`/api/admin/final-challenge/${userId}`, { method: 'DELETE' })
+    if (res.ok) {
+      setChallengeRows((prev) => prev.filter((fc) => fc.userId !== userId))
+    }
+    setChallengeActionLoading(null)
+  }
+
   const tabs: { id: Tab; label: string; count?: number }[] = [
     { id: 'checkins', label: 'Check-ins', count: checkIns.length + finalChallenges.length },
     { id: 'participants', label: 'Participantes', count: users.length },
@@ -667,20 +726,23 @@ function deleteCheckIn(id: string) {
         <div className="space-y-4">
 
           {/* Final Challenge submissions */}
-          {finalChallenges.length > 0 && (
+          {challengeRows.length > 0 && (
             <div>
               <h3 className="text-xs font-semibold text-violet-400 uppercase tracking-wide mb-2">
-                🏁 Desafio da Maratona PM3 — {finalChallenges.length} entrega{finalChallenges.length !== 1 ? 's' : ''}
+                🏁 Desafio da Maratona PM3 — {challengeRows.length} entrega{challengeRows.length !== 1 ? 's' : ''}
               </h3>
               <div className="space-y-2">
-                {finalChallenges.map((fc) => (
-                  <div key={fc.id} className="card p-4 border-violet-800/30 bg-violet-500/5">
+                {challengeRows.map((fc) => (
+                  <div key={fc.id} className={`card p-4 border-violet-800/30 ${fc.isInvalid ? 'bg-red-500/5 border-red-800/30' : 'bg-violet-500/5'}`}>
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span className="font-medium text-sm">{fc.userName}</span>
                       <span className="text-gray-600 text-xs">{fc.userEmail}</span>
-                      <span className="text-xs bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded-full font-medium shrink-0">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${fc.isInvalid ? 'bg-red-500/20 text-red-400 line-through' : 'bg-violet-500/20 text-violet-400'}`}>
                         Desafio +{fc.points}pts
                       </span>
+                      {fc.isInvalid && (
+                        <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium shrink-0">Invalidado</span>
+                      )}
                       <span className="text-xs text-gray-600 ml-auto shrink-0">
                         {new Date(fc.submittedAt).toLocaleDateString('pt-BR', {
                           day: '2-digit',
@@ -691,15 +753,66 @@ function deleteCheckIn(id: string) {
                         })}
                       </span>
                     </div>
-                    <a
-                      href={fc.challengeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-400 hover:text-blue-300 break-all flex items-center gap-1"
-                    >
-                      <span>🔗</span>
-                      <span className="truncate">{fc.challengeUrl}</span>
-                    </a>
+                    {editingChallengeUserId === fc.userId ? (
+                      <div className="space-y-2 mt-2">
+                        <input
+                          type="url"
+                          className="input text-xs w-full"
+                          value={editChallengeUrlInput}
+                          onChange={(e) => setEditChallengeUrlInput(e.target.value)}
+                          placeholder="https://..."
+                          autoFocus
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAdminEditChallenge(fc.userId)}
+                            disabled={challengeActionLoading === fc.userId}
+                            className="btn-primary text-xs px-3 py-1"
+                          >
+                            {challengeActionLoading === fc.userId ? 'Salvando...' : 'Salvar'}
+                          </button>
+                          <button onClick={() => setEditingChallengeUserId(null)} className="btn-secondary text-xs px-3 py-1">
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <a
+                          href={fc.challengeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`text-xs break-all flex items-center gap-1 ${fc.isInvalid ? 'text-gray-600 line-through' : 'text-blue-400 hover:text-blue-300'}`}
+                        >
+                          <span>🔗</span>
+                          <span className="truncate">{fc.challengeUrl}</span>
+                        </a>
+                        <div className="flex gap-3 mt-2">
+                          <button
+                            onClick={() => { setEditingChallengeUserId(fc.userId); setEditChallengeUrlInput(fc.challengeUrl) }}
+                            className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => handleAdminToggleInvalidChallenge(fc.userId)}
+                            disabled={challengeActionLoading === fc.userId}
+                            className={`text-xs transition-colors ${fc.isInvalid ? 'text-emerald-400 hover:text-emerald-300' : 'text-amber-400 hover:text-amber-300'}`}
+                          >
+                            {challengeActionLoading === fc.userId ? '...' : fc.isInvalid ? 'Revalidar' : 'Invalidar'}
+                          </button>
+                          <button
+                            onClick={() => setConfirmState({
+                              message: `Excluir a entrega do desafio de ${fc.userName}? Isso removerá os +${fc.points} pts permanentemente.`,
+                              onConfirm: async () => { setConfirmState(null); await handleAdminDeleteChallenge(fc.userId) },
+                            })}
+                            className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
@@ -863,16 +976,46 @@ function deleteCheckIn(id: string) {
               <option value="eligible">✅ Apenas elegíveis</option>
               <option value="not-eligible">— Não elegíveis</option>
             </select>
-            {(userSearch || filterCoupon) && (
+            <select
+              className="input text-sm w-44"
+              value={filterBan}
+              onChange={(e) => setFilterBan(e.target.value as '' | 'active' | 'banned')}
+            >
+              <option value="">Todos — Status</option>
+              <option value="active">✅ Ativos</option>
+              <option value="banned">🚫 Banidos</option>
+            </select>
+            <select
+              className="input text-sm w-52"
+              value={filterLevel}
+              onChange={(e) => setFilterLevel(e.target.value as '' | '0' | '1-2' | '3-5' | '6+')}
+            >
+              <option value="">Todos — Nível</option>
+              <option value="6+">🥇 Maratonista (6+ aulas)</option>
+              <option value="3-5">🥈 Corredor (3–5 aulas)</option>
+              <option value="1-2">🥉 Iniciante (1–2 aulas)</option>
+              <option value="0">🏁 Na largada (0 aulas)</option>
+            </select>
+            <select
+              className="input text-sm w-44"
+              value={filterSort}
+              onChange={(e) => setFilterSort(e.target.value as 'ranking' | 'points' | 'aulas' | 'name')}
+            >
+              <option value="ranking">↕ Ranking</option>
+              <option value="points">↓ Pontos</option>
+              <option value="aulas">↓ Aulas</option>
+              <option value="name">↓ Nome (A–Z)</option>
+            </select>
+            {(userSearch || filterCoupon || filterBan || filterLevel) && (
               <button
-                onClick={() => { setUserSearch(''); setFilterCoupon('') }}
+                onClick={() => { setUserSearch(''); setFilterCoupon(''); setFilterBan(''); setFilterLevel('') }}
                 className="text-xs text-gray-500 hover:text-white px-2"
               >
                 ✕ Limpar
               </button>
             )}
           </div>
-          {(userSearch || filterCoupon) && (
+          {(userSearch || filterCoupon || filterBan || filterLevel) && (
             <p className="text-xs text-gray-600">
               {filteredUsers.length} de {users.length} participante{users.length !== 1 ? 's' : ''}
             </p>
@@ -949,15 +1092,18 @@ function deleteCheckIn(id: string) {
 
                     {/* Final Challenge submission in participant history */}
                     {(() => {
-                      const fc = finalChallenges.find((f) => f.userId === u.id)
+                      const fc = challengeRows.find((f) => f.userId === u.id)
                       if (!fc) return null
                       return (
-                        <div className="text-xs rounded-lg px-3 py-2 bg-violet-900/20 border border-violet-800/30 mb-2 space-y-1">
+                        <div className={`text-xs rounded-lg px-3 py-2 mb-2 space-y-1 border ${fc.isInvalid ? 'bg-red-900/10 border-red-800/30' : 'bg-violet-900/20 border-violet-800/30'}`}>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-violet-300">🏁 Desafio da Maratona PM3</span>
-                            <span className="px-1.5 py-0.5 rounded text-xs bg-violet-500/20 text-violet-400">
+                            <span className={`font-medium ${fc.isInvalid ? 'text-red-400' : 'text-violet-300'}`}>🏁 Desafio da Maratona PM3</span>
+                            <span className={`px-1.5 py-0.5 rounded text-xs ${fc.isInvalid ? 'bg-red-500/20 text-red-400 line-through' : 'bg-violet-500/20 text-violet-400'}`}>
                               +{fc.points}pts
                             </span>
+                            {fc.isInvalid && (
+                              <span className="text-xs bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded">Invalidado</span>
+                            )}
                             <span className="text-gray-600 ml-auto">
                               {new Date(fc.submittedAt).toLocaleDateString('pt-BR', {
                                 day: '2-digit',
@@ -970,10 +1116,34 @@ function deleteCheckIn(id: string) {
                             href={fc.challengeUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 truncate block"
+                            className={`truncate block ${fc.isInvalid ? 'text-gray-600 line-through' : 'text-blue-400 hover:text-blue-300'}`}
                           >
                             {fc.challengeUrl}
                           </a>
+                          <div className="flex gap-3 pt-1">
+                            <button
+                              onClick={() => { setEditingChallengeUserId(fc.userId); setEditChallengeUrlInput(fc.challengeUrl); setTab('checkins') }}
+                              className="text-violet-400 hover:text-violet-300 transition-colors"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handleAdminToggleInvalidChallenge(fc.userId)}
+                              disabled={challengeActionLoading === fc.userId}
+                              className={`transition-colors ${fc.isInvalid ? 'text-emerald-400 hover:text-emerald-300' : 'text-amber-400 hover:text-amber-300'}`}
+                            >
+                              {challengeActionLoading === fc.userId ? '...' : fc.isInvalid ? 'Revalidar' : 'Invalidar'}
+                            </button>
+                            <button
+                              onClick={() => setConfirmState({
+                                message: `Excluir a entrega do desafio de ${fc.userName}?`,
+                                onConfirm: async () => { setConfirmState(null); await handleAdminDeleteChallenge(fc.userId) },
+                              })}
+                              className="text-red-400 hover:text-red-300 transition-colors"
+                            >
+                              Excluir
+                            </button>
+                          </div>
                         </div>
                       )
                     })()}
