@@ -59,6 +59,11 @@ export default async function AdminPage() {
 
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]))
 
+  // Build a map for fast lookup of finalChallenge by userId
+  const finalChallengeByUser = new Map(
+    finalChallengesRaw.map((fc) => [fc.userId, { points: fc.points, isInvalid: fc.isInvalid }]),
+  )
+
   const users = usersRaw.map((u) => ({
     id: u.id,
     name: u.name,
@@ -66,7 +71,7 @@ export default async function AdminPage() {
     isBanned: u.isBanned,
     createdAt: u.createdAt.toISOString(),
     checkInsCount: u._count.checkIns,
-    points: calcPoints(u.checkIns, u.pointAdjustments),
+    points: calcPoints(u.checkIns, u.pointAdjustments, finalChallengeByUser.get(u.id) ?? null),
     aulaCount: calcAulaCount(u.checkIns),
     couponRank: couponRankMap.get(u.id) ?? null,
   }))
@@ -99,6 +104,7 @@ export default async function AdminPage() {
         challengeUrl: fc.challengeUrl,
         submittedAt: fc.submittedAt.toISOString(),
         points: fc.points,
+        isInvalid: fc.isInvalid,
       }))}
       challengeUrl={settingsMap['challengeUrl'] ?? null}
       challengeShortDesc={settingsMap['challengeShortDesc'] ?? null}

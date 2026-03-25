@@ -356,7 +356,7 @@ interface Props {
   nextLiveId: string | null
   linkedinProfileUrl: string | null
   nextScheduledLive: { title: string; scheduledAt: string } | null
-  finalChallenge: { challengeUrl: string; submittedAt: string } | null
+  finalChallenge: { challengeUrl: string; submittedAt: string; isInvalid?: boolean } | null
   isFinalChallengeUnlocked: boolean
   welcomeDismissed: boolean
   challengeUrl: string | null
@@ -438,6 +438,11 @@ export default function DashboardClient({
   const [finalChallengeUrl, setFinalChallengeUrl] = useState('')
   const [finalChallengeError, setFinalChallengeError] = useState('')
   const [finalChallengeLoading, setFinalChallengeLoading] = useState(false)
+  const [editingChallenge, setEditingChallenge] = useState(false)
+  const [editChallengeUrl, setEditChallengeUrl] = useState('')
+  const [editChallengeLoading, setEditChallengeLoading] = useState(false)
+  const [editChallengeError, setEditChallengeError] = useState('')
+  const [confirmDeleteChallenge, setConfirmDeleteChallenge] = useState(false)
   const [challengeDetailsOpen, setChallengeDetailsOpen] = useState(false)
   // Edit modal state
   const [editingCheckIn, setEditingCheckIn] = useState<EditCheckIn | null>(null)
@@ -674,6 +679,34 @@ export default function DashboardClient({
     setFinalChallenge({ challengeUrl: finalChallengeUrl, submittedAt: new Date().toISOString() })
   }
 
+  async function handleEditChallengeSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setEditChallengeError('')
+    setEditChallengeLoading(true)
+    const res = await fetch('/api/final-challenge', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challengeUrl: editChallengeUrl }),
+    })
+    const data = await res.json()
+    setEditChallengeLoading(false)
+    if (!res.ok) {
+      setEditChallengeError(data.error || 'Erro ao editar entrega.')
+      return
+    }
+    setFinalChallenge(data.finalChallenge)
+    setEditingChallenge(false)
+  }
+
+  async function handleDeleteChallenge() {
+    const res = await fetch('/api/final-challenge', { method: 'DELETE' })
+    if (res.ok) {
+      setFinalChallenge(null)
+      setConfirmDeleteChallenge(false)
+      setFinalChallengeUrl('')
+    }
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       {showCelebration && (
@@ -697,6 +730,21 @@ export default function DashboardClient({
           onConfirm={confirmDelete}
           onCancel={() => setConfirmDeleteId(null)}
         />
+      )}
+
+      {confirmDeleteChallenge && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="card p-6 max-w-sm w-full space-y-4">
+            <h3 className="font-semibold">Excluir entrega do desafio?</h3>
+            <p className="text-sm text-gray-400">
+              A entrega e os +5 pontos serão removidos permanentemente.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={handleDeleteChallenge} className="btn-danger flex-1">Excluir</button>
+              <button onClick={() => setConfirmDeleteChallenge(false)} className="btn-secondary flex-1">Cancelar</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {editingCheckIn && (
@@ -1432,8 +1480,52 @@ export default function DashboardClient({
           <p className="text-sm text-gray-500">🔒 Disponível a partir de {new Date(unlockAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' })}</p>
         ) : finalChallenge ? (
           <div>
-            <p className="text-sm text-emerald-400 font-medium">✅ Entrega realizada — +5 pts</p>
-            <p className="text-xs text-gray-500 mt-1 break-all">{finalChallenge.challengeUrl}</p>
+            {finalChallenge.isInvalid && (
+              <p className="text-xs text-red-400 font-medium mb-1">⚠️ Entrega invalidada pelo time PM3</p>
+            )}
+            <p className={`text-sm font-medium ${finalChallenge.isInvalid ? 'text-gray-500 line-through' : 'text-emerald-400'}`}>
+              {finalChallenge.isInvalid ? 'Entrega invalidada' : '✅ Entrega realizada — +5 pts'}
+            </p>
+            {editingChallenge ? (
+              <form onSubmit={handleEditChallengeSubmit} className="mt-3 space-y-2">
+                <input
+                  type="url"
+                  className="input text-sm w-full"
+                  placeholder="https://..."
+                  value={editChallengeUrl}
+                  onChange={(e) => setEditChallengeUrl(e.target.value)}
+                  required
+                  autoFocus
+                />
+                {editChallengeError && <p className="text-xs text-red-400">{editChallengeError}</p>}
+                <div className="flex gap-2">
+                  <button type="submit" disabled={editChallengeLoading} className="btn-primary text-xs px-3 py-1.5">
+                    {editChallengeLoading ? 'Salvando...' : 'Salvar'}
+                  </button>
+                  <button type="button" onClick={() => setEditingChallenge(false)} className="btn-secondary text-xs px-3 py-1.5">
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <p className="text-xs text-gray-500 mt-1 break-all">{finalChallenge.challengeUrl}</p>
+                <div className="flex gap-3 mt-2">
+                  <button
+                    onClick={() => { setEditChallengeUrl(finalChallenge.challengeUrl); setEditingChallenge(true); setEditChallengeError('') }}
+                    className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteChallenge(true)}
+                    className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <form onSubmit={handleFinalChallengeSubmit} className="space-y-3">

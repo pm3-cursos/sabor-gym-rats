@@ -134,6 +134,7 @@ model FinalChallenge {
   challengeUrl String
   submittedAt  DateTime @default(now())
   points       Int      @default(5)
+  isInvalid    Boolean  @default(false)
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
