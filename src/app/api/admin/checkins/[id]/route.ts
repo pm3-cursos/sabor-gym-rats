@@ -23,7 +23,10 @@ export async function PATCH(
     if (!current) return NextResponse.json({ error: 'Não encontrado.' }, { status: 404 })
     const updated = await prisma.checkIn.update({
       where: { id: params.id },
-      data: { isInvalid: !current.isInvalid },
+      data: {
+        isInvalid: !current.isInvalid,
+        invalidationReason: !current.isInvalid ? (reason || null) : null,
+      },
     })
     const notificationMessage = updated.isInvalid && reason
       ? `${current.live.title}\nMotivo: ${reason}`

@@ -58,6 +58,7 @@ interface FinalChallengeRow {
   submittedAt: string
   points: number
   isInvalid: boolean
+  invalidationReason?: string | null
 }
 
 interface Props {
@@ -543,14 +544,25 @@ function deleteCheckIn(id: string) {
     setChallengeActionLoading(null)
   }
 
-  async function handleAdminToggleInvalidChallenge(userId: string) {
-    setChallengeActionLoading(userId)
-    const res = await fetch(`/api/admin/final-challenge/${userId}`, { method: 'PATCH' })
-    if (res.ok) {
-      const data = await res.json()
-      setChallengeRows((prev) => prev.map((fc) => fc.userId === userId ? { ...fc, isInvalid: data.finalChallenge.isInvalid } : fc))
-    }
-    setChallengeActionLoading(null)
+  function handleAdminToggleInvalidChallenge(userId: string, isInvalid: boolean) {
+    setConfirmState({
+      message: isInvalid ? 'Revalidar esta entrega do desafio?' : 'Invalidar esta entrega? Os pontos serão removidos.',
+      inputLabel: isInvalid ? undefined : 'Motivo da invalidação (opcional — será enviado ao usuário):',
+      onConfirm: async (reason?: string) => {
+        setConfirmState(null)
+        setChallengeActionLoading(userId)
+        const res = await fetch(`/api/admin/final-challenge/${userId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: reason || undefined }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setChallengeRows((prev) => prev.map((fc) => fc.userId === userId ? { ...fc, isInvalid: data.finalChallenge.isInvalid, invalidationReason: data.finalChallenge.invalidationReason } : fc))
+        }
+        setChallengeActionLoading(null)
+      },
+    })
   }
 
   async function handleAdminDeleteChallenge(userId: string) {
@@ -795,7 +807,7 @@ function deleteCheckIn(id: string) {
                             Editar
                           </button>
                           <button
-                            onClick={() => handleAdminToggleInvalidChallenge(fc.userId)}
+                            onClick={() => handleAdminToggleInvalidChallenge(fc.userId, fc.isInvalid)}
                             disabled={challengeActionLoading === fc.userId}
                             className={`text-xs transition-colors ${fc.isInvalid ? 'text-emerald-400 hover:text-emerald-300' : 'text-amber-400 hover:text-amber-300'}`}
                           >
@@ -1128,7 +1140,7 @@ function deleteCheckIn(id: string) {
                               Editar
                             </button>
                             <button
-                              onClick={() => handleAdminToggleInvalidChallenge(fc.userId)}
+                              onClick={() => handleAdminToggleInvalidChallenge(fc.userId, fc.isInvalid)}
                               disabled={challengeActionLoading === fc.userId}
                               className={`transition-colors ${fc.isInvalid ? 'text-emerald-400 hover:text-emerald-300' : 'text-amber-400 hover:text-amber-300'}`}
                             >

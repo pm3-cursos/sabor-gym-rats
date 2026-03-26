@@ -337,6 +337,7 @@ interface CheckIn {
   status: string
   adminNote: string | null
   isInvalid: boolean
+  invalidationReason: string | null
   createdAt: string
   updatedAt: string
 }
@@ -356,7 +357,7 @@ interface Props {
   nextLiveId: string | null
   linkedinProfileUrl: string | null
   nextScheduledLive: { title: string; scheduledAt: string } | null
-  finalChallenge: { challengeUrl: string; submittedAt: string; isInvalid?: boolean } | null
+  finalChallenge: { challengeUrl: string; submittedAt: string; isInvalid?: boolean; invalidationReason?: string | null } | null
   isFinalChallengeUnlocked: boolean
   welcomeDismissed: boolean
   challengeUrl: string | null
@@ -993,6 +994,7 @@ export default function DashboardClient({
           const aulaApproved = aulaCI?.status === 'APPROVED' && !aulaCI?.isInvalid
           const aulaInvalid = aulaCI?.status === 'APPROVED' && !!aulaCI?.isInvalid
           const aulaRejected = aulaCI?.status === 'REJECTED'
+          const linkedinInvalid = linkedinCI?.status === 'APPROVED' && !!linkedinCI?.isInvalid
           const canSubmitAula = live.isActive && (!aulaCI || aulaRejected)
           const canSubmitLinkedin = live.isActive && aulaApproved && (!linkedinCI || linkedinCI.status === 'REJECTED')
           const isNext = live.id === nextLiveId
@@ -1095,8 +1097,13 @@ export default function DashboardClient({
                 {aulaInvalid && (
                   <div className="mb-3 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
                     <p className="text-xs text-amber-400">
-                      ⚠️ <strong>Check-in invalidado pelo admin.</strong> Este registro não conta para sua pontuação. Entre em contato se acreditar que é um engano.
+                      ⚠️ <strong>Check-in invalidado pelo admin.</strong> Este registro não conta para sua pontuação.
                     </p>
+                    {aulaCI?.invalidationReason && (
+                      <p className="text-xs text-amber-300/80 mt-1">
+                        <strong>Motivo:</strong> {aulaCI.invalidationReason}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -1205,14 +1212,32 @@ export default function DashboardClient({
                       </span>
                     </div>
                     <div className="flex gap-1">
-                      {linkedinCI?.status === 'APPROVED' && (
+                      {linkedinCI?.status === 'APPROVED' && !linkedinInvalid && (
                         <span className="badge-approved">✓ Registrado</span>
+                      )}
+                      {linkedinInvalid && (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-full">
+                          ⚠️ Invalidado
+                        </span>
                       )}
                       {linkedinCI?.status === 'REJECTED' && (
                         <span className="badge-rejected">✗ Rejeitado</span>
                       )}
                     </div>
                   </div>
+
+                  {linkedinInvalid && (
+                    <div className="mb-3 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                      <p className="text-xs text-amber-400">
+                        ⚠️ <strong>Check-in LinkedIn invalidado pelo admin.</strong> Este registro não conta para sua pontuação.
+                      </p>
+                      {linkedinCI?.invalidationReason && (
+                        <p className="text-xs text-amber-300/80 mt-1">
+                          <strong>Motivo:</strong> {linkedinCI.invalidationReason}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {!linkedinCI && aulaApproved && hasLinkedinProfile && (
                     <p className="text-xs text-gray-500 mb-3">
@@ -1481,7 +1506,14 @@ export default function DashboardClient({
         ) : finalChallenge ? (
           <div>
             {finalChallenge.isInvalid && (
-              <p className="text-xs text-red-400 font-medium mb-1">⚠️ Entrega invalidada pelo time PM3</p>
+              <div className="mb-1">
+                <p className="text-xs text-red-400 font-medium">⚠️ Entrega invalidada pelo time PM3</p>
+                {finalChallenge.invalidationReason && (
+                  <p className="text-xs text-red-300/70 mt-0.5">
+                    <strong>Motivo:</strong> {finalChallenge.invalidationReason}
+                  </p>
+                )}
+              </div>
             )}
             <p className={`text-sm font-medium ${finalChallenge.isInvalid ? 'text-gray-500 line-through' : 'text-emerald-400'}`}>
               {finalChallenge.isInvalid ? 'Entrega invalidada' : '✅ Entrega realizada — +5 pts'}

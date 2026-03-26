@@ -124,6 +124,7 @@ export default async function DashboardPage() {
         status: c.status,
         adminNote: c.adminNote,
         isInvalid: c.isInvalid,
+        invalidationReason: c.invalidationReason,
         createdAt: c.createdAt.toISOString(),
         updatedAt: c.updatedAt.toISOString(),
       }))}
@@ -142,6 +143,8 @@ export default async function DashboardPage() {
       finalChallenge={finalChallenge ? {
         challengeUrl: finalChallenge.challengeUrl,
         submittedAt: finalChallenge.submittedAt.toISOString(),
+        isInvalid: finalChallenge.isInvalid,
+        invalidationReason: finalChallenge.invalidationReason ?? null,
       } : null}
       isFinalChallengeUnlocked={new Date() >= unlockDate}
       welcomeDismissed={currentUser?.welcomeDismissed ?? false}
