@@ -63,9 +63,10 @@ model CheckIn {
   insight     String?
   linkedinUrl String?
   status      CheckInStatus @default(PENDING)
-  isInvalid   Boolean       @default(false)
-  adminNote   String?
-  createdAt   DateTime      @default(now())
+  isInvalid          Boolean       @default(false)
+  invalidationReason String?
+  adminNote          String?
+  createdAt          DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   reviewedAt  DateTime?
   reviewedBy  String?
@@ -134,8 +135,9 @@ model FinalChallenge {
   challengeUrl String
   submittedAt  DateTime @default(now())
   points       Int      @default(5)
-  isInvalid    Boolean  @default(false)
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isInvalid          Boolean  @default(false)
+  invalidationReason String?
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AppSettings {

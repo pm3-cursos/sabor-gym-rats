@@ -43,7 +43,7 @@ export async function PUT(
 
 // PATCH /api/admin/final-challenge/[userId] — toggle isInvalid
 export async function PATCH(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ userId: string }> },
 ) {
   if (!(await requireAdmin())) {
@@ -51,15 +51,34 @@ export async function PATCH(
   }
 
   const { userId } = await params
+  const body = await request.json().catch(() => ({}))
+  const reason: string | undefined = body.reason
 
   const existing = await prisma.finalChallenge.findUnique({ where: { userId } })
   if (!existing) {
     return NextResponse.json({ error: 'Entrega não encontrada.' }, { status: 404 })
   }
 
+  const willBeInvalid = !existing.isInvalid
+
   const updated = await prisma.finalChallenge.update({
     where: { userId },
-    data: { isInvalid: !existing.isInvalid },
+    data: {
+      isInvalid: willBeInvalid,
+      invalidationReason: willBeInvalid ? (reason || null) : null,
+    },
+  })
+
+  const notificationMessage = willBeInvalid && reason ? `Motivo: ${reason}` : undefined
+  await prisma.notification.create({
+    data: {
+      userId,
+      type: 'SCORE_ADJUSTMENT',
+      title: willBeInvalid
+        ? '⚠️ Sua entrega do desafio final foi invalidada'
+        : '✅ Sua entrega do desafio final foi revalidada',
+      message: notificationMessage ?? null,
+    },
   })
 
   return NextResponse.json({
@@ -70,6 +89,7 @@ export async function PATCH(
       submittedAt: updated.submittedAt.toISOString(),
       points: updated.points,
       isInvalid: updated.isInvalid,
+      invalidationReason: updated.invalidationReason,
     },
   })
 }
