@@ -43,7 +43,7 @@ export default async function AdminPage() {
     }),
     prisma.appSettings.findMany({
       where: {
-        key: { in: ['challengeUrl', 'challengeShortDesc', 'challengeUnlockAt', 'showRanking', 'showFeed', 'emailFrom', 'upviralUrl', 'referralBanner', 'referralDashboard', 'referralNavbar', 'referralRanking', 'membershipPlusUrl', 'membershipPlusNavbar', 'membershipPlusCard', 'membershipPlusBanner'] },
+        key: { in: ['challengeUrl', 'challengeShortDesc', 'challengeUnlockAt', 'showRanking', 'showFeed', 'emailFrom', 'upviralUrl', 'referralBanner', 'referralDashboard', 'referralNavbar', 'referralRanking', 'membershipPlusUrl', 'membershipPlusNavbar', 'membershipPlusCard', 'membershipPlusBanner', 'coursesAccessDisabled', 'challengeSubmissionsDisabled'] },
       },
     }),
   ])
@@ -122,6 +122,8 @@ export default async function AdminPage() {
       membershipPlusNavbar={settingsMap['membershipPlusNavbar'] === 'true'}
       membershipPlusCard={settingsMap['membershipPlusCard'] === 'true'}
       membershipPlusBanner={settingsMap['membershipPlusBanner'] === 'true'}
+      coursesAccessDisabled={settingsMap['coursesAccessDisabled'] === 'true'}
+      challengeSubmissionsDisabled={settingsMap['challengeSubmissionsDisabled'] === 'true'}
     />
   )
 }

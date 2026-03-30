@@ -23,6 +23,16 @@ export async function POST(request: NextRequest) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
 
+  const globalDisableSetting = await prisma.appSettings.findUnique({
+    where: { key: 'coursesAccessDisabled' },
+  })
+  if (globalDisableSetting?.value === 'true') {
+    return NextResponse.json(
+      { error: 'O período de envio de check-ins foi encerrado.' },
+      { status: 403 },
+    )
+  }
+
   const { liveId, type = 'AULA', linkedinUrl, insight } = await request.json()
 
   if (!liveId) {
