@@ -369,8 +369,6 @@ interface Props {
   membershipPlusCard: boolean
   todayLiveId: string | null
   replitCouponInitial: { couponCode: string } | null
-  coursesAccessDisabled: boolean
-  challengeSubmissionsDisabled: boolean
 }
 
 function getDaysUntil(scheduledAt: string | null): string {
@@ -424,8 +422,6 @@ export default function DashboardClient({
   membershipPlusCard,
   todayLiveId,
   replitCouponInitial,
-  coursesAccessDisabled,
-  challengeSubmissionsDisabled,
 }: Props) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState<string | null>(null)
@@ -1181,7 +1177,7 @@ export default function DashboardClient({
                     )}
                     <button
                       onClick={() => handleSubmit(live.id, 'AULA')}
-                      disabled={submitting === `${live.id}_AULA` || !insightValid || coursesAccessDisabled}
+                      disabled={submitting === `${live.id}_AULA` || !insightValid}
                       className="btn-primary text-sm w-full"
                     >
                       {submitting === `${live.id}_AULA` ? 'Enviando...' : 'Fazer check-in'}
@@ -1343,7 +1339,7 @@ export default function DashboardClient({
                       )}
                       <button
                         onClick={() => handleSubmit(live.id, 'LINKEDIN')}
-                        disabled={submitting === `${live.id}_LINKEDIN` || !urlValue.trim() || coursesAccessDisabled}
+                        disabled={submitting === `${live.id}_LINKEDIN` || !urlValue.trim()}
                         className="btn-secondary text-sm w-full"
                       >
                         {submitting === `${live.id}_LINKEDIN`
@@ -1392,7 +1388,6 @@ export default function DashboardClient({
                     return hasRecording ? (
                       <button
                         onClick={() => setRecordingLiveId(live.id)}
-                        disabled={coursesAccessDisabled}
                         className="btn-primary text-sm w-full mt-3"
                       >
                         🎥 Gravação disponível
@@ -1447,7 +1442,6 @@ export default function DashboardClient({
                   return (
                     <button
                       onClick={() => setRecordingLiveId(live.id)}
-                      disabled={coursesAccessDisabled}
                       className="btn-primary text-sm w-full mt-3"
                     >
                       ▶ Acessar link da aula
@@ -1458,7 +1452,6 @@ export default function DashboardClient({
                   return (
                     <button
                       onClick={() => setRecordingLiveId(live.id)}
-                      disabled={coursesAccessDisabled}
                       className="btn-primary text-sm w-full mt-3"
                     >
                       🎥 Gravação disponível
@@ -1533,13 +1526,12 @@ export default function DashboardClient({
                   placeholder="https://..."
                   value={editChallengeUrl}
                   onChange={(e) => setEditChallengeUrl(e.target.value)}
-                  disabled={challengeSubmissionsDisabled}
                   required
                   autoFocus
                 />
                 {editChallengeError && <p className="text-xs text-red-400">{editChallengeError}</p>}
                 <div className="flex gap-2">
-                  <button type="submit" disabled={editChallengeLoading || challengeSubmissionsDisabled} className="btn-primary text-xs px-3 py-1.5">
+                  <button type="submit" disabled={editChallengeLoading} className="btn-primary text-xs px-3 py-1.5">
                     {editChallengeLoading ? 'Salvando...' : 'Salvar'}
                   </button>
                   <button type="button" onClick={() => setEditingChallenge(false)} className="btn-secondary text-xs px-3 py-1.5">
@@ -1551,14 +1543,12 @@ export default function DashboardClient({
               <>
                 <p className="text-xs text-gray-500 mt-1 break-all">{finalChallenge.challengeUrl}</p>
                 <div className="flex gap-3 mt-2">
-                  {!challengeSubmissionsDisabled && (
-                    <button
-                      onClick={() => { setEditChallengeUrl(finalChallenge.challengeUrl); setEditingChallenge(true); setEditChallengeError('') }}
-                      className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
-                    >
-                      Editar
-                    </button>
-                  )}
+                  <button
+                    onClick={() => { setEditChallengeUrl(finalChallenge.challengeUrl); setEditingChallenge(true); setEditChallengeError('') }}
+                    className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                  >
+                    Editar
+                  </button>
                   <button
                     onClick={() => setConfirmDeleteChallenge(true)}
                     className="text-xs text-red-400 hover:text-red-300 transition-colors"
@@ -1580,7 +1570,6 @@ export default function DashboardClient({
               placeholder="https://..."
               value={finalChallengeUrl}
               onChange={(e) => setFinalChallengeUrl(e.target.value)}
-              disabled={challengeSubmissionsDisabled}
               required
             />
             {finalChallengeError && (
@@ -1588,7 +1577,7 @@ export default function DashboardClient({
             )}
             <button
               type="submit"
-              disabled={finalChallengeLoading || challengeSubmissionsDisabled}
+              disabled={finalChallengeLoading}
               className="btn-primary w-full text-sm"
             >
               {finalChallengeLoading ? 'Enviando...' : 'Enviar entrega (+5 pts)'}
