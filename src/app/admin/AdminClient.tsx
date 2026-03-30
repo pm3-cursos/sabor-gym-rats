@@ -82,6 +82,8 @@ interface Props {
   membershipPlusNavbar: boolean
   membershipPlusCard: boolean
   membershipPlusBanner: boolean
+  coursesAccessDisabled: boolean
+  challengeSubmissionsDisabled: boolean
 }
 
 type Tab = 'checkins' | 'participants' | 'lives' | 'settings' | 'ranking'
@@ -144,6 +146,8 @@ export default function AdminClient({
   membershipPlusNavbar: initialMembershipPlusNavbar,
   membershipPlusCard: initialMembershipPlusCard,
   membershipPlusBanner: initialMembershipPlusBanner,
+  coursesAccessDisabled: initialCoursesAccessDisabled,
+  challengeSubmissionsDisabled: initialChallengeSubmissionsDisabled,
 }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('checkins')
@@ -170,6 +174,8 @@ export default function AdminClient({
   const [membershipPlusNavbarInput, setMembershipPlusNavbarInput] = useState(initialMembershipPlusNavbar)
   const [membershipPlusCardInput, setMembershipPlusCardInput] = useState(initialMembershipPlusCard)
   const [membershipPlusBannerInput, setMembershipPlusBannerInput] = useState(initialMembershipPlusBanner)
+  const [coursesAccessDisabledInput, setCoursesAccessDisabledInput] = useState(initialCoursesAccessDisabled)
+  const [challengeSubmissionsDisabledInput, setChallengeSubmissionsDisabledInput] = useState(initialChallengeSubmissionsDisabled)
   const [settingsSaved, setSettingsSaved] = useState(false)
   const [settingsError, setSettingsError] = useState('')
 
@@ -507,6 +513,8 @@ function deleteCheckIn(id: string) {
       { key: 'membershipPlusNavbar', value: membershipPlusNavbarInput ? 'true' : 'false' },
       { key: 'membershipPlusCard', value: membershipPlusCardInput ? 'true' : 'false' },
       { key: 'membershipPlusBanner', value: membershipPlusBannerInput ? 'true' : 'false' },
+      { key: 'coursesAccessDisabled', value: coursesAccessDisabledInput ? 'true' : 'false' },
+      { key: 'challengeSubmissionsDisabled', value: challengeSubmissionsDisabledInput ? 'true' : 'false' },
     ]
 
     const results = await Promise.all(
@@ -1858,6 +1866,34 @@ function deleteCheckIn(id: string) {
                   onChange={(e) => setShowFeedInput(e.target.checked)}
                 />
                 <span className="text-sm text-gray-300">Mostrar link "Feed" na Home</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Deadline controls */}
+          <div className="card p-5">
+            <h2 className="font-semibold mb-1 text-sm">🔒 Controle de Prazo</h2>
+            <p className="text-xs text-gray-500 mb-3">
+              Desative globalmente o envio de check-ins de aulas e/ou a entrega do desafio final quando os prazos encerrarem.
+            </p>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-violet-600"
+                  checked={coursesAccessDisabledInput}
+                  onChange={(e) => setCoursesAccessDisabledInput(e.target.checked)}
+                />
+                <span className="text-sm text-gray-300">Desabilitar check-ins de aulas (bloqueio global)</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-violet-600"
+                  checked={challengeSubmissionsDisabledInput}
+                  onChange={(e) => setChallengeSubmissionsDisabledInput(e.target.checked)}
+                />
+                <span className="text-sm text-gray-300">Desabilitar envio do desafio final (bloqueio global)</span>
               </label>
             </div>
           </div>

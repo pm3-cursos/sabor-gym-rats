@@ -9,6 +9,11 @@ async function isUnlocked(): Promise<boolean> {
   return new Date() >= unlockDate
 }
 
+async function isSubmissionsDisabled(): Promise<boolean> {
+  const setting = await prisma.appSettings.findUnique({ where: { key: 'challengeSubmissionsDisabled' } })
+  return setting?.value === 'true'
+}
+
 export async function GET() {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
@@ -31,6 +36,13 @@ export async function POST(request: NextRequest) {
   if (!(await isUnlocked())) {
     return NextResponse.json(
       { error: 'A entrega final ainda não está disponível. Disponível a partir de 17/03.' },
+      { status: 403 },
+    )
+  }
+
+  if (await isSubmissionsDisabled()) {
+    return NextResponse.json(
+      { error: 'O período de envio do desafio final foi encerrado.' },
       { status: 403 },
     )
   }
@@ -75,6 +87,13 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
+
+  if (await isSubmissionsDisabled()) {
+    return NextResponse.json(
+      { error: 'O período de envio do desafio final foi encerrado.' },
+      { status: 403 },
+    )
+  }
 
   const existing = await prisma.finalChallenge.findUnique({ where: { userId: session.userId } })
   if (!existing) {
